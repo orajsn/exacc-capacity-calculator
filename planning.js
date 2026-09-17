@@ -13,5 +13,19 @@
  function sessions(site){const p=validate(site);if(p.adbECPU===null)return null;const estimated=Math.floor(p.adbECPU*p.sessionsPerECPU);return {estimated,demand:p.sessionDemand,remaining:p.sessionDemand===null?null:estimated-p.sessionDemand,requiredECPU:p.sessionDemand===null?null:Math.ceil(p.sessionDemand/p.sessionsPerECPU),rate:p.sessionsPerECPU};}
  function capture(site,r){const p=validate(site);return {local:r.used+r.other,cpu:r.nodes.reduce((a,n)=>a+n.cpuUsed+n.otherCPU,0),memory:r.nodes.reduce((a,n)=>a+n.memoryUsed+n.otherMemory,0),storage:p.storageAllocated,avmcs:site.clusters.length,slots:r.slots,computeChecked:site.checkCompute};}
  function compare(site,r){if(!site.baseline)return [];const now=capture(site,r);return [['AVMCs','avmcs','count'],['Maximum ACD slots','slots','count'],['Local allocation','local','GB'],['CPU allocation','cpu','ECPU'],['Memory estimate','memory','GB'],['Exadata allocation (manual)','storage','TB']].map(([name,key,unit])=>{const enabled=!['cpu','memory'].includes(key)||(site.checkCompute&&site.baseline.computeChecked);const before=enabled?site.baseline[key]:null,after=enabled?now[key]:null;return {name,unit,before,after,delta:before===null||after===null?null:after-before};});}
- return {defaults,config,validate,budget,resources,sessions,capture,compare};
+ function summary(site, result) {
+  const rows = resources(site, result);
+  const problems = rows.filter(row => row.status !== 'Within buffer');
+  const details = problems.map(row => `${row.name}: ${row.status.toLowerCase()}`);
+  if (result.errors.length) details.unshift('Exceeds checked limit');
+  if (!site.checkCompute) details.push('CPU / memory not checked');
+  const p = config(site);
+  if (p.storageCapacity === null || p.storageAllocated === null) details.push('Exadata storage not checked');
+  return {
+   status: result.errors.length || rows.some(row => row.status === 'Over capacity') ? 'error'
+    : problems.length ? 'warning' : 'fit',
+   text: [problems.length || result.errors.length ? null : 'Within checked limits', ...details].filter(Boolean).join(' · ')
+  };
+ }
+ return {defaults,config,validate,budget,resources,sessions,capture,compare,summary};
 });

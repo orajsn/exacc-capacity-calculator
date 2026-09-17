@@ -10,3 +10,54 @@ test('base shape VM count and local capacity differ',()=>{const s=M.newSite('Bas
 test('invalid input and malformed imports never produce a fit',()=>{const s=M.newSite();s.clusters[0].slots=-1;assert.throws(()=>M.calculate(s));s.clusters[0].slots=2;s.clusters[0].nodes=[1];assert.throws(()=>M.calculate(s));assert.throws(()=>M.importScenario({schema:'other',sites:[]}));s.clusters[0].nodes=[1,1];assert.throws(()=>M.validate(s));});
 test('scenario round trip preserves results and names as inert data',()=>{const s=M.newSite('<script>bad</script>');const q=M.importScenario(JSON.parse(JSON.stringify({schema:'exacc-capacity/v1',sites:[s]})));assert.deepEqual(M.calculate(q.sites[0]),M.calculate(s));});
 test('CPU and memory checks are opt-in and allocation-specific',()=>{const s=M.newSite();s.checkCompute=false;s.clusters[0].cpu=1000;assert.equal(M.calculate(s).errors.length,0);s.checkCompute=true;assert.ok(M.calculate(s).errors.some(x=>x.includes('ECPUs exceed')));s.clusters[0].cpu=20;assert.ok(M.calculate(s).errors.some(x=>x.includes('40 ECPUs')));});
+
+test('same-layout comparison preserves compute, names and the captured baseline', () => {
+ const site = M.newSite();
+ site.clusters[0].name = 'Existing workload';
+ site.clusters[0].memoryPerCPU = 5;
+ const before = M.calculate(site);
+ const next = M.applyDesign(site, 1);
+ assert.equal(next.clusters[0].name, 'Existing workload');
+ assert.equal(next.clusters[0].cpu, 160);
+ assert.equal(next.clusters[0].memoryPerCPU, 5);
+ assert.equal(M.calculate(next).costs[0].memory, before.costs[0].memory);
+ assert.equal(site.clusters[0].slots, 10);
+});
+
+test('different layout requires explicit allocations even when compute checks are off', () => {
+ const site = M.newSite();
+ site.checkCompute = false;
+ const original = M.clone(site);
+ assert.throws(() => M.applyDesign(site, 2), /enter replacement/);
+ assert.throws(() => M.applyDesign(site, 2, {cpu: 0, memoryPerCPU: 5}));
+ assert.deepEqual(site, original);
+ const next = M.applyDesign(site, 2, {cpu: 160, memoryPerCPU: 5});
+ assert.ok(next.clusters.every(c => c.cpu === 160 && c.memoryPerCPU === 5));
+ const four = M.newSite('Four', 'x11m-standard', 4);
+ four.clusters[0].nodes = [1, 3];
+ assert.throws(() => M.applyDesign(four, 1), /enter replacement/);
+});
+
+test('imported nonsequential server IDs survive growth and shrink', () => {
+ const source = M.newSite();
+ source.nodes[0].id = 2;
+ source.nodes[1].id = 3;
+ source.clusters[0].nodes = [2, 3];
+ const imported = M.importScenario({schema: 'exacc-capacity/v1', sites: [source]}).sites[0];
+ const grown = M.resizeNodes(imported, 3);
+ assert.deepEqual(grown.nodes.map(n => n.id), [2, 3, 1]);
+ assert.deepEqual(grown.clusters[0].nodes, [2, 3, 1]);
+ grown.clusters[0].nodes = [2, 3];
+ const shrunk = M.resizeNodes(grown, 2);
+ assert.deepEqual(shrunk.clusters[0].nodes, [2, 3]);
+ assert.deepEqual(imported, source);
+});
+
+test('invalid node resize leaves the original placement unchanged', () => {
+ const site = M.newSite('Four', 'x11m-standard', 4);
+ site.clusters[0].nodes = [3, 4];
+ const original = M.clone(site);
+ assert.throws(() => M.resizeNodes(site, 2), /select at least two/);
+ assert.deepEqual(site, original);
+ assert.throws(() => M.resizeNodes(M.newSite('Base', 'x11m-base'), 3), /exactly two/);
+});

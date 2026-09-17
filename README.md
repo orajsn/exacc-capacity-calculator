@@ -14,6 +14,14 @@ The preset initial buffer of 10% is a user-adjustable planning assumption, not a
 
 ## Version 1.2 — expansion and resize planning
 
+### 1.2.1 fixes
+
+- Applying a local-storage combination preserves names and compute allocations when the AVMC count and all-server placement match. A different layout requires explicit replacement ECPUs and memory ratio; it never silently resets compute to minimums.
+- The machine overview includes every enabled resource check, including CPU/memory buffers and manual Exadata storage. Unchecked resources are labelled, and invalid inputs clear stale overview status.
+- Changing DB-server count preserves imported IDs, assigns unused IDs to added nodes, and validates placement before committing a change. Rejected changes leave the existing design intact.
+
+### Planning features
+
 - Independent buffers: local 10%, CPU 30%, memory 30%, and Exadata storage 30%. All are editable percentages of total capacity, not Oracle service limits or mandatory best practices. Existing saved local buffers remain unchanged.
 - New designs include CPU/memory allocation checks by default. Existing scenario check settings are preserved. Change per-VM ECPUs and the 2–5 GB/ECPU memory ratio to explore allocations; checks include every selected server.
 - Capture a machine baseline, then compare proposed AVMC count, ACD slots and resource allocations. Negative deltas indicate modelled release; OCI resize permission, workload fit and maintenance impact require console review.
