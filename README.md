@@ -12,6 +12,10 @@ A static, browser-only planning calculator for Autonomous VM Cluster local stora
 
 The preset initial buffer of 10% is a user-adjustable planning assumption, not an Oracle recommendation. Comparison designs replace current modelled AVMCs, span all machine DB servers and retain other allocations. The maximum local-storage count is not a guarantee that all ACDs or workloads can be provisioned.
 
+## Hardware inputs
+
+Preset shapes lock local capacity, ECPU capacity, memory, VM limit and AVMC image overhead. Existing reservations stay editable without changing the shape. Select Custom / console values to enter another verified configuration. Imported scenarios whose capacities differ from their named preset are labelled Custom, preserving their values.
+
 ## Multiple sites and machines
 
 Use **+ Site / machine** once per ExaC@C infrastructure. Give each entry a site/location and a machine name; reuse the site name for multiple machines in that location (for example DC / Machine 1, DC / Machine 2, DR / Machine 1). The overview shows all entries together, with separate hardware, reservations, AVMC design and checks. No capacity is pooled across machines. Save/open includes the whole scenario, up to eight machines. Older scenario files remain readable with an unspecified site label.
