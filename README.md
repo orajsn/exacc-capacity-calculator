@@ -12,6 +12,16 @@ A static, browser-only planning calculator for Autonomous VM Cluster capacity an
 
 The preset initial buffer of 10% is a user-adjustable planning assumption, not an Oracle recommendation. Comparison designs replace current modelled AVMCs, span all machine DB servers and retain other allocations. The maximum local-storage count is not a guarantee that all ACDs or workloads can be provisioned.
 
+## Version 1.3 — current configuration to proposed changes
+
+- One site-to-machine navigator with add, duplicate and remove controls. Removing the last machine is disabled.
+- Four resource cards show free capacity after the growth reserve, allocation totals, unchecked resources and capacity warnings. The cards and Undo stay visible while editing on desktop; on narrow screens they remain in normal page flow.
+- Set the current reference above the editor. Subsequent edits are labelled as the proposed configuration. Existing saved references remain readable.
+- Preview a layout before applying it. Replacement allocations are requested only when needed, and the preview shows resource changes and warnings. Applying without a reference captures the previous design as the current reference.
+- Undo restores the most recent change, including a removed AVMC or machine, an imported scenario, or an applied layout. Undo history stays in the current tab and is not exported.
+- Unsaved-change status tracks the scenario against its last opened or downloaded version. The browser warns before leaving with changes, where supported. There is still no automatic persistence or network upload.
+- Detailed formulas, per-server tables, resize caveats and optional session planning are available in expandable sections. The sizing formulas and scenario schema are unchanged.
+
 ## Version 1.2 — expansion and resize planning
 
 ### 1.2.1 fixes
@@ -31,7 +41,7 @@ The preset initial buffer of 10% is a user-adjustable planning assumption, not a
 
 Additional public references: [AVMC scaling and rolling restarts](https://docs.oracle.com/en/cloud/paas/autonomous-database/dedicated/adbaa/manage-autonomous-exadata-vm-clusters.html) and [shared-server architecture](https://docs.oracle.com/en/database/oracle/oracle-database/26/netag/understanding-shared-server-architecture.html). These support operating caveats; the architecture page does not substantiate the numerical session assumptions.
 
-Run `node --test model.test.cjs planning.test.cjs` for the public model checks. Runtime now also requires `planning.js` and `planning-ui.js` beside `index.html`.
+Run `node --test model.test.cjs planning.test.cjs` for the public model checks. Keep `model.js`, `planning.js`, `planning-ui.js`, `workflow.js`, `app.js` and `style.css` beside `index.html`.
 
 ## Hardware inputs
 
