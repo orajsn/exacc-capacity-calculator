@@ -1,6 +1,6 @@
 (function(root,factory){const api=factory();if(typeof module==='object'&&module.exports)module.exports=api;else root.ExaCapacity=api;})(typeof globalThis!=='undefined'?globalThis:this,function(){
  'use strict';
- const VERSION='1.0.0',CHECKED='2026-09-17';
+ const VERSION='1.1.0',CHECKED='2026-09-17';
  const SOURCES={formula:'https://docs.oracle.com/en/cloud/paas/autonomous-database/dedicated/adbaa/create-an-autonomous-exadata-vm-cluster.html',hardware:'https://docs.oracle.com/en/cloud/paas/autonomous-database/dedicated/adbaa/characteristics-of-infrastructure-shapes.html',limits:'https://docs.oracle.com/en/cloud/paas/autonomous-database/dedicated/adbaa/plan-and-observe-capacity-for-autonomous-ai-database-on.html',compute:'https://docs.oracle.com/en/cloud/paas/autonomous-database/dedicated/adbaa/compute-management-in-autonomous-ai-database-on-dedicated.html',vmc:'https://docs.oracle.com/en/engineered-systems/exadata-cloud-at-customer/ecccm/ecc-manage-vm-clusters.html'};
  const PROFILES={
   'x11m-standard':{label:'X11M Standard',image:184,local:2243,memory:1390,cpu:760,vms:6},
@@ -11,10 +11,11 @@
  };
  const clone=x=>JSON.parse(JSON.stringify(x));
  const number=(x,min,max,label,integer=false)=>{if(typeof x!=='number'||!Number.isFinite(x)||x<min||x>max||(integer&&!Number.isInteger(x)))throw new Error(`${label}: enter ${integer?'a whole number':'a number'} between ${min} and ${max}.`);return x;};
- function newSite(name='Site 1',profile='x11m-standard',nodes=2){const p=PROFILES[profile];return{name,profile,image:p.image,bufferPercent:10,allowance:0,checkCompute:false,nodes:Array.from({length:nodes},(_,i)=>({id:i+1,local:p.local,memory:p.memory,cpu:p.cpu,maxVMs:p.vms,otherLocal:0,otherMemory:0,otherCPU:0,otherVMs:0})),clusters:[{name:'AVMC 1',slots:10,nodes:Array.from({length:nodes},(_,i)=>i+1),cpu:160,memoryPerCPU:2}]};}
+ function newSite(name='Machine 1',profile='x11m-standard',nodes=2){const p=PROFILES[profile];return{name,siteName:'Site 1',profile,image:p.image,bufferPercent:10,allowance:0,checkCompute:false,nodes:Array.from({length:nodes},(_,i)=>({id:i+1,local:p.local,memory:p.memory,cpu:p.cpu,maxVMs:p.vms,otherLocal:0,otherMemory:0,otherCPU:0,otherVMs:0})),clusters:[{name:'AVMC 1',slots:10,nodes:Array.from({length:nodes},(_,i)=>i+1),cpu:160,memoryPerCPU:2}]};}
  function validate(site){
   if(!site||typeof site!=='object'||!PROFILES[site.profile])throw new Error('Unknown hardware profile.');
-  if(typeof site.name!=='string'||site.name.length>80)throw new Error('Site name must be at most 80 characters.');
+  if(typeof site.name!=='string'||site.name.length>80)throw new Error('Machine name must be at most 80 characters.');
+  if(site.siteName!==undefined&&(typeof site.siteName!=='string'||site.siteName.length>80))throw new Error('Site name must be at most 80 characters.');
   number(site.image,0,1000,'VM image GB');number(site.bufferPercent,0,90,'Buffer percent');number(site.allowance,0,1000,'Extra allowance per VM');
   if(!Array.isArray(site.nodes)||site.nodes.length<2||site.nodes.length>32)throw new Error('Choose 2 to 32 DB servers.');
   if(site.profile==='x11m-base'&&site.nodes.length!==2)throw new Error('The X11M Base preset has exactly two DB servers. Use Custom for another verified configuration.');
@@ -42,6 +43,6 @@
    rows.push({avmcs:v,absolute:absolute>=v?absolute:0,buffered:feasible?buffered:0,distribution,free:feasible?site.nodes.reduce((a,n)=>a+n.local-n.otherLocal-base*v-51.5*buffered,0):null});
   }return rows;
  }
- function importScenario(raw){if(!raw||raw.schema!=='exacc-capacity/v1'||!Array.isArray(raw.sites)||raw.sites.length<1||raw.sites.length>8)throw new Error('Use a calculator scenario JSON with 1 to 8 sites.');const sites=clone(raw.sites);sites.forEach(validate);return{schema:'exacc-capacity/v1',sites};}
+ function importScenario(raw){if(!raw||raw.schema!=='exacc-capacity/v1'||!Array.isArray(raw.sites)||raw.sites.length<1||raw.sites.length>8)throw new Error('Use a calculator scenario JSON with 1 to 8 machines.');const sites=clone(raw.sites);sites.forEach(validate);return{schema:'exacc-capacity/v1',sites};}
  return{VERSION,CHECKED,SOURCES,PROFILES,newSite,clone,validate,clusterCost,calculate,combinations,importScenario};
 });

@@ -5,12 +5,16 @@ A static, browser-only planning calculator for Autonomous VM Cluster local stora
 ## What it does
 
 - X11M Standard, Large, Extra Large and Base presets, plus manually entered console values.
-- Multiple sites, AVMC placement on selected DB servers and per-server capacity checks.
+- Multiple sites and machines, AVMC placement on selected DB servers and per-server capacity checks.
 - Maximum ACD slots, local reservations, other allocations, user-selected buffer and explicit 16-ACD limit.
 - Comparison of 1 through the available VM count, showing both absolute and buffered local-storage ceilings.
 - Optional ECPU pool and memory-allocation checks, formula breakdown, scenario JSON import/export and print/PDF.
 
-The preset initial buffer of 10% is a user-adjustable planning assumption, not an Oracle recommendation. Comparison designs replace current modelled AVMCs, span all site DB servers and retain other allocations. The maximum local-storage count is not a guarantee that all ACDs or workloads can be provisioned.
+The preset initial buffer of 10% is a user-adjustable planning assumption, not an Oracle recommendation. Comparison designs replace current modelled AVMCs, span all machine DB servers and retain other allocations. The maximum local-storage count is not a guarantee that all ACDs or workloads can be provisioned.
+
+## Multiple sites and machines
+
+Use **+ Site / machine** once per ExaC@C infrastructure. Give each entry a site/location and a machine name; reuse the site name for multiple machines in that location (for example DC / Machine 1, DC / Machine 2, DR / Machine 1). The overview shows all entries together, with separate hardware, reservations, AVMC design and checks. No capacity is pooled across machines. Save/open includes the whole scenario, up to eight machines. Older scenario files remain readable with an unspecified site label.
 
 ## Formula and evidence
 
