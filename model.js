@@ -1,6 +1,6 @@
 (function(root,factory){const api=factory();if(typeof module==='object'&&module.exports)module.exports=api;else root.ExaCapacity=api;})(typeof globalThis!=='undefined'?globalThis:this,function(){
  'use strict';
- const VERSION='1.1.1',CHECKED='2026-09-17';
+ const VERSION='1.2.0',CHECKED='2026-09-17';
  const SOURCES={formula:'https://docs.oracle.com/en/cloud/paas/autonomous-database/dedicated/adbaa/create-an-autonomous-exadata-vm-cluster.html',hardware:'https://docs.oracle.com/en/cloud/paas/autonomous-database/dedicated/adbaa/characteristics-of-infrastructure-shapes.html',limits:'https://docs.oracle.com/en/cloud/paas/autonomous-database/dedicated/adbaa/plan-and-observe-capacity-for-autonomous-ai-database-on.html',compute:'https://docs.oracle.com/en/cloud/paas/autonomous-database/dedicated/adbaa/compute-management-in-autonomous-ai-database-on-dedicated.html',vmc:'https://docs.oracle.com/en/engineered-systems/exadata-cloud-at-customer/ecccm/ecc-manage-vm-clusters.html'};
  const PROFILES={
   'x11m-standard':{label:'X11M Standard',image:184,local:2243,memory:1390,cpu:760,vms:6},
@@ -11,7 +11,7 @@
  };
  const clone=x=>JSON.parse(JSON.stringify(x));
  const number=(x,min,max,label,integer=false)=>{if(typeof x!=='number'||!Number.isFinite(x)||x<min||x>max||(integer&&!Number.isInteger(x)))throw new Error(`${label}: enter ${integer?'a whole number':'a number'} between ${min} and ${max}.`);return x;};
- function newSite(name='Machine 1',profile='x11m-standard',nodes=2){const p=PROFILES[profile];return{name,siteName:'Site 1',profile,image:p.image,bufferPercent:10,allowance:0,checkCompute:false,nodes:Array.from({length:nodes},(_,i)=>({id:i+1,local:p.local,memory:p.memory,cpu:p.cpu,maxVMs:p.vms,otherLocal:0,otherMemory:0,otherCPU:0,otherVMs:0})),clusters:[{name:'AVMC 1',slots:10,nodes:Array.from({length:nodes},(_,i)=>i+1),cpu:160,memoryPerCPU:2}]};}
+ function newSite(name='Machine 1',profile='x11m-standard',nodes=2){const p=PROFILES[profile];return{name,siteName:'Site 1',profile,image:p.image,bufferPercent:10,allowance:0,checkCompute:true,nodes:Array.from({length:nodes},(_,i)=>({id:i+1,local:p.local,memory:p.memory,cpu:p.cpu,maxVMs:p.vms,otherLocal:0,otherMemory:0,otherCPU:0,otherVMs:0})),clusters:[{name:'AVMC 1',slots:10,nodes:Array.from({length:nodes},(_,i)=>i+1),cpu:160,memoryPerCPU:2}]};}
  function validate(site){
   if(!site||typeof site!=='object'||!PROFILES[site.profile])throw new Error('Unknown hardware profile.');
   if(typeof site.name!=='string'||site.name.length>80)throw new Error('Machine name must be at most 80 characters.');

@@ -1,6 +1,6 @@
 # ExaC@C Capacity Calculator
 
-A static, browser-only planning calculator for Autonomous VM Cluster local storage on Exadata Cloud@Customer. Open `index.html` locally or serve the folder through GitHub Pages. No build, runtime dependencies, backend, analytics, cookies or automatic persistence.
+A static, browser-only planning calculator for Autonomous VM Cluster capacity and resizing on Exadata Cloud@Customer. Open `index.html` locally or serve the folder through GitHub Pages. No build, runtime dependencies, backend, analytics, cookies or automatic persistence.
 
 ## What it does
 
@@ -11,6 +11,19 @@ A static, browser-only planning calculator for Autonomous VM Cluster local stora
 - Optional ECPU pool and memory-allocation checks, formula breakdown, scenario JSON import/export and print/PDF.
 
 The preset initial buffer of 10% is a user-adjustable planning assumption, not an Oracle recommendation. Comparison designs replace current modelled AVMCs, span all machine DB servers and retain other allocations. The maximum local-storage count is not a guarantee that all ACDs or workloads can be provisioned.
+
+## Version 1.2 — expansion and resize planning
+
+- Independent buffers: local 10%, CPU 30%, memory 30%, and Exadata storage 30%. All are editable percentages of total capacity, not Oracle service limits or mandatory best practices. Existing saved local buffers remain unchanged.
+- New designs include CPU/memory allocation checks by default. Existing scenario check settings are preserved. Change per-VM ECPUs and the 2–5 GB/ECPU memory ratio to explore allocations; checks include every selected server.
+- Capture a machine baseline, then compare proposed AVMC count, ACD slots and resource allocations. Negative deltas indicate modelled release; OCI resize permission, workload fit and maintenance impact require console review.
+- Exadata storage is a separate optional manual check of console usable TB and total allocated TB, including internal/backup reservations. It is not derived from database-server local storage or recalculated when cluster fields change.
+- Session arithmetic takes one ADB's base ECPUs and an editable sessions/ECPU assumption. 75 dedicated and 325 shared/MTS are illustrative, not verified public Dedicated service limits. No node-count or autoscaling multiplier is applied. This is not a throughput or availability guarantee.
+- The memory formula remains the public detailed formula `(ECPU/VM × GB/ECPU + 40) × 1.02 × VM count`. No unpublished replacement formula or rollout date is asserted.
+
+Additional public references: [AVMC scaling and rolling restarts](https://docs.oracle.com/en/cloud/paas/autonomous-database/dedicated/adbaa/manage-autonomous-exadata-vm-clusters.html) and [shared-server architecture](https://docs.oracle.com/en/database/oracle/oracle-database/26/netag/understanding-shared-server-architecture.html). These support operating caveats; the architecture page does not substantiate the numerical session assumptions.
+
+Run `node --test model.test.cjs planning.test.cjs` for the public model checks. Runtime now also requires `planning.js` and `planning-ui.js` beside `index.html`.
 
 ## Hardware inputs
 
@@ -41,7 +54,7 @@ Keep a separate model for conventional VMCs. Their local use depends on configur
 
 ## Run and test
 
-Open `index.html` with its sibling files present. Run `node --test model.test.cjs` for formula, placement, buffer, boundary and import checks. No package installation required.
+Open `index.html` with its sibling files present. Run `node --test model.test.cjs planning.test.cjs` for formula, placement, buffer, boundary, resize, session and import checks. No package installation required.
 
 ## Publish
 
