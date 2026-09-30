@@ -29,4 +29,12 @@ input[readonly]{background:#eeeae3;color:#625b54}
 .capacity-guidance summary{font-size:16px}
 .capacity-guidance li{line-height:1.6;margin:12px 0;font-size:14px}
 a{color:var(--accent)}
+.save-help{margin:0 0 20px;padding:0 0 12px;border-bottom:1px solid var(--line)}
+.save-help ol{font-size:14px;line-height:1.7;margin:6px 0 8px;padding-left:22px}
+.save-reminder{display:flex;align-items:center;justify-content:space-between;gap:12px;background:#fff3d9;border:1px solid #d7b674;border-radius:5px;padding:9px 12px;margin-top:10px;color:#624613}
+.save-reminder p{margin:0;font-size:12px;line-height:1.45}
+.save-reminder button{font-size:12px;flex-shrink:0}
+@media(min-width:761px){html{scroll-padding-top:260px}}
+@media(max-width:760px){.save-reminder{align-items:flex-start;flex-direction:column}}
+@media print{.save-help,.save-reminder{display:none}}
 @media print{.masthead{background:white;color:#312d2a}.masthead p,.eyebrow{color:#625b54}}

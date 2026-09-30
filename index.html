@@ -4,10 +4,16 @@
 <header class="masthead"><div><span class="eyebrow">EXADATA CLOUD@CUSTOMER · PLANNING TOOL</span><h1>ExaC@C Capacity Calculator</h1><p>Plan AVMC allocations, resource headroom and future changes across your ExaC@C machines.</p></div><span class="version">AVMC calculator <span id="version"></span></span></header>
 <main>
 <div class="toolbar">
- <div class="actions"><button id="save" class="primary">Save scenario</button><label id="open-scenario" class="button" for="import" role="button" tabindex="0">Open scenario<input type="file" id="import" accept=".json,application/json" hidden></label><button id="print">Print / PDF</button></div>
+ <div class="actions"><button id="save" class="primary">Save scenario (.json)</button><label id="open-scenario" class="button" for="import" role="button" tabindex="0">Open saved JSON<input type="file" id="import" accept=".json,application/json" hidden></label><button id="print">Print / PDF</button></div>
  <span id="save-status" role="status"></span>
 </div>
-<p class="privacy">Inputs stay in this tab. Save a scenario file to keep your work. No uploads or automatic saving.</p>
+<p class="privacy">Your work stays in this browser tab until you download a JSON file to your laptop. It is not automatically saved on this site, GitHub or OCI.</p>
+<details class="save-help"><summary>How to save on your laptop and resume later</summary>
+ <ol><li>Click <strong>Save scenario (.json)</strong>. Your browser downloads <strong>exacc-scenario.json</strong>, usually to Downloads or the folder you choose.</li>
+ <li>Keep that JSON file. It contains all machines, entered allocations, planning settings and recorded Before values. Apply any preview you want to keep before saving.</li>
+ <li>Next time, open this calculator, click <strong>Open saved JSON</strong>, and select the file to resume editing.</li></ol>
+ <p class="hint">JSON is the editable configuration; Print / PDF is only a report. Closing or refreshing can lose edits that are not in your downloaded file. Your browser may warn, but do not rely on that warning as a backup.</p>
+</details>
 <div id="message" role="alert" hidden></div>
 <div class="workspace">
 <aside class="machine-nav" aria-label="Machine navigation">
@@ -20,6 +26,7 @@
 <div class="resource-strip" aria-label="Active machine resource summary">
  <div class="active-machine"><strong id="active-machine"></strong><div class="actions"><span id="configuration-stage" class="stage"></span><button id="undo" disabled>Undo last change</button></div></div>
  <div id="resource-cards" class="resource-cards" aria-live="polite"></div>
+ <div id="save-reminder" class="save-reminder" role="status" hidden><p><strong>Unsaved changes.</strong> Save the JSON to your laptop before leaving, so you can resume later.</p><button id="save-reminder-button">Save JSON now</button></div>
  <p id="resource-validation" class="negative" role="alert" hidden></p>
 </div>
 <section class="current-panel" aria-labelledby="current-heading">

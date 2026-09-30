@@ -2,8 +2,9 @@
 
 let undoSnapshot = null;
 let savedSignature = null;
-let savedLabel = 'New scenario · not saved';
+let savedLabel = 'New scenario · no JSON downloaded';
 let preview = null;
+let leaveWarningActive = false;
 
 function snapshot() {
  return {state: structuredClone(state), active};
@@ -15,6 +16,21 @@ function rememberChange(before) {
 
 function hasUnsavedChanges() {
  return JSON.stringify(state) !== savedSignature;
+}
+
+function warnBeforeLeaving(event) {
+ if (!hasUnsavedChanges()) return;
+ event.preventDefault();
+ event.returnValue = true;
+}
+
+function updateSaveReminder() {
+ const dirty = hasUnsavedChanges();
+ $('save-status').textContent = dirty ? 'Unsaved changes · download JSON to keep them' : savedLabel;
+ $('save-reminder').hidden = !dirty;
+ if (dirty && !leaveWarningActive) window.addEventListener('beforeunload', warnBeforeLeaving);
+ if (!dirty && leaveWarningActive) window.removeEventListener('beforeunload', warnBeforeLeaving);
+ leaveWarningActive = dirty;
 }
 
 function reserveLabel(status) {
@@ -58,7 +74,7 @@ function renderNavigation() {
 
 function updateWorkflow() {
  const s = site();
- $('save-status').textContent = hasUnsavedChanges() ? 'Unsaved changes' : savedLabel;
+ updateSaveReminder();
  $('undo').disabled = !undoSnapshot;
  $('remove-site').disabled = state.sites.length === 1;
  $('duplicate-site').disabled = state.sites.length >= 8;
@@ -140,6 +156,7 @@ function refreshPreview() {
 
 function initWorkflow() {
  savedSignature = JSON.stringify(state);
+ $('save-reminder-button').onclick = () => $('save').click();
  $('open-scenario').addEventListener('keydown', event => {
   if (event.key === 'Enter' || event.key === ' ') {
    event.preventDefault();
@@ -188,9 +205,4 @@ function initWorkflow() {
   $('growth-heading').scrollIntoView({behavior: 'smooth', block: 'start'});
   $('growth-heading').focus({preventScroll: true});
  };
- window.addEventListener('beforeunload', event => {
-  if (!hasUnsavedChanges()) return;
-  event.preventDefault();
-  event.returnValue = '';
- });
 }

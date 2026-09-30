@@ -1,5 +1,20 @@
 # Changelog
 
+## 1.4.2 — 2026-09-30
+
+### Added
+
+- Laptop save/resume instructions: download the editable JSON to Downloads or a chosen folder, then reopen it with Open saved JSON.
+- A visible unsaved-work reminder with a quick Save JSON button, including in the desktop resource summary while scrolling.
+- Explicit distinction between a resumable JSON configuration, the optional Before comparison and a printed PDF report.
+
+### Improved
+
+- Register the browser close/refresh warning only while unsaved changes exist, and remove it after opening/downloading a scenario or undoing back to the saved values.
+- Track typed site and machine names immediately, so they count as unsaved work before the field loses focus.
+- Download feedback says to check the local file, explains how to resume and avoids claiming the browser has confirmed a completed save.
+- No automatic browser storage, server upload or changes to sizing formulas.
+
 ## 1.4.1 — 2026-09-30
 
 ### Clarified

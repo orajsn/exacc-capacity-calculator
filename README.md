@@ -4,6 +4,14 @@ A static, browser-only planning calculator for Autonomous VM Cluster capacity an
 
 Release history is maintained in [CHANGELOG.md](CHANGELOG.md). Update its release entry alongside the calculator version before publishing.
 
+## Save on your laptop and resume later
+
+1. Click **Save scenario (.json)** to download `exacc-scenario.json`. Your browser uses Downloads or the location you choose. Check that the download completed; this static page cannot confirm the file reached disk.
+2. Keep the JSON file. It includes all machines, allocations, planning inputs and recorded Before totals. Apply any preview first if you want it saved.
+3. Return to the calculator and use **Open saved JSON** to resume. Download a new copy after further edits.
+
+The page shows an unsaved-work reminder and registers a close/refresh warning while edits differ from the last opened/downloaded scenario. Browsers control the warning text and may suppress it, especially on mobile. Keep the JSON file as your backup. The calculator does not automatically store your scenario in the browser, on GitHub, on OCI or on a server. A printed PDF is a report, not a resumable configuration.
+
 ## Optional Before / After comparison
 
 **Record Before values** keeps the allocation totals currently entered for the selected machine. Continue editing to see the difference in the Before / After table. For example, recording 1,000 GB and then modelling 800 GB shows a −200 GB change.
