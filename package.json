@@ -1,1 +1,1 @@
-{"name":"exacc-capacity-calculator","version":"1.5.1","private":true,"description":"Browser-only ExaC@C AVMC capacity planning calculator","scripts":{"test":"node --test model.test.cjs planning.test.cjs audit.test.cjs"}}
+{"name":"exacc-capacity-calculator","version":"1.6.0","private":true,"description":"Browser-only ExaC@C AVMC capacity planning calculator","scripts":{"test":"node --test model.test.cjs planning.test.cjs audit.test.cjs"}}

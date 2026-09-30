@@ -26,6 +26,8 @@ This records comparison totals, not a complete configuration that can be restore
 - Comparison of 1 through the available VM count, showing both absolute and buffered local-storage ceilings.
 - Optional ECPU pool and memory-allocation checks, formula breakdown, scenario JSON import/export and print/PDF.
 - A fixed local-storage summary shows the active machine's remaining GB while you edit on desktop or a narrow screen. It also shows a labelled preview before you apply it, and restores the plan values on cancel. Undo, Save JSON and Details are available in the bar. It is hidden in print/PDF.
+- A live AVMC → reserved ACD-slot diagram shows where local storage is allocated. Each box is a configured slot, not proof that an ACD exists. Per-server balances stay visible below the diagram because free capacity cannot be pooled between servers. Use Edit on a diagram card to open that AVMC's form.
+- Machine inputs are grouped by purpose. AVMC forms expand individually, with CPU/memory controls grouped below the local-storage inputs. The optional Before / After tools can be expanded when needed.
 
 ## Buffer targets are warnings
 

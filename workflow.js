@@ -53,6 +53,7 @@ function cancelPreview() {
 }
 
 function clearFloatingLocal(note) {
+ clearTopology();
  $('local-dock').dataset.level = 'warning';
  $('dock-machine').textContent = `${site().siteName || 'Unspecified site'} / ${site().name}`;
  $('dock-mode').textContent = preview ? 'Preview · not applied' : 'Editing now';
@@ -65,6 +66,7 @@ function clearFloatingLocal(note) {
 }
 
 function renderFloatingLocal(s, result, isPreview = false) {
+ renderTopology(s, result, isPreview);
  const local = P.resources(s, result).find(row => row.name === 'Local storage');
  const worst = result.nodes.reduce((a,n) => n.free < a.free ? n : a);
  const hasError = local.status === 'Over capacity' || result.errors.length > 0;

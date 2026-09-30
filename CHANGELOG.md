@@ -1,5 +1,21 @@
 # Changelog
 
+## 1.6.0 — 2026-09-30
+
+### Added
+
+- A live AVMC → reserved ACD-slot diagram for the selected machine, with local-storage totals, a usage bar, per-AVMC overhead/slot costs and per-server free space.
+- Diagram Edit buttons open the corresponding AVMC form. Unapplied previews are labelled and their Edit buttons are disabled.
+- Diagram boxes represent capacity reserved by the configured maximum ACD count, not discovered ACD or ADB instances.
+
+### Improved
+
+- Grouped machine fields into Site and machine, Hardware, and Optional buffer.
+- Expandable AVMC editors put local-storage controls first; CPU and memory are grouped underneath and stay open while completing legacy checks.
+- The diagram sits beside the forms on wide screens and above them on narrower screens. Invalid inputs clear stale diagram values.
+- The optional Before / After tools are collapsed initially. The floating local-storage summary remains available.
+- Formulas and scenario format are unchanged.
+
 ## 1.5.1 — 2026-09-30
 
 ### Added

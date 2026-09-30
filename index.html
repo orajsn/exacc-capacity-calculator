@@ -1,5 +1,5 @@
 <!doctype html>
-<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="description" content="Explore Exadata Cloud@Customer Autonomous VM Cluster local-storage capacity, ACD slots and design combinations."><meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; connect-src 'none'; object-src 'none'; base-uri 'none'; form-action 'none'"><meta name="referrer" content="no-referrer"><title>ExaC@C Capacity Calculator</title><link rel="stylesheet" href="style.css"><link rel="stylesheet" href="oracle-theme.css"><script src="model.js" defer></script><script src="audit.js" defer></script><script src="planning.js" defer></script><script src="planning-ui.js" defer></script><script src="audit-ui.js" defer></script><script src="workflow.js" defer></script><script src="app.js" defer></script></head>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="description" content="Explore Exadata Cloud@Customer Autonomous VM Cluster local-storage capacity, ACD slots and design combinations."><meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; connect-src 'none'; object-src 'none'; base-uri 'none'; form-action 'none'"><meta name="referrer" content="no-referrer"><title>ExaC@C Capacity Calculator</title><link rel="stylesheet" href="style.css"><link rel="stylesheet" href="oracle-theme.css"><link rel="stylesheet" href="layout.css"><script src="model.js" defer></script><script src="audit.js" defer></script><script src="planning.js" defer></script><script src="planning-ui.js" defer></script><script src="audit-ui.js" defer></script><script src="layout.js" defer></script><script src="workflow.js" defer></script><script src="app.js" defer></script></head>
 <body>
 <header class="masthead"><div><span class="eyebrow">EXADATA CLOUD@CUSTOMER · PLANNING TOOL</span><h1>ExaC@C Capacity Calculator</h1><p>See allocated and free capacity on each ExaC@C machine, and try changes before making them in OCI.</p></div><span class="version">AVMC calculator <span id="version"></span></span></header>
 <main>
@@ -29,17 +29,28 @@
  <div id="save-reminder" class="save-reminder" role="status" hidden><p><strong>Unsaved changes.</strong> Save the JSON to your laptop before leaving, so you can resume later.</p><button id="save-reminder-button">Save JSON now</button></div>
  <p id="resource-validation" class="negative" role="alert" hidden></p>
 </div>
-<section class="current-panel" aria-labelledby="current-heading">
- <h2 id="current-heading">Compare before and after (optional)</h2>
+<details class="current-panel" aria-labelledby="current-heading">
+ <summary id="current-heading">Compare before and after (optional)</summary>
  <p id="current-summary" class="hint"></p>
  <p class="hint"><strong>Example:</strong> record 1,000 GB, edit the design to 800 GB, and see a −200 GB difference. This only records comparison totals; it does not read or change OCI. Use Save scenario to keep them in a file.</p>
  <div class="actions"><button id="capture-baseline">Record “Before” values</button><button id="clear-baseline">Remove comparison</button></div>
-</section>
-<section class="setup" aria-labelledby="site-heading"><div class="section-top"><h2 id="site-heading">Machine settings</h2><span>Capacity is fixed by hardware shape</span></div><div class="fields">
-<label>Site / location<input id="location" maxlength="80" placeholder="e.g. DC or DR"></label><label>Machine name<input id="site-name" maxlength="80"></label><label>DB server shape<select id="profile"></select></label><label>DB servers<input id="node-count" type="number" min="2" max="32" step="1"></label><label>Local storage buffer (%)<input id="buffer" type="number" min="0" max="90" step="1"></label></div>
+</details>
+<section class="setup" aria-labelledby="site-heading">
+<div class="section-top"><h2 id="site-heading">Machine settings</h2><span>Capacity is fixed by hardware shape</span></div>
+<div class="machine-form-grid">
+ <fieldset class="form-group"><legend>Site and machine</legend><div class="fields"><label>Site / location<input id="location" maxlength="80" placeholder="e.g. DC or DR"></label><label>Machine name<input id="site-name" maxlength="80"></label></div></fieldset>
+ <fieldset class="form-group"><legend>Hardware</legend><div class="fields"><label>DB server shape<select id="profile"></select></label><label>DB servers<input id="node-count" type="number" min="2" max="32" step="1"></label></div></fieldset>
+ <fieldset class="form-group buffer-form-group"><legend>Optional buffer</legend><label>Local storage buffer (%)<input id="buffer" type="number" min="0" max="90" step="1"></label><p class="hint">Free space you prefer to keep. A warning only.</p></fieldset>
+</div>
 <p class="hint">If other clusters already use this machine, enter their allocations below.</p>
 <details><summary>Hardware capacity and other allocations</summary><p class="hint">The hardware preset fixes the capacity values. Use the “Other” columns for resources already allocated outside this plan. Choose Custom only for a different configuration you have verified.</p><div class="fields compact"><label>AVMC image overhead / VM (GB)<input id="image" type="number" min="0" max="1000" step="1"></label><label>Extra local storage to include per VM (GB)<input id="allowance" type="number" min="0" max="1000" step="0.5"></label></div><p class="hint">184 GB for X8M / X9M / X10M / X11M; 137 GB for X7-2 / X8-2. For other shapes, select Custom and enter console capacity. Extra local storage is an optional amount you add to the estimated allocation.</p><div class="table-wrap"><table id="server-inputs"><thead><tr><th>Server</th><th>Local capacity GB<br><small>Fixed by shape</small></th><th>Other local GB</th><th>VM limit<br><small>Fixed by shape</small></th><th>Other VMs</th><th>ECPU capacity</th><th>Other ECPUs</th><th>Memory GB</th><th>Other memory GB</th></tr></thead><tbody></tbody></table></div></details></section>
-<section aria-labelledby="design-heading"><div class="section-top"><div><h2 id="design-heading">Edit AVMC allocations</h2><p class="hint">Each row is one AVMC. Its maximum ACD count reserves local storage even before those ACDs are created.</p></div><button id="add-cluster" class="primary">+ Add AVMC</button></div><div id="clusters"></div><label class="check"><input id="compute" type="checkbox"> Include CPU and memory checks</label><p class="hint">These checks cover AVMC allocations and creation minimums. ACD creation, autoscaling, node failover and workload performance need separate checks.</p></section>
+<section aria-labelledby="design-heading">
+<div class="section-top"><div><h2 id="design-heading">Edit AVMC allocations</h2><p class="hint">Choose an AVMC to edit. Its maximum ACD count reserves local storage before those ACDs are created.</p></div><button id="add-cluster" class="primary">+ Add AVMC</button></div>
+<div class="allocation-workspace">
+ <div class="allocation-editor"><label class="check"><input id="compute" type="checkbox"> Include CPU and memory checks</label><p class="hint">Open CPU &amp; memory inside each AVMC when needed. Local-storage controls are shown first.</p><div id="clusters"></div></div>
+ <aside class="allocation-visual" aria-labelledby="map-heading"><h3 id="map-heading">AVMC → ACD slots</h3><p class="hint">Boxes show reserved slots from the maximum ACD setting. Actual ACD and ADB names are not loaded. All GB values sum the selected DB servers.</p><div id="allocation-map"></div></aside>
+</div>
+</section>
 
 <section aria-labelledby="compare-heading">
 <div class="section-top"><div><h2 id="compare-heading" tabindex="-1">Compare AVMC layouts</h2>
