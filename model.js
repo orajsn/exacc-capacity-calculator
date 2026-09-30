@@ -1,6 +1,6 @@
 (function(root,factory){const api=factory();if(typeof module==='object'&&module.exports)module.exports=api;else root.ExaCapacity=api;})(typeof globalThis!=='undefined'?globalThis:this,function(){
  'use strict';
- const VERSION='1.4.0',CHECKED='2026-09-30';
+ const VERSION='1.4.1',CHECKED='2026-09-30';
  const SOURCES={formula:'https://docs.oracle.com/en/cloud/paas/autonomous-database/dedicated/adbaa/create-an-autonomous-exadata-vm-cluster.html',hardware:'https://docs.oracle.com/en/cloud/paas/autonomous-database/dedicated/adbaa/characteristics-of-infrastructure-shapes.html',limits:'https://docs.oracle.com/en/cloud/paas/autonomous-database/dedicated/adbaa/plan-and-observe-capacity-for-autonomous-ai-database-on.html',compute:'https://docs.oracle.com/en/cloud/paas/autonomous-database/dedicated/adbaa/compute-management-in-autonomous-ai-database-on-dedicated.html',vmc:'https://docs.oracle.com/en/engineered-systems/exadata-cloud-at-customer/ecccm/ecc-manage-vm-clusters.html'};
  const PROFILES={
   'x11m-standard':{label:'X11M Standard',image:184,local:2243,memory:1390,cpu:760,vms:6},

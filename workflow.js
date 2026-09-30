@@ -64,11 +64,11 @@ function updateWorkflow() {
  $('duplicate-site').disabled = state.sites.length >= 8;
  $('active-machine').textContent = `${s.siteName || 'Unspecified site'} / ${s.name}`;
  $('configuration-stage').textContent = s.baseline ? 'Proposed configuration' : 'Configuration setup';
- $('design-heading').textContent = s.baseline ? 'Edit proposed AVMCs' : 'Configure current AVMCs';
- $('capture-baseline').textContent = s.baseline ? 'Replace current reference with this design' : 'Set as current configuration';
+ $('design-heading').textContent = s.baseline ? 'Edit proposed AVMCs' : 'Edit AVMC allocations';
+ $('capture-baseline').textContent = s.baseline ? 'Replace recorded “Before” values' : 'Record “Before” values';
  $('current-summary').textContent = s.baseline
-  ? `Current reference: ${s.baseline.avmcs} AVMCs · ${s.baseline.slots} ACD slots · ${fmt(s.baseline.local)} GB local allocated. Edits below form your proposal; this reference stays fixed.`
-  : 'Enter or open the current machine and AVMC allocations below, then set them as your current reference before exploring changes.';
+  ? `Recorded “Before”: ${s.baseline.avmcs} AVMCs · ${s.baseline.slots} ACD slots · ${fmt(s.baseline.local)} GB local allocated. Edit the allocations below; the Before / After table will show the difference. These recorded totals stay fixed until you replace or remove them.`
+  : 'Optional: record the numbers you have entered, then edit the design to compare Before versus After. Skip this if you only need capacity totals.';
  if (preview && (preview.active !== active || preview.signature !== JSON.stringify(state))) cancelPreview();
 }
 
@@ -127,7 +127,7 @@ function refreshPreview() {
   const current = M.calculate(site()), result = M.calculate(candidate);
   const comparison = P.compare({...candidate, baseline: P.capture(site(), current)}, result);
   const summary = P.summary(candidate, result);
-  $('preview-results').innerHTML = `<div class="table-wrap"><table><thead><tr><th>Resource</th><th>Editing now</th><th>Preview</th><th>Change</th></tr></thead><tbody>${comparison.map(row => `<tr><td>${row.name} (${row.unit})</td><td>${row.before === null ? 'Not checked' : fmt(row.before)}</td><td>${row.after === null ? 'Not checked' : fmt(row.after)}</td><td>${row.delta === null ? 'Not checked' : (row.delta > 0 ? '+' : '') + fmt(row.delta)}</td></tr>`).join('')}</tbody></table></div><p class="issues ${summary.status === 'error' ? 'error' : ''}">${escapeHTML(summary.text)}</p><p class="hint">Exadata allocation is entered manually; this preview does not recalculate it. ${site().baseline ? 'The saved current reference stays fixed.' : 'Applying will also record the design you are editing as the current reference.'}</p>`;
+  $('preview-results').innerHTML = `<div class="table-wrap"><table><thead><tr><th>Resource</th><th>Editing now</th><th>Preview</th><th>Change</th></tr></thead><tbody>${comparison.map(row => `<tr><td>${row.name} (${row.unit})</td><td>${row.before === null ? 'Not checked' : fmt(row.before)}</td><td>${row.after === null ? 'Not checked' : fmt(row.after)}</td><td>${row.delta === null ? 'Not checked' : (row.delta > 0 ? '+' : '') + fmt(row.delta)}</td></tr>`).join('')}</tbody></table></div><p class="issues ${summary.status === 'error' ? 'error' : ''}">${escapeHTML(summary.text)}</p><p class="hint">Exadata allocation is entered manually; this preview does not recalculate it. ${site().baseline ? 'Your recorded Before totals stay fixed.' : 'Applying will also record your current totals as Before, so you can compare the change.'}</p>`;
   if (!candidate.baseline) candidate.baseline = P.capture(site(), current);
   preview.candidate = candidate;
   $('apply-preview').disabled = false;

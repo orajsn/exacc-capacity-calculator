@@ -2,6 +2,14 @@
 
 A static, browser-only planning calculator for Autonomous VM Cluster capacity and resizing on Exadata Cloud@Customer. Open `index.html` locally or serve the folder through GitHub Pages. No build, runtime dependencies, backend, analytics, cookies or automatic persistence.
 
+Release history is maintained in [CHANGELOG.md](CHANGELOG.md). Update its release entry alongside the calculator version before publishing.
+
+## Optional Before / After comparison
+
+**Record Before values** keeps the allocation totals currently entered for the selected machine. Continue editing to see the difference in the Before / After table. For example, recording 1,000 GB and then modelling 800 GB shows a −200 GB change.
+
+This records comparison totals, not a complete configuration that can be restored. It does not fetch or change OCI resources. You can ignore this feature and still use every capacity calculation. **Save scenario** downloads the full editable scenario, including any recorded Before totals. Applying a preview without an existing reference records the previous design's totals automatically.
+
 ## What it does
 
 - X11M Standard, Large, Extra Large and Base presets, plus manually entered console values.
