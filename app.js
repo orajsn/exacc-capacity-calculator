@@ -20,16 +20,17 @@ function safeUpdate(fn, rerender = false) {
   $('results').innerHTML = '<p class="issues error">Complete valid inputs to calculate this design.</p>';
   $('combinations').querySelector('tbody').innerHTML = '';
   clearPlanning();
+  clearAudit();
   clearResourceCards();
  }
 }
 function render(){const s=site();renderNavigation();$('site-name').value=s.name;$('location').value=s.siteName||'';$('profile').value=s.profile;$('node-count').value=s.nodes.length;$('buffer').value=s.bufferPercent;$('image').value=s.image;$('image').readOnly=s.profile!=='custom';$('allowance').value=s.allowance;$('compute').checked=s.checkCompute;
  const keys=['local','otherLocal','maxVMs','otherVMs','cpu','otherCPU','memory','otherMemory'];$('server-inputs').querySelector('tbody').innerHTML=s.nodes.map((n,i)=>`<tr><td>DB ${n.id}</td>${keys.map(k=>`<td><input aria-label="DB ${n.id} ${k}" type="number" min="0" step="${k.includes('VM')?'1':'0.5'}" value="${n[k]}" data-node="${i}" data-key="${k}" ${s.profile!=='custom'&&fixedCapacity.has(k)?'readonly aria-readonly="true" title="Fixed by the selected hardware shape"':''}></td>`).join('')}</tr>`).join('');
- $('clusters').innerHTML=s.clusters.map((c,i)=>`<article class="cluster"><div class="cluster-main"><label>AVMC name<input value="${escapeHTML(c.name)}" maxlength="80" data-cluster="${i}" data-key="name"></label><label>Maximum ACD slots<input aria-label="${escapeHTML(c.name)} ACD slots" type="number" min="1" max="16" step="1" value="${c.slots}" data-cluster="${i}" data-key="slots"></label><div class="cluster-cost" id="cost-${i}"></div><button class="remove" data-remove="${i}" aria-label="Remove ${escapeHTML(c.name)}">Remove</button></div><fieldset class="node-choices"><legend>DB servers</legend>${s.nodes.map(n=>`<label><input type="checkbox" ${c.nodes.includes(n.id)?'checked':''} data-placement="${i}" data-server="${n.id}">DB ${n.id}</label>`).join('')}</fieldset>${s.checkCompute?`<div class="compute-fields"><label>ECPUs per VM<input type="number" min="40" step="1" value="${c.cpu}" data-cluster="${i}" data-key="cpu"></label><label>Memory per ECPU (GB)<input type="number" min="2" max="5" step="0.5" value="${c.memoryPerCPU}" data-cluster="${i}" data-key="memoryPerCPU"></label></div>`:''}</article>`).join('');
+ $('clusters').innerHTML=s.clusters.map((c,i)=>`<article class="cluster"><div class="cluster-main"><label>AVMC name<input value="${escapeHTML(c.name)}" maxlength="80" data-cluster="${i}" data-key="name"></label><label>Maximum ACD slots<input aria-label="${escapeHTML(c.name)} ACD slots" type="number" min="1" max="16" step="1" value="${c.slots}" data-cluster="${i}" data-key="slots"></label><div class="cluster-cost" id="cost-${i}"></div><button class="remove" data-remove="${i}" aria-label="Remove ${escapeHTML(c.name)}">Remove</button></div><fieldset class="node-choices"><legend>DB servers</legend>${s.nodes.map(n=>`<label><input type="checkbox" ${c.nodes.includes(n.id)?'checked':''} data-placement="${i}" data-server="${n.id}">DB ${n.id}</label>`).join('')}</fieldset>${memoryChecklist(c,i)}${s.checkCompute?`<div class="compute-fields"><label>ECPUs per VM<input type="number" min="40" step="1" value="${c.cpu}" data-cluster="${i}" data-key="cpu"></label><label>Memory per ECPU (GB)<input type="number" min="2" max="5" step="0.5" value="${c.memoryPerCPU}" data-cluster="${i}" data-key="memoryPerCPU"></label></div>`:''}</article>`).join('');
  $('add-site').disabled=state.sites.length>=8;
  $('replacement-cpu').value='';
  $('replacement-ratio').value='';
- renderPlanning();results();}
+ renderPlanning();renderAuditInputs();results();}
 function overview() {
  $('overview').querySelector('tbody').innerHTML = state.sites.map((s, i) => {
   let r, summary;
@@ -50,11 +51,12 @@ function overview() {
   </tr>`;
  }).join('');
 }
-function results(){overview();updateWorkflow();const s=site();let r;try{P.validate(s);r=M.calculate(s);}catch(e){message(e.message);$('results').innerHTML='<p class="issues error">Complete valid inputs to calculate this design.</p>';$('combinations').querySelector('tbody').innerHTML='';clearPlanning();clearResourceCards();return;}s.clusters.forEach((c,i)=>{const el=$('cost-'+i);if(el)el.innerHTML=`${fmt(r.costs[i].total)} <small>GB local · ${fmt(r.costs[i].perVM)} GB / VM</small>`;});
+function results(){overview();updateWorkflow();const s=site();let r;try{P.validate(s);r=M.calculate(s);}catch(e){message(e.message);$('results').innerHTML='<p class="issues error">Complete valid inputs to calculate this design.</p>';$('combinations').querySelector('tbody').innerHTML='';clearPlanning();clearAudit();clearResourceCards();return;}s.clusters.forEach((c,i)=>{const el=$('cost-'+i);if(el)el.innerHTML=`${fmt(r.costs[i].total)} <small>GB local · ${fmt(r.costs[i].perVM)} GB / VM</small>`;});
  const base=r.costs.reduce((a,c)=>a+c.base+c.allowance,0),slots=r.costs.reduce((a,c)=>a+c.slots,0),percent=n=>Math.max(0,100*n/Math.max(1,r.capacity));const label=r.errors.length?'Design exceeds a checked limit':r.warnings.length?'Fits local capacity · below buffer':'Local storage fits';
  $('results').innerHTML=`<div class="summary-line"><h2 id="result-heading">${escapeHTML(s.siteName||'Unspecified site')} / ${escapeHTML(s.name)} · local storage</h2><span class="status ${r.status}">${label}</span></div><div class="metrics"><div class="metric"><span>Machine capacity</span><strong>${fmt(r.capacity)} GB</strong><small>${s.nodes.length} DB servers</small></div><div class="metric"><span>AVMC reservation</span><strong>${fmt(r.used)} GB</strong><small>${s.clusters.length} AVMCs · ${r.slots} ACD slots</small></div><div class="metric"><span>Remaining local</span><strong class="${r.free<0?'negative':''}">${fmt(r.free)} GB</strong><small>After ${fmt(r.other)} GB other allocations</small></div><div class="metric"><span>Remaining after buffer</span><strong class="${r.afterBuffer<0?'negative':''}">${fmt(r.afterBuffer)} GB</strong><small>${s.bufferPercent}% buffer = ${fmt(r.buffer)} GB</small></div></div><div class="bar" role="img" aria-label="${fmt(r.used)} GB AVMC, ${fmt(r.other)} GB other allocations, ${fmt(r.free)} GB remaining"><span class="base-fill" style="width:${percent(base)}%"></span><span class="slot-fill" style="width:${percent(slots)}%"></span><span class="other-fill" style="width:${percent(r.other)}%"></span></div><div class="legend"><span><i class="base-fill"></i>AVMC base + allowance</span><span><i class="slot-fill"></i>ACD slots</span><span><i class="other-fill"></i>Other allocations</span><span><i class="free-fill"></i>Remaining</span></div>${r.errors.length||r.warnings.length?`<div class="issues ${r.errors.length?'error':''}"><ul>${[...r.errors,...r.warnings].map(x=>`<li>${escapeHTML(x)}</li>`).join('')}</ul></div>`:''}<h3>Every selected server must fit</h3><div class="table-wrap"><table class="node-table"><thead><tr><th>DB server</th><th>Capacity GB</th><th>AVMC GB</th><th>Other GB</th><th>Free GB</th><th>VMs / limit</th>${s.checkCompute?'<th>ECPU used / capacity</th><th>Memory GB used / capacity</th>':''}</tr></thead><tbody>${r.nodes.map(n=>`<tr><td>DB ${n.id}</td><td>${fmt(n.local)}</td><td>${fmt(n.used)}</td><td>${fmt(n.otherLocal)}</td><td class="${n.free<0?'negative':''}">${fmt(n.free)}</td><td>${n.vms+n.otherVMs} / ${n.maxVMs}</td>${s.checkCompute?`<td>${fmt(n.cpuUsed+n.otherCPU)} / ${fmt(n.cpu)}</td><td>${fmt(n.memoryUsed+n.otherMemory)} / ${fmt(n.memory)}</td>`:''}</tr>`).join('')}</tbody></table></div><p class="hint">${s.checkCompute?'AVMC pool CPU and memory checks included. ACD creation and workload capacity are not verified.':'CPU, memory, shared Exadata storage and workload fit are not checked by this local-storage result.'}</p><details><summary>Show reservation breakdown by AVMC</summary><div class="table-wrap"><table><thead><tr><th>AVMC</th><th>Servers</th><th>Base GB</th><th>ACD slots GB</th><th>Extra allowance GB</th><th>Total GB</th></tr></thead><tbody>${r.costs.map((c,i)=>`<tr><td>${escapeHTML(c.name)}</td><td>${s.clusters[i].nodes.join(', ')}</td><td>${fmt(c.base)}</td><td>${fmt(c.slots)}</td><td>${fmt(c.allowance)}</td><td>${fmt(c.total)}</td></tr>`).join('')}</tbody></table></div></details>`;
  planningResults(s,r);
  renderResourceCards(s,r);
+ renderAudit(s,r);
  $('combinations').querySelector('tbody').innerHTML=M.combinations(s).map(row=>`<tr><td>${row.avmcs}</td><td>${row.absolute||'Cannot fit'}</td><td>${row.buffered||'Cannot fit'}</td><td>${row.distribution.join(' + ')||'—'}</td><td>${row.free===null?'—':fmt(row.free)}</td><td><button class="apply" data-apply="${row.avmcs}" ${!row.buffered?'disabled':''}>Preview option</button></td></tr>`).join('');
 }
 $('profile').innerHTML=Object.entries(M.PROFILES).map(([id,p])=>`<option value="${id}">${p.label}</option>`).join('');
@@ -77,10 +79,37 @@ $('node-count').onchange = () => {
 };
 $('compute').onchange=()=>safeUpdate(()=>{site().checkCompute=$('compute').checked;},true);
 $('server-inputs').oninput=e=>{const el=e.target;if(el.dataset.node!==undefined)safeUpdate(()=>{if(site().profile!=='custom'&&fixedCapacity.has(el.dataset.key))return;site().nodes[Number(el.dataset.node)][el.dataset.key]=el.value===''?NaN:Number(el.value);});};
-$('clusters').oninput=e=>{const el=e.target;if(el.dataset.cluster!==undefined)safeUpdate(()=>{site().clusters[Number(el.dataset.cluster)][el.dataset.key]=el.dataset.key==='name'?el.value:(el.value===''?NaN:Number(el.value));});};
-$('clusters').onchange=e=>{const el=e.target;if(el.dataset.placement!==undefined)safeUpdate(()=>{const c=site().clusters[Number(el.dataset.placement)],n=Number(el.dataset.server);c.nodes=el.checked?[...c.nodes,n].sort((a,b)=>a-b):c.nodes.filter(id=>id!==n);});};
+$('clusters').oninput = e => {
+ const el=e.target;
+ if(el.dataset.cluster===undefined)return;
+ safeUpdate(()=>{
+  const c=site().clusters[Number(el.dataset.cluster)], key=el.dataset.key;
+  const value=key==='name'?el.value:(el.value===''?NaN:Number(el.value));
+  if(key==='memoryPerCPU' && Number.isFinite(value) && value!==c.memoryPerCPU) {
+   c.memoryRule='current';c.legacyRatioUnchanged=false;
+  }
+  c[key]=value;
+  if(key==='memoryPerCPU' && Number.isFinite(value)) {
+   const checklist=$('memory-checklist-'+el.dataset.cluster);
+   if(checklist)checklist.outerHTML=memoryChecklist(c,Number(el.dataset.cluster));
+  }
+ });
+};
+$('clusters').onchange = e => {
+ const el=e.target;
+ if(el.dataset.memoryRule!==undefined) safeUpdate(()=>{
+  site().clusters[Number(el.dataset.memoryRule)].memoryRule=el.value;
+ },true);
+ else if(el.dataset.legacy!==undefined) safeUpdate(()=>{
+  site().clusters[Number(el.dataset.legacy)][el.dataset.key]=el.checked;
+ },true);
+ else if(el.dataset.placement!==undefined) safeUpdate(()=>{
+  const c=site().clusters[Number(el.dataset.placement)],n=Number(el.dataset.server);
+  c.nodes=el.checked?[...c.nodes,n].sort((a,b)=>a-b):c.nodes.filter(id=>id!==n);
+ });
+};
 $('clusters').onclick=e=>{const b=e.target.closest('[data-remove]');if(b)safeUpdate(()=>{site().clusters.splice(Number(b.dataset.remove),1);},true);};
-$('add-cluster').onclick=()=>safeUpdate(()=>{if(site().clusters.length>=32)throw Error('At most 32 AVMCs can be modelled.');site().clusters.push({name:`AVMC ${site().clusters.length+1}`,slots:1,nodes:site().nodes.map(n=>n.id),cpu:40,memoryPerCPU:2});},true);
+$('add-cluster').onclick=()=>safeUpdate(()=>{if(site().clusters.length>=32)throw Error('At most 32 AVMCs can be modelled.');site().clusters.push({name:`AVMC ${site().clusters.length+1}`,slots:1,nodes:site().nodes.map(n=>n.id),cpu:40,memoryPerCPU:2,memoryRule:'current'});},true);
 $('add-site').onclick=()=>safeUpdate(()=>{if(state.sites.length>=8)throw Error('Up to eight machines per scenario.');const next=M.newSite(`Machine ${state.sites.length+1}`);next.siteName=`Site ${state.sites.length+1}`;state.sites.push(next);active=state.sites.length-1;},true);
 $('combinations').onclick = e => {
  const button = e.target.closest('[data-apply]');
@@ -91,7 +120,7 @@ $('combinations').onclick = e => {
   message(error.message);
  }
 };
-$('save').onclick=()=>{try{state.sites.forEach(s=>{M.validate(s);P.validate(s);});download('exacc-scenario.json',JSON.stringify({...state,calculatorVersion:M.VERSION},null,2),'application/json');savedSignature=JSON.stringify(state);savedLabel='Scenario download requested';updateWorkflow();message('Scenario download requested. Keep the file to preserve your work.');}catch(e){message(e.message);}};
-$('import').onchange=async e=>{const file=e.target.files[0];if(!file)return;try{if(file.size>250000)throw Error('Scenario file is too large (maximum 250 KB).');const next=M.importScenario(JSON.parse(await file.text()));next.sites.forEach(P.validate);const before=snapshot();state=next;active=0;rememberChange(before);savedSignature=JSON.stringify(state);savedLabel='Scenario opened';cancelPreview();message('Scenario loaded into this tab.');render();}catch(err){message(`Could not open scenario: ${err.message}`);}e.target.value='';};
+$('save').onclick=()=>{try{state.sites.forEach(s=>{M.validate(s);P.validate(s);A.validate(s);});download('exacc-scenario.json',JSON.stringify({...state,calculatorVersion:M.VERSION},null,2),'application/json');savedSignature=JSON.stringify(state);savedLabel='Scenario download requested';updateWorkflow();message('Scenario download requested. Keep the file to preserve your work.');}catch(e){message(e.message);}};
+$('import').onchange=async e=>{const file=e.target.files[0];if(!file)return;try{if(file.size>250000)throw Error('Scenario file is too large (maximum 250 KB).');const next=M.importScenario(JSON.parse(await file.text()));next.sites.forEach(P.validate);next.sites.forEach(A.validate);const before=snapshot();state=next;active=0;rememberChange(before);savedSignature=JSON.stringify(state);savedLabel='Scenario opened';cancelPreview();message('Scenario loaded into this tab.');render();}catch(err){message(`Could not open scenario: ${err.message}`);}e.target.value='';};
 $('print').onclick=()=>window.print();$('version').textContent=M.VERSION;$('checked').textContent=M.CHECKED;
-$('sources').innerHTML=Object.entries({formula:'Oracle sizing formula',hardware:'Hardware capacities',limits:'ACD and AVMC limits',compute:'Compute management',vmc:'Conventional VMC scope'}).map(([key,label])=>`<a href="${M.SOURCES[key]}" target="_blank" rel="noopener noreferrer">${label} ↗</a>`).join('');initPlanning();initWorkflow();render();
+$('sources').innerHTML=Object.entries({formula:'Oracle sizing formula',hardware:'Hardware capacities',limits:'ACD and AVMC limits',compute:'Compute management',vmc:'Conventional VMC scope'}).map(([key,label])=>`<a href="${M.SOURCES[key]}" target="_blank" rel="noopener noreferrer">${label} ↗</a>`).join('');initPlanning();initAudit();initWorkflow();render();

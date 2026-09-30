@@ -1,0 +1,32 @@
+/* Independent Oracle-inspired appearance; no proprietary fonts or brand assets. */
+:root {
+ --ink:#312d2a;--accent:#a33828;--line:#d9d4cf;--muted:#625b54;--orange:#986421;--red:#a52f27;
+ color:var(--ink);background:#f5f4ef;
+ font-family:Arial,Helvetica,sans-serif;
+}
+.masthead{background:#312d2a;border-top:6px solid #c74634;color:#fff}
+.masthead p{color:#e6e0d9}.eyebrow,.version{color:#d8c7b8}
+button,.button,input,select{border-color:#bdb6ae;border-radius:4px}
+button:hover,.button:hover{background:#eee9e2}
+button.primary{background:#a33828;border-color:#a33828}
+button.primary:hover{background:#852d20}
+.machine-nav{background:#eeeae3;border-color:#d9d4cf}
+.machine-nav nav button[aria-current=true]{background:#312d2a;border-left:4px solid #c74634}
+.resource-strip{background:#f5f4ef}
+.current-panel{background:#f0ece5;border-color:#d7cfc4}
+.resource-card{background:#fffefa;border-radius:5px}
+.resource-card.unchecked{background:#eeeae3}
+.design-preview{background:#fcf7ef;border-color:#a33828}
+input[readonly]{background:#eeeae3;color:#625b54}
+.formula{background:#eee8df;color:#312d2a}
+.base-fill{background:#6b5c50}.slot-fill{background:#b99a7b}.other-fill{background:#c74634}
+.memory-rule{margin-top:15px;padding:14px;background:#f5f2ed;border:1px solid var(--line);border-radius:5px}
+.memory-rule>label{max-width:470px}.memory-rule .hint{margin-bottom:0}
+.legacy-checklist{margin-top:10px}.legacy-checklist .check{margin:8px 0}
+#allocation-audit table{min-width:850px}#allocation-audit input{min-width:110px}
+#candidate-results table,#reconciliation-results table{min-width:640px}
+.capacity-guidance{border-top:1px solid var(--line);padding:15px 0}
+.capacity-guidance summary{font-size:16px}
+.capacity-guidance li{line-height:1.6;margin:12px 0;font-size:14px}
+a{color:var(--accent)}
+@media print{.masthead{background:white;color:#312d2a}.masthead p,.eyebrow{color:#625b54}}

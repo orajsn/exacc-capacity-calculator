@@ -18,13 +18,15 @@
   const problems = rows.filter(row => row.status !== 'Within buffer');
   const details = problems.map(row => `${row.name}: ${row.status.toLowerCase()}`);
   if (result.errors.length) details.unshift('Exceeds checked limit');
+  const unconfirmed = site.checkCompute && result.costs.some(c => !c.memorySizing.verified);
+  if (unconfirmed) details.push('Memory rules unconfirmed; current estimate used');
   if (!site.checkCompute) details.push('CPU / memory not checked');
   const p = config(site);
   if (p.storageCapacity === null || p.storageAllocated === null) details.push('Exadata storage not checked');
   return {
    status: result.errors.length || rows.some(row => row.status === 'Over capacity') ? 'error'
-    : problems.length ? 'warning' : 'fit',
-   text: [problems.length || result.errors.length ? null : 'Within checked limits', ...details].filter(Boolean).join(' · ')
+    : problems.length || unconfirmed ? 'warning' : 'fit',
+   text: [problems.length || result.errors.length || unconfirmed ? null : 'Within checked limits', ...details].filter(Boolean).join(' · ')
   };
  }
  return {defaults,config,validate,budget,resources,sessions,capture,compare,summary};

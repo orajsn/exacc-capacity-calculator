@@ -12,6 +12,15 @@ A static, browser-only planning calculator for Autonomous VM Cluster capacity an
 
 The preset initial buffer of 10% is a user-adjustable planning assumption, not an Oracle recommendation. Comparison designs replace current modelled AVMCs, span all machine DB servers and retain other allocations. The maximum local-storage count is not a guarantee that all ACDs or workloads can be provisioned.
 
+## Version 1.4 — memory rules and allocation evidence
+
+- Current memory formula: `(ECPU/VM × GB/ECPU + 40 + 0.3 × ECPU/VM) × 1.02 × VM count`. Applies to AVMCs created after 22 September 2026, or existing AVMCs after memory per CPU changes. The calculator uses decimal 300 MB = 0.3 GB and a minimum current-rule budget of 135 GB per VM. The raw formula at 40 ECPUs and 2 GB/ECPU is 134.64 GB; the budget uses the documented 135 GB minimum. Console rounding remains authoritative.
+- Legacy checklist: creation before the cutoff and unchanged memory-per-CPU setting must both be confirmed before using the earlier `+40 GB` formula. Creation on the cutoff date requires console confirmation. A memory-ratio edit switches the proposal to the current rule.
+- Older scenarios without memory-rule fields remain readable, but their memory history is unconfirmed and capacity checks use the conservative current estimate. Local-storage calculations and saved reference totals remain unchanged. Reconfirm legacy eligibility where appropriate; do not assume an imported snapshot is a fresh console allocation.
+- Per-AVMC memory and local-storage estimates, optional console observations, and infrastructure-total reconciliation with a user-entered tolerance. Console observations remain fixed when proposals change and never override the formula.
+- A proposed additional AVMC is checked on every DB server for CPU, memory, local storage and VM slots. This is a physical-capacity check without optional growth reserves. Shared storage, quotas, ACD reservations and scale-down minima still require console review.
+- An independent Oracle-inspired appearance uses local CSS, system fonts and no proprietary brand assets. No customer data, internal guides or private links are embedded.
+
 ## Version 1.3 — current configuration to proposed changes
 
 - One site-to-machine navigator with add, duplicate and remove controls. Removing the last machine is disabled.
@@ -37,11 +46,11 @@ The preset initial buffer of 10% is a user-adjustable planning assumption, not a
 - Capture a machine baseline, then compare proposed AVMC count, ACD slots and resource allocations. Negative deltas indicate modelled release; OCI resize permission, workload fit and maintenance impact require console review.
 - Exadata storage is a separate optional manual check of console usable TB and total allocated TB, including internal/backup reservations. It is not derived from database-server local storage or recalculated when cluster fields change.
 - Session arithmetic takes one ADB's base ECPUs and an editable sessions/ECPU assumption. 75 dedicated and 325 shared/MTS are illustrative, not verified public Dedicated service limits. No node-count or autoscaling multiplier is applied. This is not a throughput or availability guarantee.
-- The memory formula remains the public detailed formula `(ECPU/VM × GB/ECPU + 40) × 1.02 × VM count`. No unpublished replacement formula or rollout date is asserted.
+- Version 1.2 used the legacy memory formula. Version 1.4 adds the documented current rule and per-AVMC eligibility checks above.
 
 Additional public references: [AVMC scaling and rolling restarts](https://docs.oracle.com/en/cloud/paas/autonomous-database/dedicated/adbaa/manage-autonomous-exadata-vm-clusters.html) and [shared-server architecture](https://docs.oracle.com/en/database/oracle/oracle-database/26/netag/understanding-shared-server-architecture.html). These support operating caveats; the architecture page does not substantiate the numerical session assumptions.
 
-Run `node --test model.test.cjs planning.test.cjs` for the public model checks. Keep `model.js`, `planning.js`, `planning-ui.js`, `workflow.js`, `app.js` and `style.css` beside `index.html`.
+Run `node --test model.test.cjs planning.test.cjs audit.test.cjs` for the public model checks. Keep every sibling JavaScript and CSS file beside `index.html`.
 
 ## Hardware inputs
 
@@ -55,7 +64,7 @@ Use **+ Site / machine** once per ExaC@C infrastructure. Give each entry a site/
 
 Per AVMC: `VM count × [image overhead + (100 + 50 × configured maximum ACDs) × 1.03 + 2]` GB. Two-node X11M simplifies to `578 + 103 × slots`. Configured slots reserve storage before ACD creation. Each AVMC supports at most 16 ACDs.
 
-Public Oracle documentation checked 2026-09-17:
+Public Oracle memory, allocation, scaling and X11M references checked 2026-09-30:
 
 - [Detailed resource formula](https://docs.oracle.com/en/cloud/paas/autonomous-database/dedicated/adbaa/create-an-autonomous-exadata-vm-cluster.html)
 - [Infrastructure shapes](https://docs.oracle.com/en/cloud/paas/autonomous-database/dedicated/adbaa/characteristics-of-infrastructure-shapes.html)
@@ -72,7 +81,7 @@ Keep a separate model for conventional VMCs. Their local use depends on configur
 
 ## Run and test
 
-Open `index.html` with its sibling files present. Run `node --test model.test.cjs planning.test.cjs` for formula, placement, buffer, boundary, resize, session and import checks. No package installation required.
+Open `index.html` with its sibling files present. Run `node --test model.test.cjs planning.test.cjs audit.test.cjs` for formula, placement, buffer, boundary, resize, session, reconciliation and import checks. No package installation required.
 
 ## Publish
 

@@ -80,12 +80,13 @@ function clearResourceCards() {
 
 function renderResourceCards(s, result) {
  const rows = P.resources(s, result);
- $('resource-validation').hidden = !result.errors.length;
- $('resource-validation').textContent = result.errors.slice(0, 2).join(' ') + (result.errors.length > 2 ? ' More issues in local storage and server details.' : '');
- const definitions = [['Local storage', 'Local', 'GB'], ['CPU', 'CPU', 'ECPU'], ['Memory estimate', 'Memory estimate', 'GB'], ['Exadata storage (manual)', 'Exadata', 'TB']];
+ const issues = [...result.errors, ...result.warnings.filter(w => w.includes('memory rule unconfirmed'))];
+ $('resource-validation').hidden = !issues.length;
+ $('resource-validation').textContent = issues.slice(0, 2).join(' ') + (issues.length > 2 ? ' More issues in local storage and server details.' : '');
+ const definitions = [['Local storage', 'Local', 'GB'], ['CPU', 'CPU', 'ECPU'], ['Memory estimate', 'Memory estimate', 'GB'], ['Exadata storage (manual)', 'Shared DB storage', 'TB']];
  $('resource-cards').innerHTML = definitions.map(([key, title, unit]) => {
   const row = rows.find(item => item.name === key);
-  if (!row) return `<div class="resource-card unchecked"><span>${title}</span><strong>Not checked</strong><small>${key === 'Exadata storage (manual)' ? 'Enter console capacity + allocation' : 'Enable CPU / memory checks'}</small></div>`;
+  if (!row) return `<div class="resource-card unchecked"><span>${title}</span><strong>${key === 'Exadata storage (manual)' ? 'Enter capacity' : 'Not checked'}</strong><small>${key === 'Exadata storage (manual)' ? 'Shared database storage · console TB' : 'Enable CPU / memory checks'}</small></div>`;
   const level = row.status === 'Over capacity' ? 'error' : row.status === 'Below buffer' ? 'warning' : 'fit';
   return `<div class="resource-card ${level}"><span>${title}</span><strong>${fmt(row.after)} <small>${unit}</small></strong><small>free after reserve · ${row.percent}%</small><span class="card-status">${reserveLabel(row.status)}</span><small>${fmt(row.allocated)} / ${fmt(row.capacity)} ${unit} allocated</small></div>`;
  }).join('');
