@@ -37,14 +37,14 @@ test('console reconciliation includes other reservations and exposes unexplained
  site.audit={observedMemory:860,observedLocal:1638,toleranceGB:1};
  const rows=A.reconcile(site,M.calculate(site));
  near(rows[0].estimate,852.32);near(rows[0].delta,7.68);
- assert.equal(rows[0].status,'Difference to explain');assert.equal(rows[1].status,'Within entered tolerance');
+ assert.equal(rows[0].status,'Difference to explain');assert.equal(rows[1].status,'Within allowed difference');
 });
 test('blank, zero and unchecked reconciliation are distinct; unknown memory cannot be a verified match',()=>{
  const site=M.newSite();
  assert.equal(A.reconcile(site,M.calculate(site))[0].status,'Enter console total');
  site.audit={observedMemory:0};assert.equal(A.reconcile(site,M.calculate(site))[0].status,'Difference to explain');
  delete site.clusters[0].memoryRule;site.audit.observedMemory=832.32;
- assert.match(A.reconcile(site,M.calculate(site))[0].status,/unconfirmed/);
+ assert.match(A.reconcile(site,M.calculate(site))[0].status,/confirm memory formula/);
  site.checkCompute=false;assert.equal(A.reconcile(site,M.calculate(site))[0].estimate,null);
  assert.equal(A.candidate(site,M.calculate(site),M).fits,false);
 });

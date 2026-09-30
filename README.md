@@ -26,6 +26,16 @@ This records comparison totals, not a complete configuration that can be restore
 - Comparison of 1 through the available VM count, showing both absolute and buffered local-storage ceilings.
 - Optional ECPU pool and memory-allocation checks, formula breakdown, scenario JSON import/export and print/PDF.
 
+## Buffer targets are warnings
+
+A buffer is the percentage of capacity you would like to keep free. It does not allocate resources or reduce the machine's real capacity. Resource cards show the calculated free capacity, with the buffer target underneath.
+
+- **Green:** meets the buffer target.
+- **Amber:** fits the checked capacity, but is below the buffer target. You can still use the layout.
+- **Red:** exceeds a checked hardware or service limit. Adjust the inputs before applying the preview.
+
+Layout comparisons prefer an option that keeps the requested local-storage buffer. If none is possible, they still offer a layout that fits the physical storage. **Preview maximum** shows the maximum ACD slots when that differs from the option with the buffer. CPU and memory are checked in the preview when enabled. Actual Oracle allocations and reservations still count; the optional buffer is separate.
+
 The preset initial buffer of 10% is a user-adjustable planning assumption, not an Oracle recommendation. Comparison designs replace current modelled AVMCs, span all machine DB servers and retain other allocations. The maximum local-storage count is not a guarantee that all ACDs or workloads can be provisioned.
 
 ## Version 1.4 — memory rules and allocation evidence

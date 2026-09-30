@@ -14,13 +14,13 @@ test('machine summary includes all enabled capacity and buffer failures', () => 
  site.planning = {storageCapacity: 100, storageAllocated: 110, memoryBuffer: 90};
  const summary = P.summary(site, M.calculate(site));
  assert.equal(summary.status, 'error');
- assert.match(summary.text, /Exadata storage \(manual\): over capacity/);
- assert.match(summary.text, /Memory estimate: below buffer/);
+ assert.match(summary.text, /Shared database storage: over capacity/);
+ assert.match(summary.text, /Memory \(estimated\): fits, but below buffer target/);
  site.planning.storageAllocated = 0;
  assert.equal(P.summary(site, M.calculate(site)).status, 'warning');
  site.planning.memoryBuffer = 30;
  site.clusters[0].cpu = 600;
- assert.match(P.summary(site, M.calculate(site)).text, /CPU: below buffer/);
+ assert.match(P.summary(site, M.calculate(site)).text, /CPU: fits, but below buffer target/);
 });
 
 test('machine summary discloses unchecked resources and retains creation-limit failures', () => {
@@ -28,9 +28,9 @@ test('machine summary discloses unchecked resources and retains creation-limit f
  site.checkCompute = false;
  let summary = P.summary(site, M.calculate(site));
  assert.match(summary.text, /CPU \/ memory not checked/);
- assert.match(summary.text, /Exadata storage not checked/);
+ assert.match(summary.text, /Shared database storage not checked/);
  site.clusters[0].slots = 17;
  summary = P.summary(site, M.calculate(site));
  assert.equal(summary.status, 'error');
- assert.match(summary.text, /Exceeds checked limit/);
+ assert.match(summary.text, /Exceeds a hardware or service limit/);
 });

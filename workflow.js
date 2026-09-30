@@ -34,8 +34,11 @@ function updateSaveReminder() {
 }
 
 function reserveLabel(status) {
- return status === 'Within buffer' ? 'Growth reserve maintained'
-  : status === 'Below buffer' ? 'Below growth reserve' : status;
+ return P.statusText(status);
+}
+
+function resourceLabel(name) {
+ return P.resourceLabel(name);
 }
 
 function cancelPreview() {
@@ -98,30 +101,31 @@ function renderResourceCards(s, result) {
  const rows = P.resources(s, result);
  const issues = [...result.errors, ...result.warnings.filter(w => w.includes('memory rule unconfirmed'))];
  $('resource-validation').hidden = !issues.length;
+ $('resource-validation').className = result.errors.length ? 'negative' : 'buffer-warning';
  $('resource-validation').textContent = issues.slice(0, 2).join(' ') + (issues.length > 2 ? ' More issues in local storage and server details.' : '');
  const definitions = [['Local storage', 'Local', 'GB'], ['CPU', 'CPU', 'ECPU'], ['Memory estimate', 'Memory estimate', 'GB'], ['Exadata storage (manual)', 'Shared DB storage', 'TB']];
  $('resource-cards').innerHTML = definitions.map(([key, title, unit]) => {
   const row = rows.find(item => item.name === key);
   if (!row) return `<div class="resource-card unchecked"><span>${title}</span><strong>${key === 'Exadata storage (manual)' ? 'Enter capacity' : 'Not checked'}</strong><small>${key === 'Exadata storage (manual)' ? 'Shared database storage · console TB' : 'Enable CPU / memory checks'}</small></div>`;
   const level = row.status === 'Over capacity' ? 'error' : row.status === 'Below buffer' ? 'warning' : 'fit';
-  return `<div class="resource-card ${level}"><span>${title}</span><strong>${fmt(row.after)} <small>${unit}</small></strong><small>free after reserve · ${row.percent}%</small><span class="card-status">${reserveLabel(row.status)}</span><small>${fmt(row.allocated)} / ${fmt(row.capacity)} ${unit} allocated</small></div>`;
+  return `<div class="resource-card ${level}"><span>${title}</span><strong>${fmt(row.free)} <small>${unit} free</small></strong><small>${fmt(row.allocated)} / ${fmt(row.capacity)} ${unit} allocated</small><span class="card-status">${reserveLabel(row.status)}</span><small>Buffer target: ${row.percent}% (${fmt(row.buffer)} ${unit})</small></div>`;
  }).join('');
  updateWorkflow();
 }
 
-function showPreview(count) {
+function showPreview(count, fullCapacity = false) {
  M.validate(site());
  P.validate(site());
  const preserve = count === site().clusters.length && site().clusters.every(c => c.nodes.length === site().nodes.length);
- preview = {count, preserve, active, signature: JSON.stringify(state), candidate: null};
+ preview = {count, fullCapacity, preserve, active, signature: JSON.stringify(state), candidate: null};
  $('replacement-cpu').value = '';
  $('replacement-ratio').value = '';
  $('replacement-fields').hidden = preserve;
  $('design-preview').hidden = false;
- $('preview-heading').textContent = `Preview: ${count} AVMC${count === 1 ? '' : 's'}`;
+ $('preview-heading').textContent = `Preview: ${count} AVMC${count === 1 ? '' : 's'}${fullCapacity?' · maximum ACDs':''}`;
  $('preview-description').textContent = preserve
-  ? 'Names and compute allocations stay the same; only ACD slots change. The table compares your edited design with this option.'
-  : 'Enter CPU and memory allocations for each replacement AVMC. You can customise individual AVMCs after applying.';
+  ? 'Names and compute allocations stay the same; only ACD slots change. Compare this option with the design you are editing.'
+  : 'Enter the CPU and memory settings to use for each AVMC in this layout. You can edit individual AVMCs afterward.';
  refreshPreview();
  $('design-preview').scrollIntoView({behavior: 'smooth', block: 'start'});
  $('cancel-preview').focus({preventScroll: true});
@@ -134,19 +138,19 @@ function refreshPreview() {
  $('preview-error').hidden = true;
  const cpu = $('replacement-cpu').value, ratio = $('replacement-ratio').value;
  if (!preview.preserve && (cpu === '' || ratio === '')) {
-  $('preview-results').innerHTML = '<p class="hint">Complete both allocations to see the resource impact. Your design has not changed.</p>';
+  $('preview-results').innerHTML = '<p class="hint">Enter both values to see the result. Your design stays as it is until you choose Use this layout.</p>';
   return;
  }
  try {
-  const candidate = M.applyDesign(site(), preview.count, {cpu: Number(cpu), memoryPerCPU: Number(ratio)});
+  const candidate = M.applyDesign(site(), preview.count, {cpu: Number(cpu), memoryPerCPU: Number(ratio)}, preview.fullCapacity);
   P.validate(candidate);
   const current = M.calculate(site()), result = M.calculate(candidate);
   const comparison = P.compare({...candidate, baseline: P.capture(site(), current)}, result);
   const summary = P.summary(candidate, result);
-  $('preview-results').innerHTML = `<div class="table-wrap"><table><thead><tr><th>Resource</th><th>Editing now</th><th>Preview</th><th>Change</th></tr></thead><tbody>${comparison.map(row => `<tr><td>${row.name} (${row.unit})</td><td>${row.before === null ? 'Not checked' : fmt(row.before)}</td><td>${row.after === null ? 'Not checked' : fmt(row.after)}</td><td>${row.delta === null ? 'Not checked' : (row.delta > 0 ? '+' : '') + fmt(row.delta)}</td></tr>`).join('')}</tbody></table></div><p class="issues ${summary.status === 'error' ? 'error' : ''}">${escapeHTML(summary.text)}</p><p class="hint">Exadata allocation is entered manually; this preview does not recalculate it. ${site().baseline ? 'Your recorded Before totals stay fixed.' : 'Applying will also record your current totals as Before, so you can compare the change.'}</p>`;
+  $('preview-results').innerHTML = `<div class="table-wrap"><table><thead><tr><th>Resource</th><th>Editing now</th><th>Preview</th><th>Change</th></tr></thead><tbody>${comparison.map(row => `<tr><td>${resourceLabel(row.name)} (${row.unit})</td><td>${row.before === null ? 'Not checked' : fmt(row.before)}</td><td>${row.after === null ? 'Not checked' : fmt(row.after)}</td><td>${row.delta === null ? 'Not checked' : (row.delta > 0 ? '+' : '') + fmt(row.delta)}</td></tr>`).join('')}</tbody></table></div><p class="issues ${summary.status}">${escapeHTML(summary.text)}${summary.status==='warning'?' You can use this layout; the warning does not block it.':summary.status==='error'?' Adjust the inputs before using this layout.':''}</p><p class="hint">Shared-storage allocation is entered manually and stays unchanged in this preview. ${site().baseline ? 'Your recorded Before totals stay fixed.' : 'Applying will also record your current totals as Before, so you can compare the change.'}</p>`;
   if (!candidate.baseline) candidate.baseline = P.capture(site(), current);
-  preview.candidate = candidate;
-  $('apply-preview').disabled = false;
+  preview.candidate = summary.status === 'error' ? null : candidate;
+  $('apply-preview').disabled = summary.status === 'error';
  } catch (error) {
   $('preview-results').innerHTML = '';
   $('preview-error').textContent = error.message;
@@ -201,7 +205,7 @@ function initWorkflow() {
   rememberChange(before);
   cancelPreview();
   render();
-  message('Proposed configuration applied. Undo is available.');
+  message('Layout applied to this plan. Use Undo to go back.');
   $('growth-heading').scrollIntoView({behavior: 'smooth', block: 'start'});
   $('growth-heading').focus({preventScroll: true});
  };

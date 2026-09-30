@@ -1,5 +1,21 @@
 # Changelog
 
+## 1.5.0 — 2026-09-30
+
+### Clarified
+
+- Replaced “growth reserve” with “buffer target” and simplified the text across setup, resource cards, layout previews, console comparisons and session estimates.
+- Main resource cards now show actual calculated free capacity. The optional buffer target is shown separately.
+- Explained that a user-selected buffer is a warning threshold, not an Oracle allocation or service limit.
+
+### Fixed
+
+- Layouts that fit available local storage stay previewable when the buffer target cannot be met. They show an amber warning and can be applied.
+- Added “Preview maximum” when more ACD slots fit within storage capacity than within the chosen buffer target.
+- Hardware/service-limit errors remain red and block applying the preview. Buffer-only warnings do not block it.
+- Displayed negative differences from the buffer target in amber, separately from actual capacity shortages.
+- Scenario format, hardware presets and resource formulas are unchanged.
+
 ## 1.4.2 — 2026-09-30
 
 ### Added

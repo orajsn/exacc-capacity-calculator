@@ -12,7 +12,7 @@
    if (a[key] !== null && (!Number.isFinite(a[key]) || a[key] < 0 || a[key] > 10000000)) throw Error('Console allocation must be a non-negative number.');
   }
   for (const [key, min, max] of [['toleranceGB',0,100], ['newCPU',40,10000], ['newRatio',2,5], ['newSlots',1,16]]) {
-   if (!Number.isFinite(a[key]) || a[key] < min || a[key] > max) throw Error(`${key}: enter ${min} to ${max}.`);
+   if (!Number.isFinite(a[key]) || a[key] < min || a[key] > max) throw Error(`${({toleranceGB:'Allowed difference (GB)',newCPU:'New AVMC ECPUs per VM',newRatio:'New AVMC GB per ECPU',newSlots:'New AVMC maximum ACDs'})[key]}: enter ${min} to ${max}.`);
   }
   if (!Number.isInteger(a.newCPU) || !Number.isInteger(a.newSlots)) throw Error('Candidate ECPUs and ACD slots must be whole numbers.');
   return a;
@@ -27,7 +27,7 @@
    const verified = resource !== 'memory' || result.costs.every(c => c.memorySizing.verified);
    const status = !enabled ? 'Enable memory checks' : observed === null ? 'Enter console total'
     : Math.abs(delta) > a.toleranceGB ? 'Difference to explain'
-    : !verified ? 'Within tolerance; memory rules unconfirmed' : 'Within entered tolerance';
+    : !verified ? 'Close match; confirm memory formula' : 'Within allowed difference';
    return {resource,estimate,observed,delta,verified,status};
   });
  }
@@ -44,7 +44,7 @@
   });
   const verified = result.costs.every(c=>c.memorySizing.verified);
   const fits = site.checkCompute && result.errors.length===0 && rows.every(n=>n.fit);
-  return {cost,rows,fits,verified,status:!site.checkCompute?'CPU / memory not checked':!fits?'Does not fit modelled resources':!verified?'Fits conservatively; verify memory rules':'Fits modelled resources'};
+  return {cost,rows,fits,verified,status:!site.checkCompute?'CPU / memory not checked':!fits?'Does not fit the resources checked':!verified?'Fits using the new formula; confirm memory history':'Fits the resources checked'};
  }
  return {config,validate,reconcile,candidate};
 });

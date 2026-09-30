@@ -61,3 +61,26 @@ test('invalid node resize leaves the original placement unchanged', () => {
  assert.deepEqual(site, original);
  assert.throws(() => M.resizeNodes(M.newSite('Base', 'x11m-base'), 3), /exactly two/);
 });
+
+test('a buffer target warns without blocking a six-AVMC layout that fits hardware',()=>{
+ const site=M.newSite();
+ const row=M.combinations(site).find(r=>r.avmcs===6);
+ assert.equal(row.buffered,0);assert.equal(row.absolute,9);assert.equal(row.belowBuffer,true);
+ const proposed=M.applyDesign(site,6,{cpu:40,memoryPerCPU:2});
+ const result=M.calculate(proposed);
+ assert.equal(result.free,91);assert.equal(result.errors.length,0);
+ assert.equal(result.status,'warning');assert.equal(result.slots,9);
+ assert.ok(result.nodes.every(n=>n.free>=0&&n.afterBuffer<0));
+});
+
+test('maximum layout is available above the buffer target and respects actual limits',()=>{
+ const site=M.newSite();
+ const preferred=M.applyDesign(site,2,{cpu:40,memoryPerCPU:2});
+ const maximum=M.applyDesign(site,2,{cpu:40,memoryPerCPU:2},true);
+ assert.equal(M.calculate(preferred).slots,27);
+ assert.equal(M.calculate(maximum).slots,32);
+ assert.equal(M.calculate(maximum).free,34);
+ assert.ok(maximum.clusters.every(c=>c.slots<=16));
+ site.nodes[0].otherLocal=2100;
+ assert.throws(()=>M.applyDesign(site,1,null,true),/exceeds local-storage capacity/);
+});

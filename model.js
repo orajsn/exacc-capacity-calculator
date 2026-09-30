@@ -1,6 +1,6 @@
 (function(root,factory){const api=factory();if(typeof module==='object'&&module.exports)module.exports=api;else root.ExaCapacity=api;})(typeof globalThis!=='undefined'?globalThis:this,function(){
  'use strict';
- const VERSION='1.4.2',CHECKED='2026-09-30';
+ const VERSION='1.5.0',CHECKED='2026-09-30';
  const SOURCES={formula:'https://docs.oracle.com/en/cloud/paas/autonomous-database/dedicated/adbaa/create-an-autonomous-exadata-vm-cluster.html',hardware:'https://docs.oracle.com/en/cloud/paas/autonomous-database/dedicated/adbaa/characteristics-of-infrastructure-shapes.html',limits:'https://docs.oracle.com/en/cloud/paas/autonomous-database/dedicated/adbaa/plan-and-observe-capacity-for-autonomous-ai-database-on.html',compute:'https://docs.oracle.com/en/cloud/paas/autonomous-database/dedicated/adbaa/compute-management-in-autonomous-ai-database-on-dedicated.html',vmc:'https://docs.oracle.com/en/engineered-systems/exadata-cloud-at-customer/ecccm/ecc-manage-vm-clusters.html'};
  const PROFILES={
   'x11m-standard':{label:'X11M Standard',image:184,local:2243,memory:1390,cpu:760,vms:6},
@@ -44,7 +44,7 @@
   const rule = confirmedLegacy ? 'legacy' : 'current';
   const perVM = confirmedLegacy ? legacy : Math.max(135, currentRaw);
   return {rule, verified, perVM, legacyPerVM: legacy, currentRawPerVM: currentRaw,
-   label: confirmedLegacy ? 'Legacy confirmed' : verified ? 'Current rule' : 'Unconfirmed · current rule used'};
+   label: confirmedLegacy ? 'Legacy confirmed' : verified ? 'New formula' : 'Unconfirmed history · new formula used'};
  }
  function clusterCost(cluster,image=184,allowance=0) {
   const v=cluster.nodes.length,n=cluster.slots;
@@ -54,7 +54,7 @@
    cpu:cluster.cpu*v,memoryPerVM:sizing.perVM,memory:sizing.perVM*v,memorySizing:sizing};
  }
  function calculate(site){validate(site);const errors=[],warnings=[];const costs=site.clusters.map(c=>({...clusterCost(c,site.image,site.allowance),name:c.name}));
-  site.clusters.forEach((c,i)=>{if(c.slots>16)errors.push(`${c.name}: ${c.slots} slots exceeds the 16-ACD limit per AVMC.`);if(site.checkCompute&&c.cpu<40)errors.push(`${c.name}: AVMC creation requires at least 40 ECPUs per VM.`);if(site.checkCompute&&!costs[i].memorySizing.verified)warnings.push(`${c.name}: memory rule unconfirmed; current rule used conservatively. Complete the legacy checklist if applicable.`);});
+  site.clusters.forEach((c,i)=>{if(c.slots>16)errors.push(`${c.name}: ${c.slots} slots exceeds the 16-ACD limit per AVMC.`);if(site.checkCompute&&c.cpu<40)errors.push(`${c.name}: AVMC creation requires at least 40 ECPUs per VM.`);if(site.checkCompute&&!costs[i].memorySizing.verified)warnings.push(`${c.name}: memory rule unconfirmed; using the new formula. Complete the legacy checklist if this is an older AVMC.`);});
   const nodes=site.nodes.map(n=>{let used=0,cpu=0,memory=0,vms=0;site.clusters.forEach((c,i)=>{if(c.nodes.includes(n.id)){used+=costs[i].perVM;cpu+=c.cpu;memory+=costs[i].memoryPerVM;vms++;}});const buffer=n.local*site.bufferPercent/100,free=n.local-n.otherLocal-used;
    if(free< -1e-7)errors.push(`DB ${n.id}: local storage exceeds capacity by ${(-free).toFixed(1)} GB.`);else if(free+1e-7<buffer)warnings.push(`DB ${n.id}: remaining storage is below the ${site.bufferPercent}% planning buffer.`);
    if(vms+n.otherVMs>n.maxVMs)errors.push(`DB ${n.id}: ${vms+n.otherVMs} VMs exceeds the configured ${n.maxVMs}-VM limit.`);
@@ -64,17 +64,32 @@
   });
   const sum=k=>nodes.reduce((a,n)=>a+n[k],0);return{costs,nodes,errors,warnings,status:errors.length?'error':warnings.length?'warning':'fit',capacity:sum('local'),used:sum('used'),other:sum('otherLocal'),free:sum('free'),buffer:sum('buffer'),afterBuffer:sum('afterBuffer'),slots:site.clusters.reduce((a,c)=>a+c.slots,0)};
  }
- function combinations(site){validate(site);const rows=[];const vLimit=Math.min(...site.nodes.map(n=>Math.max(0,n.maxVMs-n.otherVMs)));const base=site.image+105+site.allowance;
-  for(let v=1;v<=vLimit;v++){const slotBound=(withBuffer)=>Math.max(0,Math.min(v*16,...site.nodes.map(n=>Math.floor((n.local-n.otherLocal-(withBuffer?n.local*site.bufferPercent/100:0)-base*v+1e-8)/51.5))));const absolute=slotBound(false),buffered=slotBound(true),feasible=buffered>=v;
-   const distribution=feasible?Array.from({length:v},(_,i)=>Math.floor(buffered/v)+(i<buffered%v?1:0)):[];
-   rows.push({avmcs:v,absolute:absolute>=v?absolute:0,buffered:feasible?buffered:0,distribution,free:feasible?site.nodes.reduce((a,n)=>a+n.local-n.otherLocal-base*v-51.5*buffered,0):null});
-  }return rows;
+ function combinations(site) {
+  validate(site);
+  const rows=[],vLimit=Math.min(...site.nodes.map(n=>Math.max(0,n.maxVMs-n.otherVMs)));
+  const base=site.image+105+site.allowance;
+  const distribute=(slots,count)=>Array.from({length:count},(_,i)=>Math.floor(slots/count)+(i<slots%count?1:0));
+  const freeFor=(slots,count)=>site.nodes.reduce((sum,n)=>sum+n.local-n.otherLocal-base*count-51.5*slots,0);
+  for(let count=1;count<=vLimit;count++) {
+   const bound=withBuffer=>Math.max(0,Math.min(count*16,...site.nodes.map(n=>Math.floor((n.local-n.otherLocal-(withBuffer?n.local*site.bufferPercent/100:0)-base*count+1e-8)/51.5))));
+   const absoluteBound=bound(false),bufferedBound=bound(true);
+   const absolute=absoluteBound>=count?absoluteBound:0,buffered=bufferedBound>=count?bufferedBound:0;
+   const selected=buffered||absolute;
+   rows.push({avmcs:count,absolute,buffered,
+    distribution:selected?distribute(selected,count):[],
+    absoluteDistribution:absolute?distribute(absolute,count):[],
+    free:selected?freeFor(selected,count):null,
+    absoluteFree:absolute?freeFor(absolute,count):null,
+    belowBuffer:!!absolute&&!buffered});
+  }
+  return rows;
  }
  function importScenario(raw){if(!raw||raw.schema!=='exacc-capacity/v1'||!Array.isArray(raw.sites)||raw.sites.length<1||raw.sites.length>8)throw new Error('Use a calculator scenario JSON with 1 to 8 machines.');const sites=clone(raw.sites);sites.forEach(validate);sites.forEach(s=>{const p=PROFILES[s.profile];if(s.profile!=='custom'&&(s.image!==p.image||s.nodes.some(n=>n.local!==p.local||n.memory!==p.memory||n.cpu!==p.cpu||n.maxVMs!==p.vms)))s.profile='custom';});return{schema:'exacc-capacity/v1',sites};}
- function applyDesign(site, count, allocation) {
+ function applyDesign(site, count, allocation, fullCapacity = false) {
   validate(site);
   const row = combinations(site).find(r => r.avmcs === count);
-  if (!row || !row.buffered) throw Error('This design does not fit local storage.');
+  if (!row || !row.absolute) throw Error('This design exceeds local-storage capacity.');
+  if (typeof fullCapacity !== 'boolean') throw Error('Choose a valid layout option.');
   const preserve = count === site.clusters.length && site.clusters.every(c => c.nodes.length === site.nodes.length);
   if (!preserve) {
    if (!allocation) throw Error('For a different AVMC count or placement, enter replacement ECPUs per VM and memory per ECPU before applying.');
@@ -82,7 +97,7 @@
    number(allocation.memoryPerCPU, 2, 5, 'Replacement memory per ECPU');
   }
   const next = clone(site);
-  next.clusters = row.distribution.map((slots, i) => preserve
+  next.clusters = (fullCapacity ? row.absoluteDistribution : row.distribution).map((slots, i) => preserve
    ? {...next.clusters[i], slots}
    : {name: `AVMC ${i + 1}`, slots, nodes: next.nodes.map(n => n.id), cpu: allocation.cpu, memoryPerCPU: allocation.memoryPerCPU, memoryRule: 'current'});
   validate(next);
