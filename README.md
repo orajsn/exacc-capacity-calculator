@@ -25,6 +25,7 @@ This records comparison totals, not a complete configuration that can be restore
 - Maximum ACD slots, local reservations, other allocations, user-selected buffer and explicit 16-ACD limit.
 - Comparison of 1 through the available VM count, showing both absolute and buffered local-storage ceilings.
 - Optional ECPU pool and memory-allocation checks, formula breakdown, scenario JSON import/export and print/PDF.
+- A fixed local-storage summary shows the active machine's remaining GB while you edit on desktop or a narrow screen. It also shows a labelled preview before you apply it, and restores the plan values on cancel. Undo, Save JSON and Details are available in the bar. It is hidden in print/PDF.
 
 ## Buffer targets are warnings
 

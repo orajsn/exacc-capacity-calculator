@@ -43,3 +43,34 @@ a{color:var(--accent)}
 @media(max-width:760px){.save-reminder{align-items:flex-start;flex-direction:column}}
 @media print{.save-help,.save-reminder{display:none}}
 @media print{.masthead{background:white;color:#312d2a}.masthead p,.eyebrow{color:#625b54}}
+
+/* A compact local-storage result stays visible while any input is edited. */
+.local-dock{position:fixed;inset:auto 0 0;z-index:30;display:grid;grid-template-columns:minmax(120px,.8fr) auto minmax(190px,1.35fr) auto;align-items:center;gap:18px;padding:12px max(20px,calc((100vw - 1452px)/2));padding-bottom:calc(12px + env(safe-area-inset-bottom,0px));background:#fffefa;border-top:3px solid #45815f;box-shadow:0 -3px 18px #312d2a20;color:var(--ink)}
+.dock-context,.dock-capacity,.dock-detail{display:flex;flex-direction:column;gap:4px;min-width:0}
+.dock-context strong{font-size:13px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.dock-context span,.dock-capacity>span,.dock-detail{font-size:11px;line-height:1.4}
+.dock-context span{color:var(--muted)}
+.dock-context #dock-unsaved{color:#805412;font-weight:600}
+.dock-capacity output{font-size:27px;font-weight:700;white-space:nowrap;font-variant-numeric:tabular-nums;line-height:1.1}
+.dock-detail strong{color:#245c34;font-weight:600}
+.dock-actions{display:flex;align-items:center;justify-content:flex-end;gap:6px;flex-wrap:wrap}
+.dock-actions button,.dock-actions .button{font-size:12px;padding:7px 9px}
+.local-dock[data-level=warning]{border-top-color:#b47928;background:#fff7e7}
+.local-dock[data-level=warning] .dock-detail strong{color:#805412}
+.local-dock[data-level=error]{border-top-color:var(--red);background:#fff0ed}
+.local-dock[data-level=error] .dock-detail strong,.local-dock[data-level=error] output{color:var(--red)}
+@media screen{
+ :root{--dock-clearance:125px}
+ html{scroll-padding-top:20px;scroll-padding-bottom:calc(var(--dock-clearance) + 20px)}
+ body{padding-bottom:calc(var(--dock-clearance) + env(safe-area-inset-bottom,0px))}
+ .resource-strip{position:static}
+}
+@media screen and (max-width:900px){
+ :root{--dock-clearance:190px}
+ .local-dock{grid-template-columns:minmax(0,1fr) auto;gap:7px 12px;padding:10px 16px;padding-bottom:calc(10px + env(safe-area-inset-bottom,0px))}
+ .dock-capacity{text-align:right}
+ .dock-capacity output{font-size:24px}
+ .dock-detail{grid-column:1/-1}
+ .dock-actions{grid-column:1/-1}
+}
+@media print{.local-dock{display:none}}

@@ -28,6 +28,8 @@ function updateSaveReminder() {
  const dirty = hasUnsavedChanges();
  $('save-status').textContent = dirty ? 'Unsaved changes · download JSON to keep them' : savedLabel;
  $('save-reminder').hidden = !dirty;
+ $('dock-unsaved').textContent = dirty ? 'Unsaved changes' : '';
+ $('dock-unsaved').hidden = !dirty;
  if (dirty && !leaveWarningActive) window.addEventListener('beforeunload', warnBeforeLeaving);
  if (!dirty && leaveWarningActive) window.removeEventListener('beforeunload', warnBeforeLeaving);
  leaveWarningActive = dirty;
@@ -46,6 +48,40 @@ function cancelPreview() {
  $('design-preview').hidden = true;
  $('apply-preview').disabled = true;
  $('preview-error').hidden = true;
+ try { renderFloatingLocal(site(), M.calculate(site())); }
+ catch { clearFloatingLocal('Check the inputs'); }
+}
+
+function clearFloatingLocal(note) {
+ $('local-dock').dataset.level = 'warning';
+ $('dock-machine').textContent = `${site().siteName || 'Unspecified site'} / ${site().name}`;
+ $('dock-mode').textContent = preview ? 'Preview · not applied' : 'Editing now';
+ $('dock-free').textContent = '—';
+ $('dock-label').textContent = 'Local storage left';
+ $('dock-allocation').textContent = note;
+ $('dock-status').textContent = 'Enter valid values to update the total.';
+ $('dock-save').disabled = !!preview;
+ $('dock-save').title = preview ? 'Apply or cancel the preview before saving from this bar.' : '';
+}
+
+function renderFloatingLocal(s, result, isPreview = false) {
+ const local = P.resources(s, result).find(row => row.name === 'Local storage');
+ const worst = result.nodes.reduce((a,n) => n.free < a.free ? n : a);
+ const hasError = local.status === 'Over capacity' || result.errors.length > 0;
+ $('local-dock').dataset.level = hasError ? 'error' : local.status === 'Below buffer' ? 'warning' : 'fit';
+ $('dock-machine').textContent = `${s.siteName || 'Unspecified site'} / ${s.name}`;
+ $('dock-machine').title = $('dock-machine').textContent;
+ $('dock-mode').textContent = isPreview ? 'Preview · not applied' : 'Editing now';
+ const shortfall = result.free < -1e-7;
+ $('dock-label').textContent = shortfall ? 'Local storage shortfall' : 'Local storage left';
+ $('dock-free').textContent = `${fmt(shortfall ? -result.free : Math.max(0, result.free))} GB`;
+ $('dock-allocation').textContent = `${fmt(result.used + result.other)} / ${fmt(result.capacity)} GB allocated · ${s.clusters.length} AVMC${s.clusters.length===1?'':'s'} · ${result.slots} max ACDs`;
+ $('dock-status').textContent = worst.free < -1e-7
+  ? `DB ${worst.id} is short by ${fmt(-worst.free)} GB. Check each server.`
+  : result.errors.length ? 'Local storage fits; other limits are exceeded. See details.'
+  : `${reserveLabel(local.status)} · buffer ${s.bufferPercent}%`;
+ $('dock-save').disabled = isPreview;
+ $('dock-save').title = isPreview ? 'Apply or cancel the preview before saving from this bar.' : '';
 }
 
 function renderNavigation() {
@@ -95,6 +131,7 @@ function clearResourceCards() {
  $('resource-cards').innerHTML = '<p class="issues error">Complete valid inputs to see resource impact.</p>';
  $('resource-validation').hidden = true;
  updateWorkflow();
+ clearFloatingLocal('Check the inputs');
 }
 
 function renderResourceCards(s, result) {
@@ -111,6 +148,7 @@ function renderResourceCards(s, result) {
   return `<div class="resource-card ${level}"><span>${title}</span><strong>${fmt(row.free)} <small>${unit} free</small></strong><small>${fmt(row.allocated)} / ${fmt(row.capacity)} ${unit} allocated</small><span class="card-status">${reserveLabel(row.status)}</span><small>Buffer target: ${row.percent}% (${fmt(row.buffer)} ${unit})</small></div>`;
  }).join('');
  updateWorkflow();
+ renderFloatingLocal(s, result);
 }
 
 function showPreview(count, fullCapacity = false) {
@@ -139,6 +177,7 @@ function refreshPreview() {
  const cpu = $('replacement-cpu').value, ratio = $('replacement-ratio').value;
  if (!preview.preserve && (cpu === '' || ratio === '')) {
   $('preview-results').innerHTML = '<p class="hint">Enter both values to see the result. Your design stays as it is until you choose Use this layout.</p>';
+  clearFloatingLocal('Complete both preview values');
   return;
  }
  try {
@@ -147,6 +186,7 @@ function refreshPreview() {
   const current = M.calculate(site()), result = M.calculate(candidate);
   const comparison = P.compare({...candidate, baseline: P.capture(site(), current)}, result);
   const summary = P.summary(candidate, result);
+  renderFloatingLocal(candidate, result, true);
   $('preview-results').innerHTML = `<div class="table-wrap"><table><thead><tr><th>Resource</th><th>Editing now</th><th>Preview</th><th>Change</th></tr></thead><tbody>${comparison.map(row => `<tr><td>${resourceLabel(row.name)} (${row.unit})</td><td>${row.before === null ? 'Not checked' : fmt(row.before)}</td><td>${row.after === null ? 'Not checked' : fmt(row.after)}</td><td>${row.delta === null ? 'Not checked' : (row.delta > 0 ? '+' : '') + fmt(row.delta)}</td></tr>`).join('')}</tbody></table></div><p class="issues ${summary.status}">${escapeHTML(summary.text)}${summary.status==='warning'?' You can use this layout; the warning does not block it.':summary.status==='error'?' Adjust the inputs before using this layout.':''}</p><p class="hint">Shared-storage allocation is entered manually and stays unchanged in this preview. ${site().baseline ? 'Your recorded Before totals stay fixed.' : 'Applying will also record your current totals as Before, so you can compare the change.'}</p>`;
   if (!candidate.baseline) candidate.baseline = P.capture(site(), current);
   preview.candidate = summary.status === 'error' ? null : candidate;
@@ -155,12 +195,14 @@ function refreshPreview() {
   $('preview-results').innerHTML = '';
   $('preview-error').textContent = error.message;
   $('preview-error').hidden = false;
+  clearFloatingLocal('Check the preview inputs');
  }
 }
 
 function initWorkflow() {
  savedSignature = JSON.stringify(state);
  $('save-reminder-button').onclick = () => $('save').click();
+ $('dock-save').onclick = () => { if (!preview) $('save').click(); };
  $('open-scenario').addEventListener('keydown', event => {
   if (event.key === 'Enter' || event.key === ' ') {
    event.preventDefault();

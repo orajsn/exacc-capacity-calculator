@@ -1,5 +1,20 @@
 # Changelog
 
+## 1.5.1 — 2026-09-30
+
+### Added
+
+- A fixed local-storage summary at the bottom of desktop and narrow screens. It updates as AVMCs, maximum ACD counts, placements and other allocations change.
+- Shows the active machine, local GB left, allocated/total GB, AVMC/ACD counts and per-server or buffer warnings.
+- Preview values are labelled “Preview · not applied”; cancelling restores the edited plan's summary. Invalid inputs clear the number instead of leaving a stale result.
+- Undo, Save JSON, an unsaved-change indicator and a details link remain within reach. Saving from this bar is disabled while a preview is open.
+
+### Improved
+
+- The larger resource-card section stays in normal page flow, leaving more room for editing.
+- Added space below the page so the floating summary does not cover the last controls. The summary is hidden in print/PDF.
+- Resource formulas and scenario format are unchanged.
+
 ## 1.5.0 — 2026-09-30
 
 ### Clarified

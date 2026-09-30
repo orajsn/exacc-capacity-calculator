@@ -24,7 +24,7 @@
 </aside>
 <div class="workspace-content">
 <div class="resource-strip" aria-label="Active machine resource summary">
- <div class="active-machine"><strong id="active-machine"></strong><div class="actions"><span id="configuration-stage" class="stage"></span><button id="undo" disabled>Undo last change</button></div></div>
+ <div class="active-machine"><strong id="active-machine"></strong><div class="actions"><span id="configuration-stage" class="stage"></span></div></div>
  <div id="resource-cards" class="resource-cards" aria-live="polite"></div>
  <div id="save-reminder" class="save-reminder" role="status" hidden><p><strong>Unsaved changes.</strong> Save the JSON to your laptop before leaving, so you can resume later.</p><button id="save-reminder-button">Save JSON now</button></div>
  <p id="resource-validation" class="negative" role="alert" hidden></p>
@@ -102,5 +102,12 @@
 <details class="all-checks"><summary>Checks for all machines</summary><div class="table-wrap"><table id="overview"><thead><tr><th>Site</th><th>Machine</th><th>Shape</th><th>AVMCs / ACD slots</th><th>Local capacity GB</th><th>Free local GB</th><th>Check</th></tr></thead><tbody></tbody></table></div></details>
 <details class="method"><summary>Formulas, assumptions and sources</summary><h2>How the calculation works</h2><p>For each AVMC, <var>N</var> is its configured maximum ACD count and <var>V</var> is its selected DB-server count.</p><div class="formula">Local GB = [ image + (100 + 50 × N) × 1.03 + 2 ] × V</div><p>For two X11M nodes: <strong>578 GB per AVMC + 103 GB per reserved ACD slot.</strong> Each ACD is counted once, even though its storage is allocated on every selected node. An AVMC can have at most 16 ACDs.</p><details><summary>Assumptions, source differences and scope</summary><ul><li>The result is a reservation estimate, not measured disk usage. Check capacity on every selected server.</li><li>Oracle’s detailed formula gives 681 GB for one ACD on two X11M nodes; its worked example shows 682 GB. Other summary examples also differ. This calculator consistently uses the detailed formula and shows decimal GB. Confirm final reservations in the console.</li><li>All buffers are user-selected: local storage starts at 10%; CPU, memory and manually entered Exadata storage start at 30%. These are planning assumptions, not Oracle-mandated margins.</li><li>Memory uses the current or confirmed legacy rule per AVMC. Old scenarios without a rule are unconfirmed and use the conservative current estimate; saved reference totals stay unchanged. ACD creation additionally requires available CPU per node.</li><li>Local GB belongs to database servers. Shared Exadata storage is separate; the optional TB check uses manually entered console capacity and total allocations. It does not derive internal overheads or backup reservations.</li><li>Custom and mixed-service deployments require console confirmation of VM limits. Current X11M Autonomous presets use Oracle’s documented 6 VMs/server, or 2 for Base.</li><li>Conventional VMC filesystem and VM-backup calculations will use a separate model. For now, include their console-reported local allocations as “Other local GB”. Exascale support in the conventional service does not establish Autonomous support.</li></ul></details><div id="sources"></div></details>
 </div></div>
-</main><footer>Independent planning aid · Public Oracle documentation · Sources checked <span id="checked"></span> · No Oracle endorsement implied · <a href="CHANGELOG.md" target="_blank" rel="noopener">Changelog</a></footer>
+</main>
+<aside id="local-dock" class="local-dock" data-level="fit" aria-label="Live local-storage summary">
+ <div class="dock-context"><strong id="dock-machine"></strong><span id="dock-mode"></span><span id="dock-unsaved" hidden></span></div>
+ <div class="dock-capacity"><span id="dock-label">Local storage left</span><output id="dock-free" aria-live="polite" aria-atomic="true">—</output></div>
+ <div class="dock-detail"><span id="dock-allocation"></span><strong id="dock-status"></strong></div>
+ <div class="dock-actions"><a class="button" href="#growth-heading">Details</a><button id="undo" disabled>Undo last change</button><button id="dock-save">Save JSON</button></div>
+</aside>
+<footer>Independent planning aid · Public Oracle documentation · Sources checked <span id="checked"></span> · No Oracle endorsement implied · <a href="CHANGELOG.md" target="_blank" rel="noopener">Changelog</a></footer>
 </body></html>
