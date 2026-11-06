@@ -115,6 +115,7 @@ function renderNavigation() {
 
 function updateWorkflow() {
  const s = site();
+ if(sizingResults&&(sizingResults.active!==active||sizingResults.signature!==JSON.stringify(state)))clearSizingResults();
  updateSaveReminder();
  $('undo').disabled = !undoSnapshot;
  $('remove-site').disabled = state.sites.length === 1;

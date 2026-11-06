@@ -30,7 +30,7 @@ function render(){const s=site();renderNavigation();$('site-name').value=s.name;
  $('add-site').disabled=state.sites.length>=8;
  $('replacement-cpu').value='';
  $('replacement-ratio').value='';
- renderPlanning();renderAuditInputs();results();}
+ renderPlanning();renderAuditInputs();renderSizing();results();}
 function overview() {
  $('overview').querySelector('tbody').innerHTML = state.sites.map((s, i) => {
   let r, summary;
@@ -93,7 +93,9 @@ $('clusters').oninput = e => {
   if(key==='memoryPerCPU' && Number.isFinite(value) && value!==c.memoryPerCPU) {
    c.memoryRule='current';c.legacyRatioUnchanged=false;
   }
+  if(key==='slots'&&c.requirements&&value!==c.slots){delete c.requirements.acdEcpus;c.requirements.unsizedACDs=Math.min(c.requirements.unsizedACDs||0,Number.isFinite(value)?value:c.slots);c.requirements.incomplete=true;}
   c[key]=value;
+  if(key==='name'||(key==='slots'&&Number.isInteger(value)&&value>0))renderSizing();
   if(key==='memoryPerCPU' && Number.isFinite(value)) {
    const checklist=$('memory-checklist-'+el.dataset.cluster);
    if(checklist)checklist.outerHTML=memoryChecklist(c,Number(el.dataset.cluster));
@@ -125,7 +127,7 @@ $('combinations').onclick = e => {
   message(error.message);
  }
 };
-$('save').onclick=()=>{try{state.sites.forEach(s=>{M.validate(s);P.validate(s);A.validate(s);});download('exacc-scenario.json',JSON.stringify({...state,calculatorVersion:M.VERSION},null,2),'application/json');savedSignature=JSON.stringify(state);savedLabel='JSON download requested · check your Downloads folder';updateWorkflow();message('JSON download requested: exacc-scenario.json. Check your browser Downloads or chosen folder. To resume later, use Open saved JSON. If you cancelled the download, save again before leaving; this page cannot confirm the file reached your laptop.');}catch(e){message(e.message);}};
-$('import').onchange=async e=>{const file=e.target.files[0];if(!file)return;try{if(file.size>250000)throw Error('Scenario file is too large (maximum 250 KB).');const next=M.importScenario(JSON.parse(await file.text()));next.sites.forEach(P.validate);next.sites.forEach(A.validate);const before=snapshot();state=next;active=0;activeAVMCEditor=0;rememberChange(before);savedSignature=JSON.stringify(state);savedLabel='Opened JSON · no new edits';cancelPreview();message('Resumed from your JSON file. Save scenario (.json) again after making changes to keep an updated copy on your laptop.');render();}catch(err){message(`Could not open scenario: ${err.message}`);}e.target.value='';};
+$('save').onclick=()=>{try{state.sites.forEach(s=>{M.validate(s);P.validate(s);A.validate(s);S.validate(s);});download('exacc-scenario.json',JSON.stringify({...state,calculatorVersion:M.VERSION},null,2),'application/json');savedSignature=JSON.stringify(state);savedLabel='JSON download requested · check your Downloads folder';updateWorkflow();message('JSON download requested: exacc-scenario.json. Check your browser Downloads or chosen folder. To resume later, use Open saved JSON. If you cancelled the download, save again before leaving; this page cannot confirm the file reached your laptop.');}catch(e){message(e.message);}};
+$('import').onchange=async e=>{const file=e.target.files[0];if(!file)return;try{if(file.size>250000)throw Error('Scenario file is too large (maximum 250 KB).');const next=M.importScenario(JSON.parse(await file.text()));next.sites.forEach(P.validate);next.sites.forEach(A.validate);next.sites.forEach(s=>S.validate(s));const before=snapshot();state=next;active=0;activeAVMCEditor=0;rememberChange(before);savedSignature=JSON.stringify(state);savedLabel='Opened JSON · no new edits';cancelPreview();message('Resumed from your JSON file. Save scenario (.json) again after making changes to keep an updated copy on your laptop.');render();}catch(err){message(`Could not open scenario: ${err.message}`);}e.target.value='';};
 $('print').onclick=()=>window.print();$('version').textContent=M.VERSION;$('checked').textContent=M.CHECKED;
-$('sources').innerHTML=Object.entries({formula:'Oracle sizing formula',hardware:'Hardware capacities',limits:'ACD and AVMC limits',compute:'Compute management',vmc:'Conventional VMC scope'}).map(([key,label])=>`<a href="${M.SOURCES[key]}" target="_blank" rel="noopener noreferrer">${label} ↗</a>`).join('');initPlanning();initAudit();initLayout();initWorkflow();render();
+$('sources').innerHTML=Object.entries({formula:'Oracle sizing formula',hardware:'Hardware capacities',limits:'ACD and AVMC limits',compute:'Compute management',vmc:'Conventional VMC scope'}).map(([key,label])=>`<a href="${M.SOURCES[key]}" target="_blank" rel="noopener noreferrer">${label} ↗</a>`).join('');initPlanning();initAudit();initLayout();initSizing();initWorkflow();render();

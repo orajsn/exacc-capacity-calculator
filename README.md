@@ -28,6 +28,15 @@ This records comparison totals, not a complete configuration that can be restore
 - A fixed local-storage summary shows the active machine's remaining GB while you edit on desktop or a narrow screen. It also shows a labelled preview before you apply it, and restores the plan values on cancel. Undo, Save JSON and Details are available in the bar. It is hidden in print/PDF.
 - A live AVMC → reserved ACD-slot diagram shows where local storage is allocated. Each box is a configured slot, not proof that an ACD exists. Per-server balances stay visible below the diagram because free capacity cannot be pooled between servers. Use Edit on a diagram card to open that AVMC's form.
 - Machine inputs are grouped by purpose. AVMC forms expand individually, with CPU/memory controls grouped below the local-storage inputs. The optional Before / After tools can be expanded when needed.
+- Enter workload ECPUs/RAM per AVMC to compare X11M DB-server options. The suggestion panel separates physical fit from optional buffers and marks incomplete workload lists.
+
+## Requirement-based hardware suggestions
+
+The suggestion panel compares an all-server layout across X11M memory tiers and a configurable DB-server count. Results are ranked by fewer DB servers, then smaller memory tier; this is not a price comparison or an in-place upgrade recommendation.
+
+CPU allocation includes the entered workload, ACD minimums and an editable extra-ECPU planning allowance (initially 50%). This allowance is not Oracle's actual calculated failover reservation. If per-ACD input detail is available, each ACD is floored at 8 ECPUs per node; otherwise the calculator uses an aggregate floor plus the explicitly unsized ACD count. AVMC CPU is at least 40 ECPUs per VM. Memory ratios round up to 0.5 GB/ECPU within 2–5 and use the current memory formula. A requirement above that range must be reviewed, not silently reduced.
+
+These checks cover the entered requirements only. Confirm per-ADB/ACD and per-node availability, autoscaling/failover reservations, shared-storage/backup capacity, quotas, deployment support and application performance before provisioning. Hardware for a multi-year plan must fit every relevant year.
 
 ## Buffer targets are warnings
 
@@ -79,7 +88,7 @@ The preset initial buffer of 10% is a user-adjustable planning assumption, not a
 
 Additional public references: [AVMC scaling and rolling restarts](https://docs.oracle.com/en/cloud/paas/autonomous-database/dedicated/adbaa/manage-autonomous-exadata-vm-clusters.html) and [shared-server architecture](https://docs.oracle.com/en/database/oracle/oracle-database/26/netag/understanding-shared-server-architecture.html). These support operating caveats; the architecture page does not substantiate the numerical session assumptions.
 
-Run `node --test model.test.cjs planning.test.cjs audit.test.cjs` for the public model checks. Keep every sibling JavaScript and CSS file beside `index.html`.
+Run `node --test model.test.cjs planning.test.cjs audit.test.cjs sizing.test.cjs` for the public model checks. Keep every sibling JavaScript and CSS file beside `index.html`.
 
 ## Hardware inputs
 
@@ -93,7 +102,7 @@ Use **+ Site / machine** once per ExaC@C infrastructure. Give each entry a site/
 
 Per AVMC: `VM count × [image overhead + (100 + 50 × configured maximum ACDs) × 1.03 + 2]` GB. Two-node X11M simplifies to `578 + 103 × slots`. Configured slots reserve storage before ACD creation. Each AVMC supports at most 16 ACDs.
 
-Public Oracle memory, allocation, scaling and X11M references checked 2026-09-30:
+Public Oracle memory, CPU-allocation and X11M references checked 2026-11-06:
 
 - [Detailed resource formula](https://docs.oracle.com/en/cloud/paas/autonomous-database/dedicated/adbaa/create-an-autonomous-exadata-vm-cluster.html)
 - [Infrastructure shapes](https://docs.oracle.com/en/cloud/paas/autonomous-database/dedicated/adbaa/characteristics-of-infrastructure-shapes.html)

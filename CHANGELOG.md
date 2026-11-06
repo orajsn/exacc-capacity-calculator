@@ -1,5 +1,20 @@
 # Changelog
 
+## 1.7.0 — 2026-11-06
+
+### Added
+
+- Workload-input fields per AVMC and a DB-server suggestion panel comparing X11M Base, Standard, Large and Extra Large across a selected server-count range.
+- Separate results for the smallest physical fit and the first option meeting optional buffer targets. Ranking uses DB-server count then memory tier, not prices.
+- Editable extra-ECPU planning allowance, ACD CPU minimums, workload RAM requirements, minimum memory ratios and missing-workload flags.
+- Applying an option updates the local plan and keeps Undo available. Existing other allocations are retained; a candidate cannot omit a server containing other allocations.
+
+### Limits
+
+- Suggestions cover DB-server CPU, memory and local storage for an all-server AVMC layout. They do not establish workload performance, exact failover/autoscaling reservations, shared-storage sizing, quotas, licensing, cost or in-place hardware eligibility.
+- Compare each year's requirements before choosing hardware for a multi-year plan. Unsized workloads remain explicitly incomplete.
+- Existing scenario files remain readable. No customer workbook data is included in the public app.
+
 ## 1.6.0 — 2026-09-30
 
 ### Added

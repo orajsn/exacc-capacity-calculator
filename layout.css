@@ -1,4 +1,10 @@
 /* AVMC editor and live reserved-slot diagram. */
+.sizing-request{border:1px solid var(--line);border-radius:5px;margin:14px 0;padding:14px;background:#fffefa}
+.sizing-request legend{font-weight:600;font-size:14px;padding:0 6px}
+.sizing-fields{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px}
+#sizing-results table{min-width:720px}
+@media(max-width:900px){.sizing-fields{grid-template-columns:1fr 1fr}}
+@media(max-width:500px){.sizing-fields{grid-template-columns:1fr}}
 .current-panel{padding:0}
 .current-panel>summary{padding:14px 18px;font-size:14px}
 .current-panel>p{margin:0 18px 14px}
