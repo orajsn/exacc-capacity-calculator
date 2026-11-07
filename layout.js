@@ -2,6 +2,7 @@
 
 let activeAVMCEditor = 0;
 const openComputeEditors = new Set();
+const openWorkloadEditors = new Set();
 
 function renderClusterEditors(s) {
  const known=planningIntent(s)==='allocation';
@@ -10,7 +11,7 @@ function renderClusterEditors(s) {
   <details class="cluster cluster-editor" id="cluster-editor-${i}" ${i===activeAVMCEditor?'open':''}>
    <summary data-editor-summary="${i}">
     <span class="editor-summary-name" id="editor-name-summary-${i}">${escapeHTML(c.name)}</span>
-    <span class="editor-summary-count" id="editor-count-summary-${i}">${c.slots} max ACDs</span>
+    <span class="editor-summary-count" id="editor-count-summary-${i}">${c.slots} max ACD${c.slots===1?'':'s'}</span>
     <span class="editor-summary-cost" id="cost-${i}"></span>
    </summary>
    <div class="editor-body">
@@ -19,10 +20,11 @@ function renderClusterEditors(s) {
      <label>Maximum ACD slots<input aria-label="${escapeHTML(c.name)} ACD slots" type="number" min="1" max="16" step="1" value="${c.slots}" data-cluster="${i}" data-key="slots"><small>Reserves space for up to this many ACDs.</small></label>
     </div>
     ${known?`<fieldset class="node-choices"><legend>Runs on DB servers</legend>${s.nodes.map(n=>`<label><input type="checkbox" ${c.nodes.includes(n.id)?'checked':''} data-placement="${i}" data-server="${n.id}">DB ${n.id}</label>`).join('')}</fieldset>`:`<p class="hint">All DB servers in the selected hardware option will be used.</p>`}
-    ${!known?`<div id="requirements-box-${i}">${requirementFields(c,i)}</div>`:''}
+    ${!known?`<div id="requirements-box-${i}">${requirementFields(c,i)}</div>`:c.requirements||c.topology?.acds?.length?`<details id="workload-settings-${i}" class="compute-settings" ${openWorkloadEditors.has(i)?'open':''}><summary data-workload-summary="${i}">Workload sizing inputs (optional)</summary><div id="requirements-box-${i}">${requirementFields(c,i,true)}</div></details>`:''}
     ${s.checkCompute&&hardwareReady(s)?`<details class="compute-settings" id="compute-settings-${i}" ${openComputeEditors.has(i)?'open':''}><summary id="compute-summary-${i}" data-compute-summary="${i}">CPU &amp; memory · ${c.cpu} ECPUs/VM · ${c.memoryPerCPU} GB/ECPU</summary>
      ${known?`<label>Allocation being checked<select data-allocation-kind="${i}" aria-label="${escapeHTML(c.name)} allocation type"><option value="new" ${c.allocationKind==='new'?'selected':''}>New or proposed AVMC</option><option value="existing" ${c.allocationKind==='existing'?'selected':''}>Existing console allocation</option><option value="unknown" ${!c.allocationKind||c.allocationKind==='unknown'?'selected':''}>History not confirmed</option></select></label>`:''}
      <div class="editor-fields"><label>ECPUs per VM<input type="number" min="${c.allocationKind==='new'?40:1}" step="1" value="${c.cpu}" data-cluster="${i}" data-key="cpu" ${known?'':'readonly'}></label><label>Memory per ECPU (GB)<input type="number" min="2" max="5" step="0.5" value="${c.memoryPerCPU}" data-cluster="${i}" data-key="memoryPerCPU" ${known?'':'readonly'}></label></div>
+     <p id="allocation-total-${i}" class="hint allocation-total"></p>
      ${known?memoryChecklist(c,i):'<p class="hint">These allocations come from the selected hardware option. Change workload needs and compare again to resize.</p>'}
     </details>`:s.checkCompute?'<p class="hint">CPU and memory allocations will be set in step 3.</p>':'<p class="hint">CPU and memory checks are off for this machine.</p>'}
     <div class="editor-actions"><button class="remove" data-remove="${i}" aria-label="Remove ${escapeHTML(c.name)}">Remove AVMC</button></div>
@@ -30,12 +32,13 @@ function renderClusterEditors(s) {
   </details>`).join('') : '<p class="empty-editor">No AVMCs yet. Use Add AVMC to start a layout.</p>';
 }
 
-function updateEditorSummaries(s) {
+function updateEditorSummaries(s,r) {
  s.clusters.forEach((c,i) => {
   const name=$('editor-name-summary-'+i),count=$('editor-count-summary-'+i),compute=$('compute-summary-'+i);
   if(name)name.textContent=c.name;
-  if(count)count.textContent=`${c.slots} max ACDs`;
+  if(count)count.textContent=`${c.slots} max ACD${c.slots===1?'':'s'}`;
   if(compute)compute.textContent=hardwareReady(s)?`CPU & memory · ${c.cpu} ECPUs/VM · ${c.memoryPerCPU} GB/ECPU`:'Previous allocation · compare options again in step 3';
+  const total=$('allocation-total-'+i);if(total)total.textContent=hardwareReady(s)&&r?`Across ${c.nodes.length} selected DB servers: ${fmt(c.cpu*c.nodes.length)} ECPUs allocated · ${fmt(r.costs[i].memory)} GB estimated memory.`:'Previous allocation. Compare workload options again before using these totals.';
  });
 }
 
@@ -63,13 +66,14 @@ function toggleComputeEditor(index) {
  const panel=$('compute-settings-'+index);
  if(panel)panel.open=openComputeEditors.has(index);
 }
+function toggleWorkloadEditor(index){if(!Number.isInteger(index)||!site().clusters[index])return;if(openWorkloadEditors.has(index))openWorkloadEditors.delete(index);else openWorkloadEditors.add(index);const panel=$('workload-settings-'+index);if(panel)panel.open=openWorkloadEditors.has(index);}
 
 function clearTopology() {
  $('allocation-map').innerHTML='<p class="issues warning">Check the inputs to update the diagram.</p>';
 }
 
 function renderTopology(s,r,isPreview=false) {
- if(!isPreview)updateEditorSummaries(s);
+ if(!isPreview)updateEditorSummaries(s,r);
  const ready=hardwareReady(s)||isPreview;
  const overhead=r.costs.reduce((sum,c)=>sum+c.base+c.allowance,0);
  const acd=r.costs.reduce((sum,c)=>sum+c.slots,0);

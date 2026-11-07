@@ -1,4 +1,4 @@
-(function(root,factory){const api=factory();if(typeof module==='object'&&module.exports)module.exports=api;else root.ExaSizing=api;})(typeof globalThis!=='undefined'?globalThis:this,function(){
+(function(root,factory){const api=typeof module==='object'&&module.exports?factory(require('./requirements.js')):factory(root.ExaRequirements);if(typeof module==='object'&&module.exports)module.exports=api;else root.ExaSizing=api;})(typeof globalThis!=='undefined'?globalThis:this,function(Q){
  'use strict';
  const defaults={extraCPUPercent:50,minNodes:2,maxNodes:8};
  function config(site){return {...defaults,...site.sizing};}
@@ -9,13 +9,16 @@
    const q=c.requirements;
    if(!q){if(requireAll)throw Error(`Enter workload requirements for ${c.name}.`);continue;}
    if(typeof q!=='object'||Array.isArray(q))throw Error('Workload requirements must be an object.');
-   for(const [key,min,max,label,integer] of [['ecpu',0,100000,'Workload ECPUs',false],['ramGB',0,1000000,'Workload RAM',false],['unsizedACDs',0,c.slots,'ACDs without sized workloads',true],['minRatio',2,5,'Minimum GB per ECPU',false]]){
+   Q.validateMetadata(c);
+   const inventory=Q.source(c)==='database-inventory'?Q.status(c):null,stale=!!inventory?.stale;
+   if(requireAll&&stale)throw Error(`${c.name}: inventory totals changed. Review and apply the database totals in step 2 before comparing hardware.`);
+   for(const [key,min,max,label,integer] of [['ecpu',0,100000,'Workload ECPUs',false],['ramGB',0,1000000,'Workload RAM',false],['unsizedACDs',0,stale?16:c.slots,'ACDs without sized workloads',true],['minRatio',2,5,'Minimum GB per ECPU',false]]){
     if(q[key]==null&&!requireAll)continue;number(q[key],min,max,`${c.name} ${label}`,integer);
    }
-   if(q.ecpu===0&&q.ramGB>0)throw Error(`${c.name}: enter ECPU demand before sizing memory.`);
+   if(q.ecpu===0&&q.ramGB>0&&(requireAll||!inventory?.missing.ecpu))throw Error(`${c.name}: enter ECPU demand before sizing memory.`);
    if(q.incomplete!==undefined&&typeof q.incomplete!=='boolean')throw Error('Workload completeness must be true or false.');
    if(q.acdEcpus!==undefined){
-    if(!Array.isArray(q.acdEcpus)||q.acdEcpus.length!==c.slots)throw Error(`${c.name}: ACD CPU details must match the maximum ACD count.`);
+    if(!Array.isArray(q.acdEcpus)||(!stale&&q.acdEcpus.length!==c.slots))throw Error(`${c.name}: ACD CPU details must match the maximum ACD count.`);
     q.acdEcpus.forEach(v=>number(v,0,100000,'ACD workload ECPUs'));
     if(Math.abs(q.acdEcpus.reduce((a,b)=>a+b,0)-q.ecpu)>1e-7)throw Error(`${c.name}: ACD CPU details do not add up to workload ECPUs.`);
     if(q.acdEcpus.filter(v=>v===0).length!==q.unsizedACDs)throw Error(`${c.name}: the ACD count without sized workloads does not match its CPU details.`);

@@ -10,6 +10,7 @@ function needsNewSizing(){site().clusters.forEach(c=>delete c.sizingDetail);if(p
 function goGuideStep(step){
  if(!Number.isInteger(step)||step<1||step>4)return;
  if(step!==3&&preview)cancelPreview();
+ if(step!==2&&typeof clearSourcePreview==='function')clearSourcePreview();
  guideStep=step;refreshJourney();
  $('guide-step-1').scrollIntoView({behavior:'smooth',block:'start'});
  $('guide-heading').focus({preventScroll:true});
@@ -29,7 +30,7 @@ function refreshJourney(){
   'Add one entry for each ExaC@C infrastructure. Copy its hardware and any other allocations from the console or agreed specification.',
   'Add the AVMCs, maximum ACD slots and CPU/memory allocations. Use the existing console values or your proposed allocation.',
   'Compare AVMC layouts or check whether another AVMC will fit. Preview an option before applying it to this plan.',
-  'Review the calculated capacity and warnings. Compare with console figures if available, then save the JSON.'
+  'Review the calculated capacity and warnings. Compare with console figures if available, then download a backup.'
  ];
  $('guide-instruction').textContent=instructions[guideStep-1];
  $('guide-machine').textContent=`${s.siteName?`${s.siteName} / `:''}${s.name}`;
@@ -63,7 +64,7 @@ function refreshJourney(){
  $('dock-next').hidden=guideStep===4;
  $('dock-next').textContent=guideStep<4?`Next: ${['','AVMCs','Compare','Review'][guideStep]}`:'';
  $('dock-review').hidden=guideStep!==4;
- $('guide-footer-note').textContent=guideStep===4?'Save one JSON file for all machines. Keep the assumptions with your proposal.':'You can revisit any step. Values stay in this tab until you save JSON.';
+ $('guide-footer-note').textContent=guideStep===4?'One backup file keeps all machines and options in this plan.':'You can revisit any step. Save on this device or download a backup to keep the plan.';
  $('review-save').disabled=!!preview;
  $('review-add').textContent=active<state.sites.length-1?'Next machine':'Back to machines';
 }

@@ -5,7 +5,7 @@ const scenario=()=>({schema:'exacc-capacity/v1',sites:[M.newSite('Machine A')]})
 
 test('a capacity fit remains qualified by provisioning and unchecked resources',()=>{
  const s=scenario(),r=A.assess(s,M,P);
- assert.equal(r.status,'partial');assert.match(r.headline,/provisioning is not confirmed/);
+ assert.equal(r.status,'partial');assert.match(r.headline,/Fits checked capacity; workload inputs need review/);
  assert.ok(r.unknowns.some(x=>x.code==='shared-storage'));
  assert.ok(r.unknowns.some(x=>x.code==='provisionability'));
  assert.equal(r.coverage.find(x=>x.id==='local').status,'supported');
@@ -14,7 +14,7 @@ test('a capacity fit remains qualified by provisioning and unchecked resources',
 
 test('unselected hardware never exposes default free-capacity figures',()=>{
  const s=scenario();s.sites[0].planningIntent='workload';s.sites[0].hardwareChosen=false;
- const r=A.assess(s,M,P);assert.equal(r.status,'incomplete');assert.equal(r.machines[0].result,null);assert.equal(r.machines[0].constraints.length,0);
+ const r=A.assess(s,M,P);assert.equal(r.status,'incomplete');assert.match(r.headline,/Complete the plan before assessing capacity/);assert.equal(r.machines[0].result,null);assert.equal(r.machines[0].constraints.length,0);
  const html=A.reportHTML(s,M,P,null,null,{generatedAt:'2026-11-07'});assert.match(html,/Hardware not selected/);assert.doesNotMatch(html,/2,878/);
 });
 
@@ -181,4 +181,73 @@ test('machine prefixes are added once and remain escaped',()=>{
  assert.equal(A.issueHTML({machine:'DC / Machine A',message:'DC / Machine A / AVMC 1: missing peer.'}),'DC / Machine A / AVMC 1: missing peer.');
  assert.equal(A.issueHTML({machine:'DC / Machine A',message:'DC / Machine AB: another group.'}),'<strong>DC / Machine A:</strong> DC / Machine AB: another group.');
  assert.equal(A.issueHTML({machine:'<machine>',message:'<machine>: <script>bad</script>'}),'&lt;machine&gt;: &lt;script&gt;bad&lt;/script&gt;');
+});
+
+test('stale inventory sizing is actionable while allocation figures remain available',()=>{
+ const T=require('./topology.js'),Q=require('./requirements.js'),s=scenario(),c=s.sites[0].clusters[0];
+ c.topology={acds:[{...T.newACD('Group'),adbs:[{...T.newADB('DB'),ecpu:20,ramGB:40,storageTB:1}]}]};T.ensureIds(s);
+ c.requirements=Q.inventoryRequirements(c);const baseline=A.assess(s,M,P,T).machines[0].result.free;c.topology.acds[0].adbs[0].ecpu=30;
+ const r=A.assess(s,M,P,T);assert.equal(r.status,'partial');assert.equal(r.headline,'Fits checked capacity; workload inputs need review');assert.equal(r.machines[0].result.free,baseline);
+ const finding=r.findings.advisories.find(x=>x.code==='requirements-stale');assert.ok(finding);assert.equal(finding.target.clusterUid,c.uid);assert.equal(finding.target.field,'requirements');assert.equal(r.warnings.some(x=>x.code==='database_totals_stale'),false);
+});
+
+test('manual totals remain independent and differences are visible without changing the calculation',()=>{
+ const T=require('./topology.js'),s=scenario(),c=s.sites[0].clusters[0];c.requirements={ecpu:100,ramGB:200,unsizedACDs:9,minRatio:2,incomplete:false,source:'manual'};
+ c.topology={acds:[{...T.newACD('Group'),adbs:[{...T.newADB('DB'),ecpu:20,ramGB:40,storageTB:1}]}]};T.ensureIds(s);
+ const before=JSON.stringify(c.requirements),r=A.assess(s,M,P,T);assert.ok(r.findings.advisories.some(x=>x.code==='manual-inventory-difference'));assert.equal(JSON.stringify(c.requirements),before);
+ const html=A.reportHTML(s,M,P,T);assert.match(html,/manual sizing inputs differ/);assert.match(html,/Missing information/);assert.match(html,/Not checked in this estimate/);assert.match(html,/does not establish Oracle approval/);assert.match(html,/Workload inputs used for sizing/);assert.match(html,/Manual totals retained/);assert.match(html,/20 ECPUs \/ 40 GB RAM/);
+});
+
+test('input gaps are still shown before hardware is selected',()=>{
+ const s=scenario();s.sites[0].planningIntent='workload';s.sites[0].hardwareChosen=false;
+ const r=A.assess(s,M,P);assert.equal(r.machines[0].result,null);assert.ok(r.findings.missingInputs.some(x=>x.code==='workload-incomplete'));assert.ok(r.findings.missingInputs.some(x=>x.code==='hardware-unselected'));
+});
+
+test('empty optional inventory is one not-selected finding with legacy arrays preserved',()=>{
+ const T=require('./topology.js'),s=scenario(),r=A.assess(s,M,P,T);
+ assert.ok(r.warnings.some(x=>x.code==='acd_inventory_missing'));assert.ok(r.unknowns.some(x=>x.code==='named-inventory'));
+ assert.equal(r.findings.notSelected.filter(x=>['acd_inventory_missing','named-inventory'].includes(x.code)).length,1);
+ assert.equal(r.findings.missingInputs.some(x=>['acd_inventory_missing','named-inventory'].includes(x.code)),false);
+});
+
+test('disabled compute and blank optional storage are not missing-information tasks',()=>{
+ const s=scenario();s.sites[0].checkCompute=false;
+ const r=A.assess(s,M,P),codes=r.findings.notSelected.map(x=>x.code);
+ assert.ok(codes.includes('compute-off'));assert.ok(codes.includes('shared-storage'));
+ assert.equal(r.findings.missingInputs.some(x=>['compute-off','shared-storage'].includes(x.code)),false);
+ assert.equal(r.findings.advisories.some(x=>['compute-off','shared-storage'].includes(x.code)),false);
+ assert.ok(r.unknowns.some(x=>x.code==='compute-off'));assert.ok(r.unknowns.some(x=>x.code==='shared-storage'));
+ assert.equal(r.findings.notSelected.find(x=>x.code==='compute-off').target.field,'compute');
+ assert.equal(r.findings.notSelected.find(x=>x.code==='shared-storage').target.field,'storageCapacity');
+ assert.equal(r.coverage.find(x=>x.id==='compute').status,'not-checked');
+ const html=A.reportHTML(s,M,P);assert.match(html,/Not checked in this estimate/);assert.match(html,/optional checks are not selected/);assert.match(html,/CPU and memory checks are not selected/);
+});
+
+test('a half-entered shared-storage check is missing information with its precise field',()=>{
+ for(const [planning,field]of [[{storageCapacity:100,storageAllocated:null},'storageAllocated'],[{storageCapacity:null,storageAllocated:20},'storageCapacity']]){
+  const s=scenario();s.sites[0].planning=planning;const r=A.assess(s,M,P),finding=r.findings.missingInputs.find(x=>x.code==='shared-storage');
+  assert.ok(finding);assert.equal(finding.target.field,field);assert.equal(r.findings.notSelected.some(x=>x.code==='shared-storage'),false);assert.match(finding.message,/only one total entered/);
+ }
+});
+
+test('quick known-hardware and manual totals do not require an unused database inventory',()=>{
+ const T=require('./topology.js');
+ for(const requirements of [undefined,{source:'manual',ecpu:20,ramGB:40,unsizedACDs:9,minRatio:2,incomplete:false}]){
+  const s=scenario(),machine=s.sites[0];machine.planningIntent='allocation';machine.checkCompute=false;if(requirements)machine.clusters[0].requirements=requirements;
+  const r=A.assess(s,M,P,T),finding=r.findings.notSelected.find(x=>x.code==='named-inventory');
+  assert.ok(finding);assert.equal(finding.target.panelId,'panel-topology');assert.equal(r.findings.missingInputs.some(x=>['named-inventory','acd_inventory_missing'].includes(x.code)),false);assert.ok(r.machines[0].result);
+ }
+});
+
+test('selected inventory with no groups remains missing, including legacy source inference',()=>{
+ const T=require('./topology.js');
+ for(const metadata of [{source:'database-inventory'},{source:'database-topology'},{topologySignature:'{"slots":10,"acds":[]}'}]){
+  const s=scenario(),c=s.sites[0].clusters[0];c.requirements={ecpu:0,ramGB:0,unsizedACDs:10,minRatio:2,incomplete:true,...metadata};
+  const r=A.assess(s,M,P,T);assert.equal(r.findings.missingInputs.filter(x=>['named-inventory','acd_inventory_missing'].includes(x.code)).length,1);assert.equal(r.findings.notSelected.some(x=>x.code==='named-inventory'),false);
+ }
+});
+
+test('a started named group still requires its missing name and database rows',()=>{
+ const T=require('./topology.js'),s=scenario(),c=s.sites[0].clusters[0];c.requirements={source:'manual',ecpu:20,ramGB:40,unsizedACDs:9,minRatio:2,incomplete:false};c.topology={acds:[T.newACD('')]};
+ const r=A.assess(s,M,P,T);assert.ok(r.findings.missingInputs.some(x=>x.code==='acd_name_missing'));assert.ok(r.findings.missingInputs.some(x=>x.code==='acd_has_no_databases'));assert.equal(r.findings.notSelected.some(x=>x.code==='named-inventory'),false);
 });

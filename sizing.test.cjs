@@ -1,4 +1,4 @@
-const test=require('node:test'),assert=require('node:assert/strict'),M=require('./model.js'),P=require('./planning.js'),S=require('./sizing.js');
+const test=require('node:test'),assert=require('node:assert/strict'),M=require('./model.js'),P=require('./planning.js'),S=require('./sizing.js'),T=require('./topology.js'),Q=require('./requirements.js');
 function sample(){const s=M.newSite();s.clusters[0].slots=3;s.clusters[0].requirements={ecpu:200,ramGB:800,minRatio:4,unsizedACDs:1,acdEcpus:[120,80,0],incomplete:true};return s;}
 test('workload sizing separates base CPU, ACD floors and explicit planning allowance',()=>{
  const c=sample().clusters[0];assert.deepEqual(S.allocation(c,2,50),{cpu:158,memoryPerCPU:4,memoryRule:'current'});
@@ -59,4 +59,24 @@ test('Base candidates keep the fixed two-node shape and respect asymmetric exist
  site.nodes[0].otherCPU=100;const base=S.build(site,'x11m-base',2,M),r=M.calculate(base);
  assert.ok(r.errors.some(x=>x.includes('DB 1: allocated ECPUs')));assert.ok(r.nodes.reduce((sum,n)=>sum+n.cpu-n.cpuUsed-n.otherCPU,0)>0);
  const suggested=S.suggest(site,M,P);assert.equal(suggested.rows.find(row=>row.profile==='x11m-base').fit,false);
+});
+test('stale inventory blocks hardware suggestions while saved allocation capacity remains readable',()=>{
+ const site=sample(),c=site.clusters[0],a=T.newACD();a.adbs=[{...T.newADB(),ecpu:100,ramGB:400,storageTB:1}];c.topology={acds:[a]};c.requirements=Q.inventoryRequirements(c);
+ const before=M.calculate(site);assert.ok(S.suggest(site,M,P).minimum);
+ a.adbs[0].ecpu=150;S.validate(site);assert.deepEqual(M.calculate(site),before);assert.throws(()=>S.validate(site,true),/Review and apply/);assert.throws(()=>S.suggest(site,M,P),/inventory totals changed/);
+ c.requirements=Q.inventoryRequirements(c);assert.doesNotThrow(()=>S.validate(site,true));
+});
+test('old inventory records and changed reserved slots remain loadable until explicitly reviewed',()=>{
+ const site=sample(),c=site.clusters[0],a=T.newACD();a.adbs=[{...T.newADB(),ecpu:100,ramGB:400}];c.topology={acds:[a]};c.requirements=T.databaseTotals(c).requirements;delete c.requirements.source;
+ c.slots=1;const applied=structuredClone(c.requirements);assert.doesNotThrow(()=>S.validate(site));assert.deepEqual(c.requirements,applied);assert.throws(()=>S.validate(site,true),/Review and apply/);
+ c.requirements=Q.inventoryRequirements(c);assert.doesNotThrow(()=>S.validate(site,true));assert.equal(c.requirements.acdEcpus.length,1);
+});
+test('metadata edits and independent manual requirements remain usable without reapplying inventory',()=>{
+ const site=sample(),c=site.clusters[0],a=T.newACD();a.adbs=[{...T.newADB(),ecpu:100,ramGB:400}];c.topology={acds:[a]};c.requirements=Q.inventoryRequirements(c);
+ a.name='Renamed';a.adbs[0].storageTB=50;assert.doesNotThrow(()=>S.validate(site,true));
+ c.requirements=Q.useManual(c);a.adbs[0].ecpu=1000;assert.doesNotThrow(()=>S.validate(site,true));assert.equal(c.requirements.ecpu,200);
+});
+test('known RAM with missing database CPU can be saved as incomplete but cannot size hardware',()=>{
+ const site=sample(),c=site.clusters[0],a=T.newACD();a.adbs=[{...T.newADB(),ecpu:null,ramGB:400}];c.topology={acds:[a]};c.requirements=Q.inventoryRequirements(c);
+ assert.equal(c.requirements.incomplete,true);assert.doesNotThrow(()=>S.validate(site));assert.throws(()=>S.validate(site,true),/enter ECPU demand/);
 });

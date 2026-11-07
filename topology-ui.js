@@ -24,6 +24,9 @@ function renderTopologyEditor(){
 }
 function renderTopologyReview(){
  const summary=T.inspect(state),target=$('topology-review'),live=$('topology-live-findings');
+ // Older topology signatures also included storage. CPU/RAM sizing provenance
+ // uses the narrower requirements signature, including for resumed old plans.
+ summary.warnings=summary.warnings.filter(x=>x.code!=='database_totals_stale'||Q.status(state.sites[x.siteIndex].clusters[x.clusterIndex]).stale);
  // Update text/options in place so typing and keyboard focus stay in the existing form.
  if(!summary.errors.some(x=>x.code==='invalid_topology')){
   for(const e of T.entries(state)){
@@ -44,8 +47,10 @@ function renderTopologyReview(){
 }
 function topologyChange(fn,full=false){
  let changed=false;
- safeUpdate(()=>{fn();T.validateState(state);changed=true;},full);
+ const before=site().clusters.map(c=>Q.source(c)==='database-inventory'?Q.sizingSignature(c):null);
+ safeUpdate(()=>{fn();T.validateState(state);if(planningIntent(site())==='workload'&&site().clusters.some((c,i)=>before[i]!==null&&before[i]!==Q.sizingSignature(c)))needsNewSizing();changed=true;},full);
  if(!full)renderTopologyReview();
+ renderRequirementSources();
  return changed;
 }
 function initTopology(){
@@ -54,7 +59,7 @@ function initTopology(){
  target.addEventListener('input',event=>{
   const el=event.target,key=el.dataset?.topologyField;if(!key||['independentSwitchover','peerSettingsConfirmed'].includes(key))return;
   const a=T.find(state,el.dataset.acdId)?.acd,d=el.dataset.adbId?a?.adbs.find(d=>d.id===el.dataset.adbId):a;if(!d)return;
-  topologyChange(()=>{d[key]=key==='name'?el.value:el.value===''?null:Number(el.value);if(key!=='name')needsNewSizing();});
+  topologyChange(()=>{d[key]=key==='name'?el.value:el.value===''?null:Number(el.value);});
  });
  target.addEventListener('change',event=>{
   const el=event.target;
@@ -68,21 +73,19 @@ function initTopology(){
  target.addEventListener('click',event=>{
   const el=event.target.closest('[data-topology-action]');if(!el)return;
   const action=el.dataset.topologyAction,e=el.dataset.acdId?T.find(state,el.dataset.acdId):null,c=site().clusters[Number(el.dataset.clusterIndex)];
-  const changed=topologyChange(()=>{
+  if(action==='use-totals'){previewInventorySizing(Number(el.dataset.clusterIndex));return;}
+  topologyChange(()=>{
    T.ensureIds(state);
    if(action==='add-acd'){
     if(!c)throw Error('Choose an AVMC first.');const list=T.acds(c);if(list.length>=Math.min(c.slots,T.MAX_ACDS))throw Error('Add an ACD slot before adding another named ACD.');
-    if(!c.topology)c.topology={acds:[]};let n=1;while(c.topology.acds.some(a=>a.name===`ACD ${n}`))n++;const a=T.newACD(`ACD ${n}`);c.topology.acds.push(a);topologyOpenACDs.add(a.id);needsNewSizing();
+    if(!c.topology)c.topology={acds:[]};let n=1;while(c.topology.acds.some(a=>a.name===`ACD ${n}`))n++;const a=T.newACD(`ACD ${n}`);c.topology.acds.push(a);topologyOpenACDs.add(a.id);
    }else if(action==='add-adb'){
-    if(!e)throw Error('ACD no longer exists.');if(e.acd.adbs.length>=T.MAX_ADBS)throw Error('The calculator database-row limit has been reached.');let n=1;while(e.acd.adbs.some(d=>d.name===`ADB ${n}`))n++;e.acd.adbs.push(T.newADB(`ADB ${n}`));topologyOpenACDs.add(e.acd.id);needsNewSizing();
+    if(!e)throw Error('ACD no longer exists.');if(e.acd.adbs.length>=T.MAX_ADBS)throw Error('The calculator database-row limit has been reached.');let n=1;while(e.acd.adbs.some(d=>d.name===`ADB ${n}`))n++;e.acd.adbs.push(T.newADB(`ADB ${n}`));topologyOpenACDs.add(e.acd.id);
    }else if(action==='remove-adb'){
-    if(!e)return;e.acd.adbs=e.acd.adbs.filter(d=>d.id!==el.dataset.adbId);needsNewSizing();
+    if(!e)return;e.acd.adbs=e.acd.adbs.filter(d=>d.id!==el.dataset.adbId);
    }else if(action==='remove-acd'){
-    if(!e)return;T.unlinkPeer(state,e.acd.id);e.cluster.topology.acds=e.cluster.topology.acds.filter(a=>a.id!==e.acd.id);topologyOpenACDs.delete(e.acd.id);needsNewSizing();
-   }else if(action==='use-totals'){
-    if(!c||!T.acds(c).length)throw Error('Add named ACDs and database rows first.');if(T.acds(c).length>c.slots)throw Error('Named ACDs exceed the reserved slots.');c.requirements=T.databaseTotals(c).requirements;needsNewSizing();
+    if(!e)return;T.unlinkPeer(state,e.acd.id);e.cluster.topology.acds=e.cluster.topology.acds.filter(a=>a.id!==e.acd.id);topologyOpenACDs.delete(e.acd.id);
    }
   },true);
-  if(action==='use-totals'&&changed)message('Database totals copied into this AVMC’s workload inputs. Missing CPU/RAM values stay flagged. Compare hardware again; peer copies are sized on their own machines.');
  });
 }

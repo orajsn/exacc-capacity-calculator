@@ -65,6 +65,9 @@ function clearFloatingLocal(note) {
  $('dock-machine').textContent = `${site().siteName || 'Unspecified site'} / ${site().name}`;
  $('dock-mode').textContent = preview ? 'Preview · not applied' : 'Editing now';
  $('dock-free').textContent = '—';
+ for(const prefix of ['dock','dock-cpu','dock-memory']){$(prefix+'-free').textContent='—';$(prefix+'-detail').textContent='Check inputs';$(prefix+'-metric').dataset.level='unchecked';}
+ $('dock-scope').disabled=true;$('dock-view-label').textContent='Inputs incomplete';
+ site().clusters.forEach((_,i)=>{const cost=$('cost-'+i),total=$('allocation-total-'+i);if(cost)cost.textContent='Check inputs';if(total)total.textContent='Complete valid inputs to update totals.';});
  $('dock-label').textContent = 'Local storage left';
  $('dock-allocation').textContent = note;
  $('dock-status').textContent = 'Enter valid values to update the total.';
@@ -73,34 +76,26 @@ function clearFloatingLocal(note) {
 }
 
 function renderFloatingLocal(s, result, isPreview = false) {
- renderTopology(s, result, isPreview);
- if(!hardwareReady(s)&&!isPreview){
-  $('local-dock').dataset.level='draft';
-  $('dock-machine').textContent=`${s.siteName||'Site not named'} / ${s.name}`;
-  $('dock-mode').textContent='Workload sizing';
-  $('dock-label').textContent='Hardware not selected';
-  $('dock-free').textContent='—';
-  $('dock-allocation').textContent=`${s.clusters.length} AVMC${s.clusters.length===1?'':'s'} planned`;
-  $('dock-status').textContent='Enter workloads in step 2, then choose hardware in step 3.';
-  $('dock-save').disabled=false;$('dock-save').title='Save this draft to continue later.';return;
+ renderTopology(s,result,isPreview);
+ const scope=$('dock-scope'),signature=`${s.uid||s.name}|${s.nodes.map(n=>n.id).join(',')}`;
+ if(scope.dataset.signature!==signature){scope.innerHTML='<option value="machine">Whole machine</option>'+s.nodes.map(n=>`<option value="node:${n.id}">DB ${n.id} only</option>`).join('');scope.value='machine';scope.dataset.signature=signature;}
+ const v=window.ExaLiveCapacity.build(s,result,P,{ready:hardwareReady(s),preview:isPreview,scope:scope.value});
+ scope.disabled=!hardwareReady(s)&&!isPreview;$('dock-scope-control').hidden=scope.disabled;
+ $('local-dock').dataset.level=v.level;
+ $('dock-machine').textContent=`${s.siteName||'Site not named'} / ${s.name}`;$('dock-machine').title=$('dock-machine').textContent;
+ $('dock-mode').textContent=isPreview?'Preview · not applied':v.level==='draft'?'Workload sizing':'Editing now';
+ $('dock-view-label').textContent=v.scopeLabel;
+ for(const m of v.metrics){
+  const prefix=m.id==='local'?'dock':`dock-${m.id}`,short=m.checked&&m.free< -1e-7;
+  const name=m.id==='local'?'Local storage':m.id==='cpu'?'CPU':'Memory (estimate)';
+  $(prefix+'-label').textContent=v.level==='draft'&&m.id==='local'?'Hardware not selected':`${isPreview?'Preview · ':''}${name} ${short?'shortfall':'left'}`;
+  $(prefix+'-free').textContent=m.checked?`${fmt(short?-m.free:m.free)} ${m.unit}`:'—';
+  $(prefix+'-detail').textContent=m.checked?`${fmt(m.allocated)} / ${fmt(m.capacity)} ${m.unit} allocated`:m.reason;
+  $(prefix+'-metric').dataset.level=!m.checked?'unchecked':m.status==='Over capacity'?'error':m.status==='Below buffer'?'warning':'fit';
  }
- const local = P.resources(s, result).find(row => row.name === 'Local storage');
- const worst = result.nodes.reduce((a,n) => n.free < a.free ? n : a);
- const hasError = local.status === 'Over capacity' || result.errors.length > 0;
- $('local-dock').dataset.level = hasError ? 'error' : local.status === 'Below buffer' ? 'warning' : 'fit';
- $('dock-machine').textContent = `${s.siteName || 'Unspecified site'} / ${s.name}`;
- $('dock-machine').title = $('dock-machine').textContent;
- $('dock-mode').textContent = isPreview ? 'Preview · not applied' : 'Editing now';
- const shortfall = result.free < -1e-7;
- $('dock-label').textContent = `${isPreview?'Preview · ':''}${shortfall ? 'Local storage shortfall' : 'Local storage left'}`;
- $('dock-free').textContent = `${fmt(shortfall ? -result.free : Math.max(0, result.free))} GB`;
- $('dock-allocation').textContent = `${fmt(result.used + result.other)} / ${fmt(result.capacity)} GB allocated · ${s.clusters.length} AVMC${s.clusters.length===1?'':'s'} · ${result.slots} max ACDs`;
- $('dock-status').textContent = worst.free < -1e-7
-  ? `DB ${worst.id} is short by ${fmt(-worst.free)} GB. Check each server.`
-  : result.errors.length ? 'Local storage fits; other limits are exceeded. See details.'
-  : `${reserveLabel(local.status)} · buffer ${s.bufferPercent}%`;
- $('dock-save').disabled = isPreview;
- $('dock-save').title = isPreview ? 'Apply or cancel the preview before saving from this bar.' : '';
+ $('dock-allocation').textContent=hardwareReady(s)||isPreview?`${s.clusters.length} AVMC${s.clusters.length===1?'':'s'} · ${result.slots} max ACD${result.slots===1?'':'s'}`:`${s.clusters.length} AVMC${s.clusters.length===1?'':'s'} planned`;
+ $('dock-status').textContent=v.note;
+ $('dock-save').disabled=isPreview;$('dock-save').title=isPreview?'Apply or cancel the preview before downloading a backup.':'Download this plan as a portable backup.';
 }
 
 function renderNavigation() {
@@ -139,6 +134,7 @@ function updateWorkflow() {
  $('remove-site').disabled = state.sites.length === 1;
  $('duplicate-site').disabled = state.sites.length >= 8;
  $('active-machine').textContent = `${s.siteName || 'Unspecified site'} / ${s.name}`;
+ $('resource-scope').textContent=`Whole-machine totals · ${s.nodes.length} DB servers`;
  $('configuration-stage').textContent = s.baseline ? 'Proposed configuration' : 'Configuration setup';
  $('design-heading').textContent = s.baseline ? 'Edit proposed AVMCs' : 'Edit AVMC allocations';
  $('capture-baseline').textContent = s.baseline ? 'Replace recorded “Before” values' : 'Record “Before” values';
@@ -147,7 +143,7 @@ function updateWorkflow() {
   : 'Optional: record the numbers you have entered, then edit the design to compare Before versus After. Skip this if you only need capacity totals.';
  if (preview && (preview.active !== active || preview.signature !== JSON.stringify(state))) cancelPreview();
  refreshJourney();
- renderTopologyReview();renderAssessment();conventionalStatus();renderScenarioComparison();updateDeviceDraft();
+ renderTopologyReview();renderAssessment();renderRequirementSources();conventionalStatus();renderScenarioComparison();updateDeviceDraft();
 }
 
 function clearResourceCards() {
@@ -227,6 +223,8 @@ function initWorkflow() {
  savedSignature = JSON.stringify(state);
  $('save-reminder-button').onclick = () => $('save').click();
  $('dock-save').onclick = () => { if (!preview) $('save').click(); };
+ $('dock-findings').onclick=()=>{goGuideStep(4);$('assessment-summary').scrollIntoView({behavior:'smooth',block:'start'});};
+ $('dock-scope').onchange=()=>{if(preview&&!preview.candidate){clearFloatingLocal('Complete the preview inputs.');return;}const candidate=preview?.candidate||site();try{renderFloatingLocal(candidate,M.calculate(candidate),!!preview?.candidate);}catch(e){clearFloatingLocal(e.message);}};
  $('open-scenario').addEventListener('keydown', event => {
   if (event.key === 'Enter' || event.key === ' ') {
    event.preventDefault();

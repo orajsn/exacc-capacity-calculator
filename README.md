@@ -4,15 +4,23 @@ A browser-only presales planner for Exadata Cloud@Customer. Keep separate custom
 
 [Open the planner](https://orajsn.github.io/exacc-capacity-calculator/) · [Product goals](PRODUCT_GOALS.md) · [Release history](CHANGELOG.md) · [Test catalogue](TESTING.md)
 
-## My plans: customers, projects and owner labels
+## Choose a starting point
 
-**My plans** lists the projects saved in this browser, grouped by customer. Search by customer, project, optional owner/alias, site, machine or full Plan ID. Each plan keeps its own machines, database inventory and alternatives.
+- **Quick capacity check:** choose known hardware and add AVMC/ACD reservations. It starts with local storage only; enable CPU/memory checks when the allocations are known.
+- **New customer plan:** open the customer/project form and use the full four-step workflow.
+- **Try an example:** explore an editable, illustrative production/DR plan. It does not save automatically or replace unsaved work without a choice.
+
+The **Start** button returns to these choices. **Saved plans** opens device copies; **Download backup** saves a portable .json file; **Open plan file** reads that backup. Switching plans preserves the existing unsaved-work guard.
+
+## Saved plans: customers, projects and owner labels
+
+**Saved plans** lists the projects saved in this browser, grouped by customer. Search by customer, project, optional owner/alias, site, machine or full Plan ID. Each plan keeps its own machines, database inventory and alternatives.
 
 - **Create a customer plan** starts a separate project with a generated Plan ID and saves it on this device.
 - **Save on this device** keeps the working plan in the library and enables automatic updates after a short pause. You can turn automatic saving off in the saving help.
 - **Save as new copy** creates a separate Plan ID. Loading an alternative inside a plan keeps that plan's identity.
 - **Archive** removes a saved plan from the active list; Archived plans can be restored. Permanent deletion is a separate explicit action.
-- JSON files and reports include customer, project, owner and full Plan ID. Older JSON files receive an ID when opened; save JSON to preserve it.
+- JSON files and reports include customer, project, owner and full Plan ID. Older JSON files receive an ID when opened; download a backup to preserve it.
 
 An owner alias is a label, not a verified account. A Plan ID is a reference, not a password or an online retrieval code. Other people using the public calculator do not automatically see your plans. On another device/browser, open the plan's JSON first; entering the ID alone cannot retrieve data that is not there.
 
@@ -21,9 +29,19 @@ An owner alias is a label, not a verified account. A Plan ID is a reference, not
 1. **Machines:** add one entry per ExaC@C infrastructure. Choose **Size a new machine** or **Check known hardware**. Hardware preset capacities are locked; Custom accepts verified console values.
 2. **AVMCs & workloads:** enter AVMC allocations or workload ECPU/RAM needs. Optionally import Excel/CSV and name the ACDs and databases. **Use database totals for sizing** is an explicit action.
 3. **Compare options:** compare hardware, alternative AVMC layouts or saved plans. Save separate growth and migration-overlap options without changing the working plan.
-4. **Review & save:** inspect the limiting resource, warnings and open checks. Save JSON to resume, or download the report for all-machine executive and technical views.
+4. **Review & save:** inspect the limiting resource, warnings and open checks. Download backup to resume, or download the report for all-machine executive and technical views.
 
 The capacity bar keeps Next, Undo, Redo and Save available. Detailed inputs are optional. Buffers are preferred free capacity: missing a buffer warns; it does not reduce physical capacity.
+
+The live bar shows remaining local storage, CPU and estimated memory. Choose **Whole machine** or an individual DB server; Review cards remain explicitly labelled whole-machine totals. A positive total does not hide a node shortage. Disabled or unavailable checks show no invented free capacity, and preview values remain labelled until applied.
+
+## Which inputs drive sizing?
+
+Each AVMC selects **Manual totals** or **Database inventory**. Manual totals stay independent of named database rows. Inventory totals are applied through a review showing current values, proposed totals, changes and missing data; applying never silently resizes known AVMC allocations.
+
+Changing inventory CPU/RAM/grouping/slot inputs marks previously applied inventory sizing stale. Hardware suggestions then require updated totals. Renames, storage and DR metadata do not invalidate CPU/RAM sizing. Switching back to Manual restores the saved manual assumptions, with an incomplete flag when a changed slot layout makes an old breakdown unusable.
+
+Review separates **Corrections**, **Missing information**, **Advisories** and **Not checked in this estimate**. Review input actions open a reliably identified machine/AVMC/database field; deleted or ambiguous items fall back to a surviving parent instead of another record. Optional disabled checks are not presented as required missing inputs. These checks still do not establish provisioning or DR approval.
 
 ## Database placement and DR
 
@@ -56,7 +74,7 @@ Choose whether the existing Other values already include those footprints. Inclu
 
 ## Saving and recovery
 
-**Save JSON** downloads the current customer plan with its ID, owner, all machines, named inventory, alternatives, assumptions and rule metadata. The filename includes the customer/project and a short ID suffix. Check that the download completed. **Open JSON** resumes it without automatically overwriting a saved device copy. Existing v1 scenario files remain readable; results use current rules and imported rule differences are shown.
+**Download backup** downloads the current customer plan with its ID, owner, all machines, named inventory, alternatives, assumptions and rule metadata. The filename includes the customer/project and a short ID suffix. Check that the download completed. **Open plan file** resumes it without automatically overwriting a saved device copy. Existing v1 scenario files remain readable; results use current rules and imported rule differences are shown.
 
 The library stores separate plans in IndexedDB on this browser/device. It does not sync or upload. Switching away from unsaved work offers Save, Discard or Keep working. A newer saved revision from another tab causes a conflict instead of a silent overwrite; choose the saved version, save a new copy, or explicitly replace it.
 

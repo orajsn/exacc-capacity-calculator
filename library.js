@@ -6,7 +6,7 @@
  function fail(code,message,extra){const error=new Error(message);error.code=code;if(extra)Object.assign(error,extra);return error;}
  function databaseError(error){
   if(typeof error?.code==='string')return error;
-  if(error?.name==='QuotaExceededError')return fail('quota','This browser has no room to save the plan. Download JSON or remove an archived plan. Existing saved plans have not been replaced.');
+  if(error?.name==='QuotaExceededError')return fail('quota','This browser has no room to save the plan. Download a backup or remove an archived plan. Existing saved plans have not been replaced.');
   return fail('unavailable','Device storage is unavailable or the operation was interrupted. Keep this tab open and download JSON to keep your work.');
  }
  function id(value){if(typeof value!=='string'||!ID_PATTERN.test(value))throw fail('invalid','Plan ID must contain 8–80 letters, numbers, hyphens or underscores.');return value;}
@@ -101,7 +101,7 @@
  function createStore(backend,options={}){
   const now=options.now||(()=>new Date().toISOString()),digest=options.digest||sha256;
   let closed=false;
-  function ready(){if(closed)throw fail('unavailable','This device library connection is closed. Reopen My plans or refresh the page.');}
+  function ready(){if(closed)throw fail('unavailable','This device library connection is closed. Reopen Saved plans or refresh the page.');}
   async function execute(action){try{return await action();}catch(error){throw databaseError(error);}}
   async function read(idValue){ready();id(idValue);return unpack(await execute(()=>backend.read(idValue)));}
   async function getMeta(idValue){ready();id(idValue);const meta=await execute(()=>backend.getMeta(idValue));if(!meta)throw fail('notfound','This plan is no longer saved on this browser.');return structuredClone(metaValid(meta));}

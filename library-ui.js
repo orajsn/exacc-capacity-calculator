@@ -19,7 +19,7 @@ function renderPlanContext(){
  $('plan-switch-save').disabled=libraryTransitioning;$('plan-switch-discard').disabled=libraryTransitioning;
  $('plan-device-status').textContent=libraryError|| (librarySaving?'Saving on this device…':planSavedHere()?`Saved on this device${libraryAuto?' · automatic updates on':''}`:libraryBinding?'Changes not saved on this device yet':'Not saved on this device');
  $('plan-device-status').dataset.state=libraryError?'warning':planSavedHere()?'saved':'unsaved';
- $('draft-status').textContent=libraryError|| (libraryAuto?'Valid changes are saved to this plan after a short pause. Keep JSON as a portable backup.':'Automatic device saving is off. Save on this device to keep this plan in My plans.');
+ $('draft-status').textContent=libraryError|| (libraryAuto?'Valid changes are saved to this plan after a short pause. Keep JSON as a portable backup.':'Automatic device saving is off. Save on this device to keep this plan in Saved plans.');
 }
 async function refreshPlanList(){
  if(!libraryStore)return;
@@ -28,12 +28,12 @@ async function refreshPlanList(){
 function renderPlanList(){
  const query=$('library-search').value.trim().toLocaleLowerCase('en-US'),archived=$('library-archived').checked;
  const active=libraryRecords.filter(m=>!m.archivedAt),gone=libraryRecords.filter(m=>m.archivedAt),bytes=libraryRecords.reduce((n,m)=>n+(m.bodyBytes||0),0);
- $('library-state').textContent=libraryStore?`${active.length} saved plan${active.length===1?'':'s'} · ${gone.length} archived · ${(bytes/1000000).toFixed(1)} MB of plan data on this browser`:'Device library unavailable. You can still use the calculator and save JSON.';
+ $('library-state').textContent=libraryStore?`${active.length} saved plan${active.length===1?'':'s'} · ${gone.length} archived · ${(bytes/1000000).toFixed(1)} MB of plan data on this browser`:'Device library unavailable. You can still use the calculator and download a backup.';
  const rows=libraryRecords.filter(m=>!!m.archivedAt===archived).filter(m=>[m.id,m.customer,m.name,m.owner,...(m.sites||[]).flatMap(s=>[s.siteName,s.name])].join(' ').toLocaleLowerCase('en-US').includes(query)).sort((a,b)=>String(b.updatedAt).localeCompare(String(a.updatedAt)));
  const groups=new Map();for(const m of rows){const k=(m.customer||'Customer not named').trim().toLocaleLowerCase('en-US');if(!groups.has(k))groups.set(k,{name:m.customer||'Customer not named',plans:[]});groups.get(k).plans.push(m);}
- $('library-cards').innerHTML=rows.length?[...groups.values()].map(g=>`<section class="customer-group"><h3>${escapeHTML(g.name)}</h3><div class="plan-card-grid">${g.plans.map(m=>`<article class="plan-card"><div><h4>${escapeHTML(m.name||'Untitled plan')}</h4><p>${escapeHTML(m.owner?`Owner: ${m.owner}`:'Owner not specified')}</p><code>${escapeHTML(m.id)}</code></div><p class="hint">${m.machineCount} machine${m.machineCount===1?'':'s'} · ${escapeHTML((m.sites||[]).map(s=>`${s.siteName?s.siteName+' / ':''}${s.name}`).join(' · '))}</p><p class="hint">Saved ${escapeHTML(new Date(m.updatedAt).toLocaleString())}</p><div class="actions">${m.archivedAt?`<button data-plan-action="restore" data-plan-id="${escapeHTML(m.id)}">Restore</button><button data-plan-action="export" data-plan-id="${escapeHTML(m.id)}">Export JSON</button><button class="remove" data-plan-action="delete" data-plan-id="${escapeHTML(m.id)}">Delete permanently</button>`:`<button class="primary" data-plan-action="open" data-plan-id="${escapeHTML(m.id)}">Open plan</button><button data-plan-action="copy" data-plan-id="${escapeHTML(m.id)}">Duplicate</button><button data-plan-action="export" data-plan-id="${escapeHTML(m.id)}">Export JSON</button><button class="remove" data-plan-action="archive" data-plan-id="${escapeHTML(m.id)}">Archive</button>`}</div></article>`).join('')}</div></section>`).join(''):`<p class="empty-editor">${query?'No plans match this search.':archived?'No archived plans.':'No saved plans yet. Create one, or open a JSON file and save it on this device.'}</p>`;
+ $('library-cards').innerHTML=rows.length?[...groups.values()].map(g=>`<section class="customer-group"><h3>${escapeHTML(g.name)}</h3><div class="plan-card-grid">${g.plans.map(m=>`<article class="plan-card"><div><h4>${escapeHTML(m.name||'Untitled plan')}</h4><p>${escapeHTML(m.owner?`Owner: ${m.owner}`:'Owner not specified')}</p><code>${escapeHTML(m.id)}</code></div><p class="hint">${m.machineCount} machine${m.machineCount===1?'':'s'} · ${escapeHTML((m.sites||[]).map(s=>`${s.siteName?s.siteName+' / ':''}${s.name}`).join(' · '))}</p><p class="hint">Saved ${escapeHTML(new Date(m.updatedAt).toLocaleString())}</p><div class="actions">${m.archivedAt?`<button data-plan-action="restore" data-plan-id="${escapeHTML(m.id)}">Restore</button><button data-plan-action="export" data-plan-id="${escapeHTML(m.id)}">Download backup</button><button class="remove" data-plan-action="delete" data-plan-id="${escapeHTML(m.id)}">Delete permanently</button>`:`<button class="primary" data-plan-action="open" data-plan-id="${escapeHTML(m.id)}">Open plan</button><button data-plan-action="copy" data-plan-id="${escapeHTML(m.id)}">Duplicate</button><button data-plan-action="export" data-plan-id="${escapeHTML(m.id)}">Download backup</button><button class="remove" data-plan-action="archive" data-plan-id="${escapeHTML(m.id)}">Archive</button>`}</div></article>`).join('')}</div></section>`).join(''):`<p class="empty-editor">${query?'No plans match this search.':archived?'No archived plans.':'No saved plans yet. Create one, or open a JSON file and save it on this device.'}</p>`;
 }
-function showPlanLibrary(open=true){$('plan-library').hidden=!open;$('planner-workspace').hidden=open;$('plan-context').hidden=open;for(const id of ['local-dock','save','print','save-status','save-help'])$(id).hidden=open;if(open){refreshPlanList();$('library-heading').focus({preventScroll:true});$('plan-library').scrollIntoView({block:'start',behavior:'smooth'});}}
+function showPlanLibrary(open=true){if($('start-options'))$('start-options').hidden=true;if(typeof startChoicesOpen!=='undefined')startChoicesOpen=false;$('plan-library').hidden=!open;$('planner-workspace').hidden=open;$('plan-context').hidden=open;for(const id of ['local-dock','save','print','save-status','save-help'])$(id).hidden=open;if(open){refreshPlanList();$('library-heading').focus({preventScroll:true});$('plan-library').scrollIntoView({block:'start',behavior:'smooth'});}}
 function announcePlanChange(meta,action='save'){try{libraryChannel?.postMessage({id:meta.id,revision:meta.revision,action});}catch{}}
 function resetLibraryBinding(binding=null,auto=false){
  clearTimeout(librarySaveTimer);librarySaveTimer=null;libraryGeneration++;libraryAutoEpoch++;libraryBinding=binding;libraryAuto=auto;librarySavedSignature=null;libraryConflict=null;libraryError='';$('plan-conflict').hidden=true;
@@ -56,7 +56,7 @@ async function runPlanTransition(action){
 }
 function showPlanConflict(error){
  libraryAuto=false;libraryConflict={id:state.project.id,latest:error.latest||error.meta||null,code:error.code};
- libraryError=error.code==='archived'?'This plan is archived. Restore it in My plans or save a new copy.':'A saved copy of this Plan ID already exists or changed in another tab. Your working plan has been kept.';
+ libraryError=error.code==='archived'?'This plan is archived. Restore it in Saved plans or save a new copy.':'A saved copy of this Plan ID already exists or changed in another tab. Your working plan has been kept.';
  $('plan-conflict').hidden=false;$('plan-conflict-text').textContent=libraryError;
  $('plan-replace-saved').hidden=error.code==='archived';
 }
@@ -66,7 +66,7 @@ async function savePlanOnDevice({expectedRevision}={}){
  if(librarySaving){await librarySaving;if(planSavedHere())return true;}
  await libraryReady;
  if(requestedGeneration!==libraryGeneration||requestedId!==state.project.id)return false;
- if(!libraryStore){libraryError='This browser cannot save plans here. Download JSON to keep your work.';renderPlanContext();message(libraryError);return false;}
+ if(!libraryStore){libraryError='This browser cannot save plans here. Download a backup to keep your work.';renderPlanContext();message(libraryError);return false;}
  if(preview){message('Apply or cancel the preview before saving a plan.');return false;}
  let copy,signature,generation,id,revision;
  try{L.ensureIdentity(state);validateWorkspace(state);copy=structuredClone(state);signature=JSON.stringify(copy);id=copy.project.id;generation=libraryGeneration;revision=expectedRevision??(libraryBinding?.id===id?libraryBinding.revision:0);}
@@ -92,14 +92,14 @@ async function openStoredPlan(id){
  const before=planSignature(),loaded=await libraryStore.load(id),next=importWorkspace(loaded.scenario);
  if(before!==planSignature()&&planHasUnkeptChanges())throw Error('The working plan changed while opening. Your edits have been kept; open the saved plan again when ready.');
  if(loaded.meta.archivedAt)throw Error('Restore this archived plan before opening it.');
- activatePlan(next,{binding:loaded.meta,auto:true,label:'Opened from My plans · JSON backup recommended'});
+ activatePlan(next,{binding:loaded.meta,auto:true,label:'Opened from Saved plans · JSON backup recommended'});
 }
 async function saveWorkingCopy(){
- await libraryReady;if(!libraryStore){message('Device storage is unavailable. Download JSON instead.');return false;}
+ await libraryReady;if(!libraryStore){message('Device storage is unavailable. Download a backup instead.');return false;}
  try{
   validateWorkspace(state);const before=planSignature(),autoEpoch=libraryAutoEpoch,copy=L.copyAsNew(state);copy.project.name=`${copy.project.name||'Untitled plan'} (copy)`.slice(0,120);
   const saved=await libraryStore.save(copy,{expectedRevision:0});announcePlanChange(saved.meta);
-  if(before===planSignature()&&autoEpoch===libraryAutoEpoch)activatePlan(copy,{binding:saved.meta,auto:true,label:'New device copy · JSON backup recommended'});else message('The copy was saved in My plans. Your newer edits or saving preference remain in the working plan.');
+  if(before===planSignature()&&autoEpoch===libraryAutoEpoch)activatePlan(copy,{binding:saved.meta,auto:true,label:'New device copy · JSON backup recommended'});else message('The copy was saved in Saved plans. Your newer edits or saving preference remain in the working plan.');
   await refreshPlanList();return true;
  }catch(e){message(e.message);return false;}
 }
@@ -163,7 +163,7 @@ async function initLibrary(){
   const legacy=readLegacyPlanDraft();
   try{
    libraryStore=await L.open();
-   if(legacy.draft){try{validateWorkspace(legacy.draft.scenario);const migrated=await libraryStore.importLegacy(legacy.draft);clearMigratedLegacyDraft(legacy.raw);message(`Previous device draft added to My plans as ${migrated.meta.name||'Recovered plan'}.`);}catch(e){offerLegacyPlanRecovery(legacy,e);}}
+   if(legacy.draft){try{validateWorkspace(legacy.draft.scenario);const migrated=await libraryStore.importLegacy(legacy.draft);clearMigratedLegacyDraft(legacy.raw);message(`Previous device draft added to Saved plans as ${migrated.meta.name||'Recovered plan'}.`);}catch(e){offerLegacyPlanRecovery(legacy,e);}}
    else if(legacy.status==='unreadable')offerLegacyPlanRecovery(legacy,new Error('It could not be read automatically. Download a copy to keep the original data.'));
    await refreshPlanList();
    if(libraryRecords.length&&startingSignature===planSignature()&&!hasUnsavedChanges())showPlanLibrary(true);

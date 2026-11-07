@@ -2,6 +2,8 @@
 const test=require('node:test'),assert=require('node:assert/strict');
 const M=require('./model.js'),P=require('./planning.js'),S=require('./sizing.js'),T=require('./topology.js');
 const X=require('./scenarios.js'),C=require('./conventional.js'),R=require('./rules.js'),A=require('./assessment.js'),D=require('./drafts.js');
+const Q=require('./requirements.js'),F=require('./findings.js');
+const Live=require('./live-capacity.js'),Starts=require('./starters.js'),L=require('./library.js');
 
 function plan(names=['Production']){
  const value={schema:'exacc-capacity/v1',sites:names.map((name,index)=>{
@@ -20,6 +22,91 @@ function validateAll(value){
 }
 function resume(raw){const value=X.preserveExtras(M.importScenario(raw),raw,M,validateSites);T.ensureIds(value);return validateAll(value);}
 const assess=value=>A.assess(value,M,P,T,R,C);
+
+test('manual totals remain independent while applied inventory totals become stale after CPU or RAM edits',()=>{
+ const value=plan(),s=value.sites[0],a=databaseGroup(s),c=s.clusters[0];
+ c.requirements={source:'manual',ecpu:40,ramGB:160,unsizedACDs:0,minRatio:4,incomplete:false};
+ const before=JSON.stringify(c.requirements);a.adbs[0].ecpu=20;
+ assert.equal(JSON.stringify(c.requirements),before);assert.equal(Q.status(c).stale,false);
+ assert.ok(assess(value).warnings.some(x=>x.code==='manual-inventory-difference'));
+ c.requirements=Q.inventoryRequirements(c);assert.equal(c.requirements.ecpu,20);assert.equal(Q.status(c).stale,false);
+ a.adbs[0].ramGB=80;assert.equal(c.requirements.ramGB,64);assert.equal(Q.status(c).stale,true);
+ const review=assess(value);assert.equal(review.status,'partial');assert.equal(review.headline,'Fits checked capacity; workload inputs need review');assert.ok(review.machines[0].result);assert.ok(review.warnings.some(x=>x.code==='requirements-stale'));
+ c.requirements=Q.useManual(c);assert.equal(c.requirements.ecpu,40);assert.equal(c.requirements.ramGB,160);assert.equal(Q.status(c).stale,false);
+});
+
+test('missing workload inputs preserve available allocation checks while unselected hardware remains incomplete',()=>{
+ const value=plan(),s=value.sites[0],a=databaseGroup(s),c=s.clusters[0],allocation=M.calculate(s);a.adbs[0].ramGB=null;c.requirements=Q.inventoryRequirements(c);
+ const review=assess(value);assert.equal(review.status,'partial');assert.equal(review.headline,'Fits checked capacity; workload inputs need review');assert.equal(review.machines[0].result.used,allocation.used);assert.ok(review.machines[0].constraints.length>0);
+ assert.ok(review.findings.missingInputs.some(x=>x.code==='adb_workload_missing'));assert.ok(review.findings.missingInputs.some(x=>x.code==='workload-incomplete'));
+ const report=A.reportHTML(value,M,P,T,R,{conventional:C,requirements:Q});assert.match(report,/AVMC allocation estimates/);assert.doesNotMatch(report,/Capacity is not calculated until the input and hardware choice are complete/);
+ s.planningIntent='workload';s.hardwareChosen=false;const unselected=assess(value);assert.equal(unselected.status,'incomplete');assert.equal(unselected.machines[0].result,null);assert.equal(unselected.headline,'Complete the plan before assessing capacity');
+ assert.match(A.reportHTML(value,M,P,T,R,{conventional:C,requirements:Q}),/Capacity is not calculated until the input and hardware choice are complete/);
+});
+
+test('rename, order, storage and DR metadata changes do not invalidate inventory CPU/RAM totals',()=>{
+ const value=plan(),s=value.sites[0],a=databaseGroup(s),c=s.clusters[0];a.adbs.push({...T.newADB('LedgerDB'),ecpu:8,ramGB:32,storageTB:0.5});c.requirements=Q.inventoryRequirements(c);
+ s.name='Renamed machine';c.name='Renamed AVMC';a.name='Renamed ACD';a.adbs[0].name='Renamed database';a.adbs[0].storageTB=3;a.adbs[0].independentSwitchover=true;a.adbs.reverse();
+ assert.equal(Q.status(c).stale,false);assert.equal(assess(value).warnings.some(x=>x.code==='requirements-stale'),false);
+ const restored=resume(JSON.parse(JSON.stringify(value)));assert.equal(Q.status(restored.sites[0].clusters[0]).stale,false);
+});
+
+test('inventory preview receipts expire after values, active machine or stable identities change',()=>{
+ const value=plan(['Production','Recovery']);databaseGroup(value.sites[0]);databaseGroup(value.sites[1]);
+ const receipt=Q.createPreview(value,0,0),before=JSON.stringify(value);assert.equal(Q.previewIsCurrent(receipt,value,0),true);assert.equal(Q.previewIsCurrent(receipt,value,1),false);
+ assert.equal(JSON.stringify(value),before,'preview does not mutate the plan');
+ value.sites[0].clusters[0].topology.acds[0].adbs[0].ecpu=32;assert.equal(Q.previewIsCurrent(receipt,value,0),false);
+ const current=Q.createPreview(value,0,0);value.sites[0].clusters[0].uid='replacement-avmc';assert.equal(Q.previewIsCurrent(current,value,0),false);
+});
+
+test('findings carry exact machine, AVMC, ACD and database identities and safe field targets',()=>{
+ const value=plan(['Production','Recovery']),a=databaseGroup(value.sites[1]),s=value.sites[1],c=s.clusters[0],d=a.adbs[0];d.ramGB=null;
+ const review=assess(value),row=review.findings.missingInputs.find(x=>x.code==='adb_workload_missing'&&x.adbId===d.id);assert.ok(row);
+ const target=row.target||F.targetFor(row,value);assert.equal(target.siteUid,s.uid);assert.equal(target.clusterUid,c.uid);assert.equal(target.acdId,a.id);assert.equal(target.adbId,d.id);assert.equal(target.field,'ramGB');assert.equal(target.step,2);
+ value.sites.reverse();assert.equal(F.resolveTarget(target,value).siteIndex,0);
+ c.topology.acds=[];const parent=F.resolveTarget(target,value);assert.equal(parent.clusterUid,c.uid);assert.equal(parent.acdId,undefined);assert.equal(parent.field,undefined);
+ value.sites.splice(0,1);assert.equal(F.resolveTarget(target,value),null);
+});
+
+test('removed finding identities never target a replacement AVMC or ADB at the old array position',()=>{
+ const value=plan(),a=databaseGroup(value.sites[0]),s=value.sites[0],c=s.clusters[0],d=a.adbs[0];
+ const target=F.targetFor({code:'adb_workload_missing',machineIndex:0,clusterIndex:0,acdId:a.id,adbId:d.id},value);
+ a.adbs[0]={...T.newADB('Replacement database'),ecpu:null,ramGB:null,storageTB:null};
+ const acdTarget=F.resolveTarget(target,value);assert.equal(acdTarget.acdId,a.id);assert.equal(acdTarget.adbId,undefined);assert.equal(acdTarget.field,undefined);
+ s.clusters[0]=M.newSite().clusters[0];T.ensureIds(value);
+ const machineTarget=F.resolveTarget(target,value);assert.equal(machineTarget.clusterIndex,undefined);assert.equal(machineTarget.clusterUid,undefined);assert.equal(machineTarget.field,undefined);
+});
+
+test('live capacity keeps per-server CPU and memory shortages visible despite positive machine totals',()=>{
+ const s=M.newSite();s.nodes[0].otherCPU=650;s.nodes[0].otherMemory=1100;const before=JSON.stringify(s),result=M.calculate(s);
+ const machine=Live.build(s,result,P),server=Live.build(s,result,P,{scope:'node:1'}),metric=(view,id)=>view.metrics.find(m=>m.id===id);
+ assert.equal(metric(machine,'cpu').free,550);assert.equal(metric(server,'cpu').free,-50);assert.ok(Math.abs(metric(machine,'memory').free-847.68)<1e-7);assert.ok(Math.abs(metric(server,'memory').free+126.16)<1e-7);
+ assert.equal(machine.level,'error');assert.equal(server.level,'error');assert.match(machine.note,/DB 1/);assert.deepEqual(metric(machine,'cpu').affectedNodes,[1]);assert.deepEqual(metric(machine,'memory').affectedNodes,[1]);
+ assert.equal(server.scopeLabel,'DB 1 only');assert.equal(JSON.stringify(s),before);
+});
+
+test('live capacity clears unchecked or unselected compute values and labels preview state separately',()=>{
+ const s=M.newSite(),result=M.calculate(s);s.checkCompute=false;
+ const off=Live.build(s,M.calculate(s),P),cpu=off.metrics.find(m=>m.id==='cpu'),memory=off.metrics.find(m=>m.id==='memory');
+ assert.equal(cpu.checked,false);assert.equal(cpu.free,null);assert.equal(memory.checked,false);assert.equal(memory.free,null);assert.equal(off.metrics.find(m=>m.id==='local').free,2878);
+ const unknown=Live.build(s,result,P,{ready:false});assert.equal(unknown.level,'draft');assert.ok(unknown.metrics.every(m=>!m.checked&&m.free===null));
+ s.checkCompute=true;const preview=Live.build(s,result,P,{ready:false,preview:true,scope:'node:2'});assert.equal(preview.preview,true);assert.equal(preview.scope,'node:2');assert.equal(preview.metrics.find(m=>m.id==='cpu').free,600);
+ assert.equal(Live.build(s,result,P,{scope:'node:999'}).scope,'machine');
+});
+
+test('live capacity does not claim a complete fit when manually checked shared storage is over capacity',()=>{
+ const s=M.newSite();s.planning={storageCapacity:10,storageAllocated:12};const live=Live.build(s,M.calculate(s),P);
+ assert.equal(live.level,'error');assert.match(live.note,/shared|Exadata/i);assert.doesNotMatch(live.note,/Meets the checked capacity/);
+});
+
+test('quick and example starters create separate valid plan identities and explicit illustrative content',()=>{
+ const dependencies={model:M,topology:T,library:L,rules:R,requirements:Q},quick=Starts.create('quick',dependencies),example=Starts.create('example',dependencies);
+ assert.notEqual(quick.project.id,example.project.id);assert.equal(quick.sites[0].clusters.length,0);assert.equal(quick.sites[0].checkCompute,false);assert.equal(quick.sites[0].planningIntent,'allocation');
+ assert.equal(example.sites.length,2);assert.match(example.project.notes,/Illustrative/);assert.equal(T.inspect(example).counts.linkedPairs,1);
+ assert.doesNotThrow(()=>validateAll(quick));assert.doesNotThrow(()=>validateAll(example));
+ example.sites.forEach(s=>assert.equal(Q.status(s.clusters[0]).stale,false));
+ const next=Starts.create('example',dependencies);assert.notEqual(next.project.id,example.project.id);assert.notEqual(next.sites[0].uid,example.sites[0].uid);
+});
 
 test('legacy JSON remains usable without inventing a database inventory or deployment approval',()=>{
  const raw={schema:'exacc-capacity/v1',sites:[M.newSite('Existing machine')]},expected=M.calculate(raw.sites[0]);

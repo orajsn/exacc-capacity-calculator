@@ -43,3 +43,12 @@ The five-minute first-use target in PRODUCT_GOALS.md still needs an independent 
 - Async regressions pin replacement to the selected Plan ID, keep Cancel effective while Save finishes, and keep automatic saving off if the user disables it during an in-flight save.
 - Native browser checks migrate a genuine 2.0 recovery draft, save two customers with different owners/IDs, find a plan by ID, protect a newer save from a second tab, and archive/restore a plan.
 - No calculation or hardware rules changed in this release. Saved JSON remains the recovery route when browser storage is unavailable or full.
+
+## 2.2 clarity and navigation verification
+
+- Sizing-source tests cover manual restoration, inventory preview/apply, stale receipts, changed active machines, quantitative versus metadata edits, legacy signatures, known-hardware invariants and incomplete values.
+- Live-capacity tests cover whole-machine/per-server arithmetic, positive totals with a node shortage, disabled/unselected resources, previews and shared-storage overcapacity without a false fit.
+- Typed findings tests cover stable identities, reordered/removed machines and databases, ambiguous fallback, exact missing RAM/peer-side fields, optional checks versus missing values, and unsafe target strings.
+- Entry tests cover blank quick checks, generic production/DR examples, unsaved-work guards and no automatic example persistence.
+- Browser checks exercise the example, per-node view, database RAM edit and explicit totals review, exact missing-field navigation, manual assumption restoration, quick check with compute off/on and narrow-screen live metrics. Source changes retain the open editor and keyboard focus.
+- Independent first-time presales users have not yet performed the five-minute usability trial. Automated and browser checks are not a substitute for that trial.

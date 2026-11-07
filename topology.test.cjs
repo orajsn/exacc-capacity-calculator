@@ -1,5 +1,5 @@
 const test=require('node:test'),assert=require('node:assert/strict');
-const T=require('./topology.js'),M=require('./model.js'),S=require('./sizing.js');
+const T=require('./topology.js'),M=require('./model.js'),S=require('./sizing.js'),Q=require('./requirements.js');
 const fs=require('node:fs'),path=require('node:path'),vm=require('node:vm');
 const fresh=()=>({schema:'exacc-capacity/v1',sites:[M.newSite('Production'),M.newSite('Recovery'),M.newSite('Recovery 2')]});
 function fixture(){
@@ -99,12 +99,12 @@ test('unlinking a peer and changing its role remove both sides without changing 
 function ui(state){
  class Element{constructor(){this.innerHTML='';this.events={};}addEventListener(type,fn){this.events[type]=fn;}}
  const elements=new Map(['topology-editor','topology-review','topology-live-findings'].map(k=>[k,new Element()]));
- const ctx={ExaTopology:T,state,active:0,$:id=>elements.get(id),site:()=>state.sites[0],fmt:n=>String(n),escapeHTML:s=>String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])),message:text=>{ctx.lastMessage=text;},needsNewSizing:()=>{state.sites[0].hardwareChosen=false;},safeUpdate:(fn,full)=>{fn();if(full)ctx.renderTopologyEditor();}};
+ const ctx={ExaTopology:T,Q,state,active:0,$:id=>elements.get(id),site:()=>state.sites[0],planningIntent:s=>s.planningIntent||'workload',renderRequirementSources:()=>{},previewInventorySizing:index=>{ctx.preview=Q.createPreview(state,0,index);},fmt:n=>String(n),escapeHTML:s=>String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])),message:text=>{ctx.lastMessage=text;},needsNewSizing:()=>{state.sites[0].hardwareChosen=false;},safeUpdate:(fn,full)=>{fn();if(full)ctx.renderTopologyEditor();}};
  ctx.window=ctx;vm.createContext(ctx);vm.runInContext(fs.readFileSync(path.join(__dirname,'topology-ui.js'),'utf8'),ctx);ctx.initTopology();ctx.renderTopologyEditor();
  return {ctx,editor:elements.get('topology-editor'),review:elements.get('topology-review')};
 }
 test('topology editor keeps typed input stable and blank metrics remain unknown',()=>{
- const state=fixture(),a=T.entries(state)[0].acd,d=a.adbs[0],page=ui(state),html=page.editor.innerHTML;
+ const state=fixture(),c=state.sites[0].clusters[0];c.requirements=Q.inventoryRequirements(c);const a=T.entries(state)[0].acd,d=a.adbs[0],page=ui(state),html=page.editor.innerHTML;
  page.editor.events.input({target:{dataset:{acdId:a.id,adbId:d.id,topologyField:'ecpu'},value:''}});
  assert.equal(d.ecpu,null);assert.equal(page.editor.innerHTML,html);assert.equal(state.sites[0].hardwareChosen,false);assert.match(page.review.innerHTML,/CPU or RAM needs are missing/);
 });
@@ -112,11 +112,39 @@ test('topology renders names inert and uses one surrounding disclosure supplied 
  const state=fixture(),a=T.entries(state)[0].acd;a.name='<img src=x onerror=alert(1)>';a.adbs[0].name='<script>boom</script>';
  const page=ui(state);assert.match(page.editor.innerHTML,/&lt;img/);assert.doesNotMatch(page.editor.innerHTML,/<img src/);assert.match(page.review.innerHTML,/&lt;script&gt;/);assert.doesNotMatch(page.editor.innerHTML,/data-inventory-details="main"/);
 });
-test('explicit totals action updates requirements but editing records alone does not',()=>{
+test('database totals action previews the change without overwriting manual requirements',()=>{
  const state=fixture(),c=state.sites[0].clusters[0],original={ecpu:12,ramGB:24,unsizedACDs:0,minRatio:2};c.requirements={...original};const page=ui(state),a=c.topology.acds[0],d=a.adbs[0];
  page.editor.events.input({target:{dataset:{acdId:a.id,adbId:d.id,topologyField:'ecpu'},value:'120'}});assert.deepEqual(c.requirements,original);
  page.editor.events.click({target:{closest:()=>({dataset:{topologyAction:'use-totals',clusterIndex:'0'}})}});
- assert.equal(c.requirements.ecpu,120);assert.equal(c.requirements.source,'database-topology');assert.match(page.ctx.lastMessage,/Database totals copied/);
+ assert.deepEqual(c.requirements,original);assert.equal(page.ctx.preview.requirements.ecpu,120);assert.equal(page.ctx.preview.requirements.source,'database-inventory');assert.equal(Q.previewIsCurrent(page.ctx.preview,state,0),true);
+});
+
+test('inventory name and metadata edits preserve current sizing but CPU changes invalidate it',()=>{
+ const state=fixture(),s=state.sites[0],c=s.clusters[0],a=c.topology.acds[0],d=a.adbs[0];s.hardwareChosen=true;c.requirements=Q.inventoryRequirements(c);const page=ui(state);
+ for(const [field,value]of [['name','Renamed database'],['storageTB','3']])page.editor.events.input({target:{dataset:{acdId:a.id,adbId:d.id,topologyField:field},value}});
+ page.editor.events.input({target:{dataset:{acdId:a.id,topologyField:'name'},value:'Renamed group'}});
+ assert.equal(s.hardwareChosen,true);assert.equal(Q.status(c).stale,false);
+ page.editor.events.input({target:{dataset:{acdId:a.id,adbId:d.id,topologyField:'ecpu'},value:'120'}});
+ assert.equal(s.hardwareChosen,false);assert.equal(Q.status(c).stale,true);assert.equal(c.requirements.ecpu,100);
+});
+
+test('legacy applied inventory name and storage edits do not display a false stale-totals review warning',()=>{
+ const state=fixture(),s=state.sites[0],c=s.clusters[0],a=c.topology.acds[0],d=a.adbs[0];s.hardwareChosen=true;c.requirements=T.databaseTotals(c).requirements;const page=ui(state);
+ page.editor.events.input({target:{dataset:{acdId:a.id,adbId:d.id,topologyField:'name'},value:'Renamed legacy database'}});
+ page.editor.events.input({target:{dataset:{acdId:a.id,adbId:d.id,topologyField:'storageTB'},value:'3'}});
+ assert.equal(Q.status(c).stale,false);assert.equal(s.hardwareChosen,true);assert.doesNotMatch(page.review.innerHTML,/database rows changed after totals were copied/);
+});
+
+test('database edits stay independent of manual requirements and known hardware allocation',()=>{
+ for(const mode of ['manual','inventory-known-hardware']){
+  const state=fixture(),s=state.sites[0],c=s.clusters[0],a=c.topology.acds[0],d=a.adbs[0];s.hardwareChosen=true;
+  c.requirements=mode==='manual'?{source:'manual',ecpu:12,ramGB:24,unsizedACDs:0,minRatio:2}:Q.inventoryRequirements(c);
+  if(mode==='inventory-known-hardware')s.planningIntent='allocation';
+  const before=JSON.stringify(c.requirements),page=ui(state);
+  page.editor.events.input({target:{dataset:{acdId:a.id,adbId:d.id,topologyField:'ecpu'},value:'120'}});
+  assert.equal(JSON.stringify(c.requirements),before);assert.equal(s.hardwareChosen,true);
+  assert.equal(Q.status(c).stale,mode==='inventory-known-hardware');
+ }
 });
 test('peer-settings confirmation is explicit and does not overwrite numeric demand',()=>{
  const state=fixture(),a=T.entries(state)[0].acd,d=a.adbs[0],page=ui(state);

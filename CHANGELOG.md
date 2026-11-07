@@ -1,5 +1,23 @@
 # Changelog
 
+## 2.2.0 — 2026-11-08
+
+### Improved
+
+- Clear starting choices: Quick capacity check, New customer plan and an editable generic production/DR example.
+- Renamed My plans to Saved plans, Save JSON to Download backup and Open JSON to Open plan file. Backups retain the existing JSON format.
+- Explicit Manual totals / Database inventory sizing sources, with a difference preview and Apply action. Original manual assumptions can be restored.
+- Semantic inventory freshness checks: CPU/RAM/grouping changes require sizing review; labels, storage and DR metadata do not falsely invalidate CPU/RAM totals.
+- Live storage, CPU and estimated-memory balances, with whole-machine or per-DB-server views. Node shortages and manually checked shared-storage deficits remain visible.
+- Typed Review input actions navigate by stable identities to relevant fields, including closed AVMC/ACD editors. Missing information is separated from optional or external checks.
+- Known allocation checks remain visible when workload inputs need review. Optional workload sections retain focus/open state through source changes.
+
+### Preserved
+
+- Numerical resource formulas, hardware presets, local-only saving and existing scenario/library compatibility.
+- Example/quick entry never silently replaces unsaved work or automatically stores example data.
+- Independent first-time-user usability testing remains a future validation step; this release uses automated and browser checks.
+
 ## 2.1.0 — 2026-11-07
 
 ### Added

@@ -47,3 +47,16 @@ Requested and executed 7 November 2026. The goal is organization and dependable 
 | G12. Use local resources efficiently | No added server; metadata-only listing, on-demand payload loading, delayed writes, no rewrite on unchanged open, bounded storage and actionable quota errors. | Implemented in 2.1 |
 
 Cross-device retrieval requires a separate shared-storage/access design. Owner aliases and Plan IDs in this release are organizational labels, not authentication. Future shared access must be explicit; no customer data is published by the library.
+
+## 2.2 — presales clarity and everyday polish
+
+Requested and executed 8 November 2026. This pass implements the four highest-priority improvements from the UI review.
+
+| Goal | Acceptance criteria | Delivery |
+| --- | --- | --- |
+| G13. Make starting and saving clear | Saved plans / Download backup / Open plan file labels; quick check, customer plan and illustrative example entry points; unsaved work protected. | Implemented in 2.2 |
+| G14. Make sizing provenance explicit | Manual versus inventory source, applied/current totals and missing data preview, explicit Apply, preserved manual assumptions and stale-data guards. | Implemented in 2.2 |
+| G15. Show the effect while editing | Live local/CPU/memory balances; per-node or whole-machine view; clear disabled/unknown/preview states and node shortage warnings. | Implemented in 2.2 |
+| G16. Turn findings into actions | Stable-ID navigation to the correct editor/field; safe fallback after deletion; missing inputs separated from not-selected/external checks. | Implemented in 2.2 |
+
+The broader suggestions—multi-option decision tables, large-inventory workbench and incoming-file diff review—remain future scope. The five-minute first-use target has not been tested with independent presales users.

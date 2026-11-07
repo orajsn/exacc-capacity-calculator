@@ -64,10 +64,10 @@
   const result={errors:[],warnings:[],groups:[],counts:{machines:state?.sites?.length||0,avmcs:0,reservedSlots:0,namedACDs:0,adbs:0,primaryADBs:0,standbyADBs:0,linkedPairs:0}};
   try{validateState(state);}catch(e){result.errors.push({code:'invalid_topology',message:e.message});return result;}
   const all=entries(state),byId=new Map(all.filter(e=>e.acd.id).map(e=>[e.acd.id,e]));
-  const issue=(level,code,message,e)=>result[level].push({code,message,...(e?{siteIndex:e.siteIndex,clusterIndex:e.clusterIndex,acdId:e.acd?.id}: {})});
+  const issue=(level,code,message,e)=>result[level].push({code,message,...(e?{siteIndex:e.siteIndex,siteUid:state.sites[e.siteIndex]?.uid,clusterIndex:e.clusterIndex,clusterUid:state.sites[e.siteIndex]?.clusters[e.clusterIndex]?.uid,acdId:e.acd?.id,adbId:e.adb?.id}: {})});
   const duplicates=(items,key)=>{const seen=new Set();return items.filter(item=>{const n=norm(item[key]);if(!n)return false;const duplicate=seen.has(n);seen.add(n);return duplicate;});};
   state.sites.forEach((s,si)=>{
-   duplicates(s.clusters,'name').forEach(c=>issue('warnings','duplicate_avmc_name',`${s.name}: more than one AVMC is named “${c.name}”. Give them distinct labels.`));
+   duplicates(s.clusters,'name').forEach(c=>issue('warnings','duplicate_avmc_name',`${s.name}: more than one AVMC is named “${c.name}”. Give them distinct labels.`,{siteIndex:si,clusterIndex:s.clusters.indexOf(c)}));
    s.clusters.forEach((c,ci)=>{
     result.counts.avmcs++;result.counts.reservedSlots+=c.slots;
     const list=acds(c),e={siteIndex:si,clusterIndex:ci};
@@ -86,13 +86,13 @@
    result.groups.push(g);
    if(!norm(a.name))issue('warnings','acd_name_missing',`${location}: enter an ACD name.`,e);
    if(!a.adbs.length)issue('warnings','acd_has_no_databases',`${location}: no database rows are entered. Only the empty ACD and its resource minimums can be planned; future database workloads are not included.`,e);
-   duplicates(a.adbs,'name').forEach(d=>issue('errors','duplicate_adb_name',`${location}: duplicate database name “${d.name}”.`,e));
+   duplicates(a.adbs,'name').forEach(d=>issue('errors','duplicate_adb_name',`${location}: duplicate database name “${d.name}”.`,{...e,adb:d}));
    for(const d of a.adbs){
-    if(!norm(d.name))issue('warnings','adb_name_missing',`${location}: a database has no name.`,e);
-    if(d.ecpu==null||d.ramGB==null)issue('warnings','adb_workload_missing',`${location} / ${d.name||'Unnamed ADB'}: CPU or RAM needs are missing.`,e);
-    if(d.peerSettingsConfirmed===true&&d.ecpu!=null&&(!Number.isInteger(d.ecpu)||d.ecpu<2))issue('errors','invalid_configured_adb_ecpu',`${d.name||'This database'}: a confirmed proposed ECPU setting must be a whole number of at least 2 ECPUs. Fractional or zero workload demand can remain unconfirmed.`,e);
-    if(d.independentSwitchover&&a.adbs.length>1)issue('errors','independent_switchover_shared_acd',`${d.name||'This database'} needs independent switchover but shares ${a.name} with ${a.adbs.length-1} other database(s). Use its own ACD.`,e);
-    if(d.independentSwitchover&&a.role==='unprotected')issue('warnings','independent_switchover_unprotected',`${d.name||'This database'} is in an unprotected ACD. Add a DR design before treating switchover as available.`,e);
+    if(!norm(d.name))issue('warnings','adb_name_missing',`${location}: a database has no name.`,{...e,adb:d});
+    if(d.ecpu==null||d.ramGB==null)issue('warnings','adb_workload_missing',`${location} / ${d.name||'Unnamed ADB'}: CPU or RAM needs are missing.`,{...e,adb:d});
+    if(d.peerSettingsConfirmed===true&&d.ecpu!=null&&(!Number.isInteger(d.ecpu)||d.ecpu<2))issue('errors','invalid_configured_adb_ecpu',`${d.name||'This database'}: a confirmed proposed ECPU setting must be a whole number of at least 2 ECPUs. Fractional or zero workload demand can remain unconfirmed.`,{...e,adb:d});
+    if(d.independentSwitchover&&a.adbs.length>1)issue('errors','independent_switchover_shared_acd',`${d.name||'This database'} needs independent switchover but shares ${a.name} with ${a.adbs.length-1} other database(s). Use its own ACD.`,{...e,adb:d});
+    if(d.independentSwitchover&&a.role==='unprotected')issue('warnings','independent_switchover_unprotected',`${d.name||'This database'} is in an unprotected ACD. Add a DR design before treating switchover as available.`,{...e,adb:d});
    }
    if(a.role==='unprotected'&&refs.length)issue('errors','unprotected_has_peers',`${location}: an unprotected ACD cannot also have peer links.`,e);
    if(a.role==='standby'&&a.peerIds?.length)issue('errors','standby_has_peer_list',`${location}: a standby must reference one primary with peerId, not a standby list.`,e);
@@ -114,10 +114,10 @@
      if(left.size!==right.size||[...left.keys()].some(n=>!right.has(n)))issue('warnings','peer_inventory_incomplete',`${location} ↔ ${target.acd.name}: database names do not match. Complete or reconcile both inventories; no peer workload is copied automatically.`,e);
      for(const [n,d]of left){const peer=right.get(n);if(!peer)continue;
       const settingsConfirmed=d.peerSettingsConfirmed===true&&peer.peerSettingsConfirmed===true;
-      if(!settingsConfirmed)issue('warnings','peer_settings_unconfirmed',`${d.name}: CPU/storage inputs have not been confirmed as proposed settings on both peer copies. Workload needs alone do not establish matching configured peers.`,e);
+      if(!settingsConfirmed)issue('warnings','peer_settings_unconfirmed',`${d.name}: CPU/storage inputs have not been confirmed as proposed settings on both peer copies. Workload needs alone do not establish matching configured peers.`,d.peerSettingsConfirmed!==true?{...e,adb:d}:{...target,adb:peer});
       for(const [key,title]of [['ecpu','ECPU'],['storageTB','storage']]){
-       if(d[key]==null||peer[key]==null)issue('warnings',`peer_${key}_unknown`,`${d.name}: ${title} is missing on a peer copy. Matching peer settings are not checked.`,e);
-       else if(Math.abs(d[key]-peer[key])>1e-7)issue(settingsConfirmed?'errors':'warnings',settingsConfirmed?`peer_${key}_mismatch`:`peer_${key}_review`,`${d.name}: primary and standby ${title} inputs differ (${d[key]} versus ${peer[key]}). ${settingsConfirmed?'The confirmed proposed peer settings must match.':'Review the configured peer settings; workload demand may differ.'}`,e);
+       if(d[key]==null||peer[key]==null)issue('warnings',`peer_${key}_unknown`,`${d.name}: ${title} is missing on a peer copy. Matching peer settings are not checked.`,d[key]==null?{...e,adb:d}:{...target,adb:peer});
+       else if(Math.abs(d[key]-peer[key])>1e-7)issue(settingsConfirmed?'errors':'warnings',settingsConfirmed?`peer_${key}_mismatch`:`peer_${key}_review`,`${d.name}: primary and standby ${title} inputs differ (${d[key]} versus ${peer[key]}). ${settingsConfirmed?'The confirmed proposed peer settings must match.':'Review the configured peer settings; workload demand may differ.'}`,{...e,adb:d});
       }
      }
     }
