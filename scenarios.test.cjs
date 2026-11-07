@@ -23,6 +23,37 @@ test('metadata validation preserves project, rules and alternatives and rejects 
  const bad=clone(w);bad.alternatives[0].alternatives=[];assert.throws(()=>X.validateExtras(bad,M),/invalid structure/);
  bad.alternatives=w.alternatives;bad.ruleSet.checked=42;assert.throws(()=>X.validateExtras(bad,M),/Rule-set check date/);
 });
+test('customer, owner and full Plan ID survive JSON import without changing their values',()=>{
+ const w=workspace();w.project={id:'plan-5c69ea60-33cd-44f1-8ca4-fba9ae31140a',name:'2027 allocation',customer:'Example <Bank> & Co',owner:'José / JSN',notes:'Scope stays local.'};
+ w.alternatives=[X.capture(w,'Before','option',M)];
+ const raw=JSON.parse(JSON.stringify(w)),out=X.preserveExtras(M.importScenario(raw),raw,M);
+ assert.deepEqual(out.project,w.project);assert.notEqual(out.project,w.project);assert.equal(out.alternatives.length,1);
+});
+test('legacy projects do not gain invented identity or owner fields during validation',()=>{
+ const w=workspace();assert.equal(X.validateExtras(w,M).project,undefined);
+ w.project={name:'Legacy proposal',notes:''};const project=X.validateExtras(w,M).project;
+ assert.deepEqual(project,w.project);for(const key of ['id','customer','owner'])assert.equal(Object.hasOwn(project,key),false);
+});
+test('plan metadata rejects invalid IDs and type or length violations',()=>{
+ for(const id of ['',null,42,{},'short','plan/one','plan:one','<script>','x'.repeat(81)])assert.throws(()=>X.validateProject({id,name:'Plan',notes:''}),/Plan ID/);
+ for(const [field,value,pattern]of [['customer',{},/Customer name/],['customer','x'.repeat(121),/Customer name/],['owner',null,/Owner/],['owner','x'.repeat(81),/Owner/],['name','x'.repeat(121),/Project name/],['notes','x'.repeat(6001),/Project notes/]])assert.throws(()=>X.validateProject({name:'Plan',notes:'',[field]:value}),pattern);
+ const p=X.validateProject({id:'PLAN_001',name:'x'.repeat(120),customer:'c'.repeat(120),owner:'o'.repeat(80),notes:'n'.repeat(6000)});assert.equal(p.id,'PLAN_001');
+ assert.deepEqual(X.validateProject({name:'',notes:'',customer:'',owner:''}),{name:'',notes:'',customer:'',owner:''});
+});
+test('project metadata copies only declared fields and does not adopt JSON prototype keys',()=>{
+ const project=JSON.parse('{"id":"plan-safe01","name":"Plan","notes":"","customer":"Example","owner":"JSN","__proto__":{"polluted":true},"unexpected":"value"}');
+ const clean=X.validateProject(project);assert.equal(Object.getPrototypeOf(clean),Object.prototype);assert.equal(Object.hasOwn(clean,'__proto__'),false);assert.equal(Object.hasOwn(clean,'unexpected'),false);assert.equal({}.polluted,undefined);
+});
+test('growth, migration and repeated alternative restores remain within the current project identity',()=>{
+ const w=workspace();w.project={id:'plan-current-001',name:'Current proposal',customer:'Example customer',owner:'JSN',notes:'Original notes'};
+ w.sites[0].clusters[0].requirements={ecpu:80,ramGB:320,unsizedACDs:0,minRatio:4,incomplete:false};
+ w.alternatives=[X.capture(w,'Initial','option',M),X.growth(w,{name:'Year 2',ecpuPercent:20,ramPercent:20},M),X.migration(w,{name:'Overlap',siteIndex:0,clusterIndexes:[0]},M)];
+ w.project.name='Renamed proposal';w.project.owner='Second owner';w.project.notes='Revised assumptions';
+ let current=w;
+ for(const saved of w.alternatives){current=X.restore(current,saved.id,M);assert.deepEqual(current.project,w.project);assert.equal(current.project.id,'plan-current-001');assert.equal(current.alternatives.length,3);}
+ current.project.customer='Changed only in restored copy';assert.equal(w.project.customer,'Example customer');
+ const imported=X.preserveExtras(M.importScenario(w),JSON.parse(JSON.stringify(w)),M);assert.deepEqual(imported.project,w.project);
+});
 test('all alternative sites pass the caller supplied extension validator',()=>{
  const w=workspace();w.alternatives=[X.capture(w,'Saved','option',M)];w.alternatives[0].sites[0].untrustedExtension=true;
  assert.throws(()=>X.preserveExtras(M.importScenario(w),w,M,sites=>{if(sites.some(s=>s.untrustedExtension))throw Error('Invalid extension');}),/Invalid extension/);
@@ -122,9 +153,15 @@ test('fresh import replaces only the untouched empty starting entry and reports 
  const s=M.newSite('Machine 1');s.siteName='';s.clusters=[];s.planningIntent='workload';s.hardwareChosen=false;s.uid='fresh';
  const w={schema:'exacc-capacity/v1',sites:[s]},p=X.previewCSV(csv());
  const out=X.buildCSVImport(w,p,{mode:'add',siteIndex:0},M);assert.equal(out.candidate.sites.length,1);assert.equal(out.report.startingEntryReplaced,true);assert.match(out.warnings.join(' '),/empty starting entry/);assert.equal(w.sites[0].name,'Machine 1');
- for(const edit of [copy=>copy.sites[0].name='My machine',copy=>copy.sites[0].bufferPercent=15,copy=>copy.project={name:'Plan',notes:'Keep this entry'}]){
+ for(const edit of [copy=>copy.sites[0].name='My machine',copy=>copy.sites[0].siteName='DC',copy=>copy.sites[0].bufferPercent=15,copy=>copy.sites[0].nodes[0].otherLocal=1,copy=>copy.sites[0].conventional={clusters:[],applied:null},copy=>copy.sites[0].planning={storageCapacity:100,storageAllocated:0}]){
   const changed=clone(w);edit(changed);const kept=X.buildCSVImport(changed,p,{mode:'add',siteIndex:0},M);assert.equal(kept.candidate.sites.length,2);assert.equal(kept.report.startingEntryReplaced,false);
  }
+});
+test('named customer metadata does not turn an otherwise untouched starting machine into inventory',()=>{
+ const s=M.newSite('Machine 1');s.siteName='';s.clusters=[];s.planningIntent='workload';s.hardwareChosen=false;s.uid='starting-machine';
+ const project={id:'plan-new-customer-001',name:'2027 plan',customer:'Example customer',owner:'JSN',notes:'Sizing assumptions belong to the whole plan.'};
+ const w={schema:'exacc-capacity/v1',project,sites:[s]},out=X.buildCSVImport(w,X.previewCSV(csv()),{mode:'add',siteIndex:0},M);
+ assert.equal(out.report.startingEntryReplaced,true);assert.equal(out.candidate.sites.length,1);assert.equal(out.candidate.sites[0].name,'Production');assert.deepEqual(out.candidate.project,project);assert.equal(w.sites[0].name,'Machine 1');
 });
 test('CSV merging will not replace an existing database silently',()=>{
  const w=workspace();w.sites[0].clusters[0].name='Core';w.sites[0].clusters[0].topology=topology();w.sites[0].clusters[0].topology.acds[0].role='unprotected';

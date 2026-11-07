@@ -34,3 +34,16 @@ A first-time presales user should be able to build a basic scenario in five minu
 See TESTING.md for the test catalogue and browser scenarios, CHANGELOG.md for delivered behavior and README.md for usage/coverage. Independent review identified stale worksheet previews and incorrect name-based machine matching; both were repaired and covered by regression tests before release. Open Oracle documentation conflicts remain recorded even when the implemented planning path is complete.
 
 The 2.0 baseline delivers the scoped goals above. Further coverage needs its own validated model: storage cells/backups, node/site-failure capacity, conventional filesystem reservations and additional hardware generations. The five-minute usability trial and customer workload validation remain future evidence, not claimed results.
+
+## 2.1 — local customer plan library
+
+Requested and executed 7 November 2026. The goal is organization and dependable local saving, using the current static hosting.
+
+| Goal | Acceptance criteria | Delivery |
+| --- | --- | --- |
+| G9. Separate customers and projects | Customer-grouped plan cards; optional owner alias; stable Plan ID; search includes sites/machines; one project's inputs do not replace another's saved copy. | Implemented in 2.1 |
+| G10. Keep work safe while switching | Revision-checked saves, unsaved-work choices, reversible archive, safe copy/replace actions and cancellation that prevents a later switch. | Implemented in 2.1 |
+| G11. Preserve identity and old work | Metadata in JSON/reports; older files receive IDs; previous recovery draft migrates only after a verified save; failed migration retains its source. | Implemented in 2.1 |
+| G12. Use local resources efficiently | No added server; metadata-only listing, on-demand payload loading, delayed writes, no rewrite on unchanged open, bounded storage and actionable quota errors. | Implemented in 2.1 |
+
+Cross-device retrieval requires a separate shared-storage/access design. Owner aliases and Plan IDs in this release are organizational labels, not authentication. Future shared access must be explicit; no customer data is published by the library.

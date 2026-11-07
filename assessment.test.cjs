@@ -56,6 +56,24 @@ test('report escapes every user-authored name, notes and peer reference',()=>{
  s.sites[0].clusters[0].topology={acds:[{id:'a',name:'<ACD>',role:'primary',peerIds:['<bad-peer>'],adbs:[{id:'d',name:'</td><script>x</script>',ecpu:0,ramGB:null,storageTB:0,independentSwitchover:true}]}]};
  const html=A.reportHTML(s,M,P,null,null,{generatedAt:'<date>'});assert.doesNotMatch(html,/<script|<img|<svg/);assert.match(html,/&lt;script&gt;/);assert.match(html,/A &amp; B/);assert.match(html,/&lt;bad-peer&gt;/);assert.match(html,/Not entered/);assert.match(html,/default-src 'none'/);
 });
+test('report header identifies customer, project, owner alias and the complete Plan ID',()=>{
+ const s=scenario();s.project={id:'plan-5c69ea60-33cd-44f1-8ca4-fba9ae31140a',name:'2027 capacity plan',customer:'Example customer',owner:'JSN',notes:'Review storage.'};
+ const html=A.reportHTML(s,M,P,null,null,{generatedAt:'2026-11-07'}),header=html.split('<header>')[1].split('</header>')[0];
+ assert.match(header,/<dt>Customer<\/dt><dd>Example customer<\/dd>/);assert.match(header,/<dt>Project<\/dt><dd>2027 capacity plan<\/dd>/);assert.match(header,/<dt>Owner \/ alias<\/dt><dd>JSN<\/dd>/);assert.match(header,/<dt>Plan ID<\/dt><dd class="plan-id">plan-5c69ea60-33cd-44f1-8ca4-fba9ae31140a<\/dd>/);
+ assert.match(html,/\.report-identity dd\{[^}]*overflow-wrap:anywhere/);assert.doesNotMatch(header,/signed in|authenticated|verified owner/i);
+});
+test('report treats identity labels as text even if invoked before metadata validation',()=>{
+ const s=scenario();s.project={id:'<script>id</script>',name:'<svg onload=run()>',customer:'<img src=x onerror=run()>',owner:'" onload="run() & alias',notes:''};
+ const html=A.reportHTML(s,M,P),header=html.split('<header>')[1].split('</header>')[0];
+ assert.doesNotMatch(html,/<script|<svg|<img/);assert.match(header,/&lt;script&gt;id&lt;\/script&gt;/);assert.match(header,/&lt;img src=x onerror=run\(\)&gt;/);assert.match(header,/&quot; onload=&quot;run\(\) &amp; alias/);
+});
+test('report labels missing legacy identity without inventing an owner or Plan ID',()=>{
+ for(const project of [undefined,{name:'Legacy proposal',notes:''},{name:' ',customer:' ',owner:'',notes:''}]){
+  const s=scenario();if(project)s.project=project;const header=A.reportHTML(s,M,P).split('<header>')[1].split('</header>')[0];
+  assert.match(header,/<dt>Customer<\/dt><dd>Not named<\/dd>/);assert.match(header,/<dt>Owner \/ alias<\/dt><dd>Not named<\/dd>/);assert.match(header,/<dt>Plan ID<\/dt><dd class="plan-id">Not assigned<\/dd>/);
+  if(!project?.name?.trim())assert.match(header,/<h1>ExaC@C capacity plan<\/h1>/);
+ }
+});
 
 test('rule metadata and source links are safe and included in the report',()=>{
  const R={VERSION:'rules-v2',CHECKED:'2026-11-07',SCOPE:'Autonomous only',rules:[{id:'r',label:'Rule',formula:'x < y',sourceUrls:['javascript:alert(1)','https://docs.oracle.com/example'],notes:[]}],conflicts:[{id:'c',label:'Doc difference',handling:'Confirm console.'}]};

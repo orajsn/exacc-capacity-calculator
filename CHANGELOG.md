@@ -1,5 +1,26 @@
 # Changelog
 
+## 2.1.0 — 2026-11-07
+
+### Added
+
+- Browser-local My plans library, grouped by customer and searchable by project, owner/alias, site, machine or Plan ID.
+- Stable Plan IDs and customer/owner metadata in JSON and report headers. Owner labels do not create accounts or access control.
+- Independent saved plans, duplication, archive/restore and explicit permanent removal. The four-step calculator remains inside each plan.
+- Asynchronous storage with metadata-only listing, delayed automatic saves, revision conflict checks and no silent cross-tab overwrite.
+- Validated migration of the old single draft; its source stays intact until the new copy is safely committed.
+- Safe switching and JSON opening, with unsaved-work choices and identity checks around asynchronous actions.
+
+### Preserved
+
+- Static hosting, no shared online customer database, no network upload and no new runtime dependency.
+- Old scenario files, calculation rules, hardware presets and named alternatives remain supported.
+
+### Limits
+
+- Up to 100 active/archived plans and 10 MB per plan, subject to browser storage limits. JSON remains the portable backup.
+- Plan IDs find data already saved or imported in the current browser. Cross-device retrieval and shared online workspaces are not part of this release.
+
 ## 2.0.0 — 2026-11-07
 
 ### Added

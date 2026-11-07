@@ -35,3 +35,11 @@ The release also runs a local DOM/event harness for startup, inputs, keyboard ac
 5. Push the approved release, verify the remote commit and Pages build, then compare changed live assets to local tested content.
 
 The five-minute first-use target in PRODUCT_GOALS.md still needs an independent user trial. Passing these checks does not certify Oracle provisioning, workload performance or DR recovery.
+
+## 2.1 library verification
+
+- Pure store tests cover identity, UTF-8 limits, metadata-only reads, atomic revisions, quota/conflict preservation, archive/restore and deterministic legacy migration.
+- Event tests cover independent plans, filtering, save/open/copy, unsaved-work choices, cross-tab conflicts, migration failures/newer legacy drafts and owner/ID preservation in exports.
+- Async regressions pin replacement to the selected Plan ID, keep Cancel effective while Save finishes, and keep automatic saving off if the user disables it during an in-flight save.
+- Native browser checks migrate a genuine 2.0 recovery draft, save two customers with different owners/IDs, find a plan by ID, protect a newer save from a second tab, and archive/restore a plan.
+- No calculation or hardware rules changed in this release. Saved JSON remains the recovery route when browser storage is unavailable or full.

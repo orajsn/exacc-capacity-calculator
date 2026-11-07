@@ -25,14 +25,23 @@
   if(!Array.isArray(sites)||sites.length<1||sites.length>8)throw Error('Each saved option needs 1 to 8 machines.');
   return model?model.importScenario({schema:'exacc-capacity/v1',sites}).sites:clone(sites);
  }
+ function validateProject(value){
+  if(!value||typeof value!=='object'||Array.isArray(value))throw Error('Invalid project details.');
+  const project={name:text(value.name??'',120,'Project name'),notes:text(value.notes??'',6000,'Project notes')};
+  if(value.id!==undefined){
+   const planId=text(value.id,80,'Plan ID',true);
+   if(!/^[A-Za-z0-9_-]{8,80}$/.test(planId))throw Error('Plan ID: use 8 to 80 letters, numbers, underscores or hyphens.');
+   project.id=planId;
+  }
+  if(value.customer!==undefined)project.customer=text(value.customer,120,'Customer name');
+  if(value.owner!==undefined)project.owner=text(value.owner,80,'Owner / alias');
+  return project;
+ }
  function validateExtras(raw,model,validateSites){
   if(!raw||typeof raw!=='object'||Array.isArray(raw))throw Error('Invalid plan metadata.');
   const output={};
   if(raw.ruleSet!==undefined)output.ruleSet=validateRuleSet(raw.ruleSet);
-  if(raw.project!==undefined){
-   if(!raw.project||typeof raw.project!=='object'||Array.isArray(raw.project))throw Error('Invalid project details.');
-   output.project={name:text(raw.project.name??'',120,'Project name'),notes:text(raw.project.notes??'',6000,'Project notes')};
-  }
+  if(raw.project!==undefined)output.project=validateProject(raw.project);
   if(raw.alternatives!==undefined){
    if(!Array.isArray(raw.alternatives)||raw.alternatives.length>MAX_ALTERNATIVES)throw Error(`Keep at most ${MAX_ALTERNATIVES} saved options in one plan.`);
    const ids=new Set(),names=new Set();
@@ -241,7 +250,7 @@
  function newMachine(row,model){const s=model.newSite(row.machine);s.uid=id('machine');s.siteName=row.site;s.clusters=[];s.planningIntent='workload';s.hardwareChosen=false;return s;}
  function newCluster(row,s){return {uid:id('avmc'),name:row.avmc,slots:1,nodes:s.nodes.map(n=>n.id),cpu:40,memoryPerCPU:2,memoryRule:'current',topology:{acds:[]}};}
  function untouchedStartingEntry(state,model){
-  if(state.sites.length!==1||state.project?.notes)return false;
+  if(state.sites.length!==1)return false;
   const actual=clone(state.sites[0]);delete actual.uid;
   const expected=model.newSite('Machine 1');expected.siteName='';expected.clusters=[];expected.planningIntent='workload';expected.hardwareChosen=false;
   const fields=Object.keys(expected);
@@ -287,5 +296,5 @@
  function applyCSV(state,preview,opts,model,topology){return buildCSVImport(state,preview,opts,model,topology).candidate;}
  function csvCell(value){let str=String(value??'');if(/^[=+@\-\t\r]/.test(str))str="'"+str;return /[",\r\n]/.test(str)?'"'+str.replace(/"/g,'""')+'"':str;}
  function template(){return FIELDS.map(f=>f.key).join(',')+'\r\n'+['DC','Production','Core apps','Payments','PaymentsDB','unprotected','16','64','1','yes','ECPU'].map(csvCell).join(',')+'\r\n';}
- return {MAX_ALTERNATIVES,MAX_CSV_ROWS,FIELDS,validateExtras,preserveExtras,capture,restore,compare,growth,migration,parseCSV,defaultMapping,prepareWorksheetRows,previewCSV,buildCSVImport,applyCSV,template};
+ return {MAX_ALTERNATIVES,MAX_CSV_ROWS,FIELDS,validateProject,validateExtras,preserveExtras,capture,restore,compare,growth,migration,parseCSV,defaultMapping,prepareWorksheetRows,previewCSV,buildCSVImport,applyCSV,template};
 });

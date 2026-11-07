@@ -1,10 +1,22 @@
 # ExaC@C Capacity Planner
 
-A browser-only presales planner for Exadata Cloud@Customer. Build a multi-site plan, compare resource allocations, map database groups and export the reasoning. No account, backend, analytics or data upload. Optional device recovery is off until the user enables it.
+A browser-only presales planner for Exadata Cloud@Customer. Keep separate customer projects, build multi-site plans, compare allocations and export the reasoning. No account, backend, analytics or data upload. Device saving starts when you create a saved plan or choose Save on this device.
 
 [Open the planner](https://orajsn.github.io/exacc-capacity-calculator/) · [Product goals](PRODUCT_GOALS.md) · [Release history](CHANGELOG.md) · [Test catalogue](TESTING.md)
 
-## Start in four steps
+## My plans: customers, projects and owner labels
+
+**My plans** lists the projects saved in this browser, grouped by customer. Search by customer, project, optional owner/alias, site, machine or full Plan ID. Each plan keeps its own machines, database inventory and alternatives.
+
+- **Create a customer plan** starts a separate project with a generated Plan ID and saves it on this device.
+- **Save on this device** keeps the working plan in the library and enables automatic updates after a short pause. You can turn automatic saving off in the saving help.
+- **Save as new copy** creates a separate Plan ID. Loading an alternative inside a plan keeps that plan's identity.
+- **Archive** removes a saved plan from the active list; Archived plans can be restored. Permanent deletion is a separate explicit action.
+- JSON files and reports include customer, project, owner and full Plan ID. Older JSON files receive an ID when opened; save JSON to preserve it.
+
+An owner alias is a label, not a verified account. A Plan ID is a reference, not a password or an online retrieval code. Other people using the public calculator do not automatically see your plans. On another device/browser, open the plan's JSON first; entering the ID alone cannot retrieve data that is not there.
+
+## Plan each machine in four steps
 
 1. **Machines:** add one entry per ExaC@C infrastructure. Choose **Size a new machine** or **Check known hardware**. Hardware preset capacities are locked; Custom accepts verified console values.
 2. **AVMCs & workloads:** enter AVMC allocations or workload ECPU/RAM needs. Optionally import Excel/CSV and name the ACDs and databases. **Use database totals for sizing** is an explicit action.
@@ -44,13 +56,15 @@ Choose whether the existing Other values already include those footprints. Inclu
 
 ## Saving and recovery
 
-**Save JSON** downloads all machines, named inventory, saved options, assumptions and rule metadata. Check that the download completed. **Open JSON** resumes it. Existing v1 scenario files remain readable; results are recalculated using current rules, and imported rule differences are shown.
+**Save JSON** downloads the current customer plan with its ID, owner, all machines, named inventory, alternatives, assumptions and rule metadata. The filename includes the customer/project and a short ID suffix. Check that the download completed. **Open JSON** resumes it without automatically overwriting a saved device copy. Existing v1 scenario files remain readable; results use current rules and imported rule differences are shown.
 
-Optional device drafts store the plan only in the current browser/device. They do not sync or upload. Recovery is offered explicitly on reopening, and Clear stored draft does not delete the working plan. A downloaded JSON remains the portable backup.
+The library stores separate plans in IndexedDB on this browser/device. It does not sync or upload. Switching away from unsaved work offers Save, Discard or Keep working. A newer saved revision from another tab causes a conflict instead of a silent overwrite; choose the saved version, save a new copy, or explicitly replace it.
 
-There is one recovery slot for this site in a browser. Other tabs can replace it; leaving-page checks verify that the stored draft still matches the current plan. Use separate JSON files for separate projects.
+The previous single recovery draft is migrated once after validation. Its old copy is only removed after a successful library commit and only if it has not changed meanwhile. Failed migration keeps the original recoverable.
 
-JSON export/import is bounded to 10 MB in UTF-8; keep at most 20 alternatives per file. Device drafts are bounded to 2 MB and may also be limited by browser storage permissions/quota. A failed draft save is shown and does not claim that current edits were saved. Undo/Redo retains up to 20 changes in the current tab; it is not exported.
+JSON and individual saved plans are limited to 10 MB UTF-8; keep at most 20 alternatives per plan. The library accepts 100 active/archived plans, subject to the browser's actual storage allowance. Browser settings, private mode or clearing site data can remove device copies, so keep downloaded JSON backups. A failed save is shown; it never reports current edits as stored. Undo/Redo retains up to 20 changes within the open plan and is reset when switching projects.
+
+For efficiency, listing and search read compact metadata rather than every plan's full JSON. Only the selected plan is loaded. Automatic writes are delayed until typing pauses, and opening an unchanged saved plan does not rewrite it. Metadata and payload updates use one transaction with revision checks. See [IndexedDB](https://developer.mozilla.org/en-US/docs/Web/API/IndexedDB_API/Using_IndexedDB) and [browser storage limits](https://developer.mozilla.org/en-US/docs/Web/API/Storage_API/Storage_quotas_and_eviction_criteria).
 
 ## Reports and coverage
 

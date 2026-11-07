@@ -7,9 +7,10 @@ const escapeHTML=x=>String(x).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>'
 function validateMachines(sites){sites.forEach(s=>{M.validate(s);P.validate(s);A.validate(s);S.validate(s);C.validate(s);});T.validateState({sites});}
 function validateWorkspace(value){validateMachines(value.sites);F.validateExtras(value,M,validateMachines);return value;}
 function importWorkspace(raw){
- const next=F.preserveExtras(M.importScenario(raw),raw,M,validateMachines);T.ensureIds(next);validateWorkspace(next);return next;
+ const next=F.preserveExtras(M.importScenario(raw),raw,M,validateMachines);T.ensureIds(next);L.ensureIdentity(next);validateWorkspace(next);return next;
 }
 function workspaceForDownload(){
+ L.ensureIdentity(state);
  validateWorkspace(state);
  const payload={...state,calculatorVersion:M.VERSION,ruleSet:{version:R.VERSION,checked:R.CHECKED,scope:R.SCOPE}};
  if(new Blob([JSON.stringify(payload,null,2)]).size>10000000)throw Error('This plan exceeds the 10 MB JSON limit. Remove saved alternatives or split the plan before downloading.');
@@ -38,7 +39,7 @@ function safeUpdate(fn, rerender = false) {
   clearResourceCards();
  }
 }
-function render(){T.ensureIds(state);const s=site();renderNavigation();$('site-name').value=s.name;$('location').value=s.siteName||'';$('profile').value=s.profile;$('node-count').value=s.nodes.length;$('buffer').value=s.bufferPercent;$('image').value=s.image;$('image').readOnly=s.profile!=='custom';$('allowance').value=s.allowance;$('compute').checked=s.checkCompute;
+function render(){T.ensureIds(state);L.ensureIdentity(state);const s=site();renderNavigation();$('site-name').value=s.name;$('location').value=s.siteName||'';$('profile').value=s.profile;$('node-count').value=s.nodes.length;$('buffer').value=s.bufferPercent;$('image').value=s.image;$('image').readOnly=s.profile!=='custom';$('allowance').value=s.allowance;$('compute').checked=s.checkCompute;
  const keys=['local','otherLocal','maxVMs','otherVMs','cpu','otherCPU','memory','otherMemory'];$('server-inputs').querySelector('tbody').innerHTML=s.nodes.map((n,i)=>`<tr><td>DB ${n.id}</td>${keys.map(k=>`<td><input aria-label="DB ${n.id} ${k}" type="number" min="0" step="${k.includes('VM')?'1':'0.5'}" value="${n[k]}" data-node="${i}" data-key="${k}" ${s.profile!=='custom'&&fixedCapacity.has(k)?'readonly aria-readonly="true" title="Fixed by the selected hardware shape"':''}></td>`).join('')}</tr>`).join('');
  renderClusterEditors(s);
  $('add-site').disabled=state.sites.length>=8;
@@ -144,7 +145,8 @@ $('combinations').onclick = e => {
   message(error.message);
  }
 };
-$('save').onclick=()=>{try{const payload=workspaceForDownload();download('exacc-scenario.json',JSON.stringify(payload,null,2),'application/json');savedSignature=JSON.stringify(state);savedLabel='JSON download requested · check your Downloads folder';updateWorkflow();message('JSON download requested: exacc-scenario.json. Check Downloads or your chosen folder. Use Open JSON to resume. If you cancelled, save again; this page cannot confirm the file reached your laptop.');}catch(e){message(e.message);}};
-$('import').onchange=async e=>{const file=e.target.files[0];if(!file)return;try{if(file.size>10000000)throw Error('Scenario file is too large (maximum 10 MB).');const next=importWorkspace(JSON.parse(await file.text()));const before=snapshot();state=next;active=0;activeAVMCEditor=0;guideStep=1;rememberChange(before);savedSignature=JSON.stringify(state);savedLabel='Opened JSON · no new edits';cancelPreview();message('Resumed from JSON. Results use the current rules; review any rule-version or open-check warnings. Save JSON after editing to keep your changes.');render();}catch(err){message(`Could not open scenario: ${err.message}`);}e.target.value='';};
+let jsonImportGeneration=0;
+$('save').onclick=()=>{try{const payload=workspaceForDownload(),name=planFilename(payload);download(name,JSON.stringify(payload,null,2),'application/json');savedSignature=JSON.stringify(state);savedLabel='JSON download requested · check your Downloads folder';updateWorkflow();message(`JSON download requested: ${name}. It includes the Plan ID, customer, owner and all machines. Check Downloads; if you cancelled, save again.`);}catch(e){message(e.message);}};
+$('import').onchange=async e=>{const file=e.target.files[0];if(!file)return;const generation=++jsonImportGeneration;try{if(file.size>10000000)throw Error('Scenario file is too large (maximum 10 MB).');const raw=JSON.parse(await file.text());if(generation!==jsonImportGeneration)return;const hadID=!!raw.project?.id,next=importWorkspace(raw);requestPlanTransition(async()=>{activatePlan(next,{sourceKept:true,label:'Opened JSON · not automatically saved on this device'});message(hadID?'Opened the JSON plan. Save on this device to add or update its local copy.':'This older file had no Plan ID. A new ID was assigned; save JSON to keep it, or save on this device.');});}catch(err){if(generation===jsonImportGeneration)message(`Could not open scenario: ${err.message}`);}e.target.value='';};
 $('print').onclick=()=>{goGuideStep(4);window.print();};$('version').textContent=M.VERSION;$('checked').textContent=M.CHECKED;
-$('sources').innerHTML=Object.entries({formula:'Oracle sizing formula',hardware:'Hardware capacities',limits:'ACD and AVMC limits',compute:'Compute management',vmc:'Conventional VMC scope'}).map(([key,label])=>`<a href="${M.SOURCES[key]}" target="_blank" rel="noopener noreferrer">${label} ↗</a>`).join('');T.ensureIds(state);initPlanning();initAudit();initLayout();initSizing();initJourney();initTopology();initConventional();initScenarios();initWorkloadImport();initAssessment();initDrafts();initWorkflow();render();
+$('sources').innerHTML=Object.entries({formula:'Oracle sizing formula',hardware:'Hardware capacities',limits:'ACD and AVMC limits',compute:'Compute management',vmc:'Conventional VMC scope'}).map(([key,label])=>`<a href="${M.SOURCES[key]}" target="_blank" rel="noopener noreferrer">${label} ↗</a>`).join('');T.ensureIds(state);L.ensureIdentity(state);initPlanning();initAudit();initLayout();initSizing();initJourney();initTopology();initConventional();initScenarios();initWorkloadImport();initAssessment();initDrafts();initWorkflow();render();

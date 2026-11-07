@@ -32,9 +32,10 @@ function warnBeforeLeaving(event) {
 
 function updateSaveReminder() {
  const dirty = hasUnsavedChanges();
- $('save-status').textContent = dirty ? 'Unsaved changes · download JSON to keep them' : savedLabel;
- $('save-reminder').hidden = !dirty;
- $('dock-unsaved').textContent = dirty ? 'Unsaved changes' : '';
+ const savedHere=deviceDraftIsCurrent();
+ $('save-status').textContent = savedHere?'Saved on this device · JSON is your portable backup':dirty ? 'Unsaved changes · save on device or download JSON' : savedLabel;
+ $('save-reminder').hidden = !dirty||savedHere;
+ $('dock-unsaved').textContent = dirty ? savedHere?'Saved on this device':'Unsaved changes' : '';
  $('dock-unsaved').hidden = !dirty;
  if (dirty && !leaveWarningActive) window.addEventListener('beforeunload', warnBeforeLeaving);
  if (!dirty && leaveWarningActive) window.removeEventListener('beforeunload', warnBeforeLeaving);
