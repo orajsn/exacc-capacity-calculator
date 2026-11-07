@@ -1,7 +1,7 @@
 <!doctype html>
-<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="description" content="Explore Exadata Cloud@Customer Autonomous VM Cluster local-storage capacity, ACD slots and design combinations."><meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; connect-src 'none'; object-src 'none'; base-uri 'none'; form-action 'none'"><meta name="referrer" content="no-referrer"><title>ExaC@C Capacity Calculator</title><link rel="stylesheet" href="style.css"><link rel="stylesheet" href="oracle-theme.css"><link rel="stylesheet" href="layout.css"><script src="model.js" defer></script><script src="audit.js" defer></script><script src="planning.js" defer></script><script src="planning-ui.js" defer></script><script src="audit-ui.js" defer></script><script src="layout.js" defer></script><script src="sizing.js" defer></script><script src="sizing-ui.js" defer></script><script src="workflow.js" defer></script><script src="app.js" defer></script></head>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="description" content="Explore Exadata Cloud@Customer Autonomous VM Cluster local-storage capacity, ACD slots and design combinations."><meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; connect-src 'none'; object-src 'none'; base-uri 'none'; form-action 'none'"><meta name="referrer" content="no-referrer"><title>ExaC@C Capacity Calculator</title><link rel="stylesheet" href="style.css"><link rel="stylesheet" href="oracle-theme.css"><link rel="stylesheet" href="layout.css"><link rel="stylesheet" href="journey.css"><script src="model.js" defer></script><script src="audit.js" defer></script><script src="planning.js" defer></script><script src="planning-ui.js" defer></script><script src="audit-ui.js" defer></script><script src="layout.js" defer></script><script src="sizing.js" defer></script><script src="sizing-ui.js" defer></script><script src="journey.js" defer></script><script src="workflow.js" defer></script><script src="app.js" defer></script></head>
 <body>
-<header class="masthead"><div><span class="eyebrow">EXADATA CLOUD@CUSTOMER · PLANNING TOOL</span><h1>ExaC@C Capacity Calculator</h1><p>See allocated and free capacity on each ExaC@C machine, and try changes before making them in OCI.</p></div><span class="version">AVMC calculator <span id="version"></span></span></header>
+<header class="masthead"><div><span class="eyebrow">EXADATA CLOUD@CUSTOMER · PRESALES PLANNING</span><h1>ExaC@C Capacity Calculator</h1><p>Build the customer’s machine layout, enter requirements, and compare capacity options before making changes in OCI.</p></div><span class="version">AVMC calculator <span id="version"></span></span></header>
 <main>
 <div class="toolbar">
  <div class="actions"><button id="save" class="primary">Save scenario (.json)</button><label id="open-scenario" class="button" for="import" role="button" tabindex="0">Open saved JSON<input type="file" id="import" accept=".json,application/json" hidden></label><button id="print">Print / PDF</button></div>
@@ -15,6 +15,7 @@
  <p class="hint">JSON is the editable configuration; Print / PDF is only a report. Closing or refreshing can lose edits that are not in your downloaded file. Your browser may warn, but do not rely on that warning as a backup.</p>
 </details>
 <div id="message" role="alert" hidden></div>
+<div class="presales-intro"><div><h2>Start with the customer’s machines</h2><p>One machine entry is one ExaC@C infrastructure, such as Production or DR. DB servers and AVMCs sit inside it. Add the machines you need, or resume a saved proposal.</p></div><button id="guide-open">Open a saved proposal</button></div>
 <div class="workspace">
 <aside class="machine-nav" aria-label="Machine navigation">
  <h2>Sites &amp; machines</h2><nav id="site-tabs" aria-label="Sites and machines"></nav>
@@ -23,44 +24,51 @@
  <p class="hint">Each machine is checked separately. Spare capacity on one machine cannot be used by another.</p>
 </aside>
 <div class="workspace-content">
-<div class="resource-strip" aria-label="Active machine resource summary">
+<nav class="guide-steps" aria-label="Sizing steps"><button id="guide-step-1">1. Machines</button><button id="guide-step-2">2. AVMCs &amp; workloads</button><button id="guide-step-3">3. Compare options</button><button id="guide-step-4">4. Review &amp; save</button></nav>
+<div class="guide-header"><div id="guide-machine"></div><h2 id="guide-heading" tabindex="-1">1. Machines</h2><p id="guide-instruction"></p><div id="guide-context"></div></div>
+<div id="review-needs-hardware" class="guide-review-notice" hidden><p>Hardware has not been selected for this workload plan. Compare the options before treating capacity figures as a proposal.</p><button id="review-choose">Go to hardware options</button></div>
+<p id="review-partial" class="issues warning" hidden>Some workloads are still unsized. This review covers the entered requirements only.</p>
+
+<div id="panel-resources" class="resource-strip guide-panel review-panel" aria-label="Active machine resource summary">
  <div class="active-machine"><strong id="active-machine"></strong><div class="actions"><span id="configuration-stage" class="stage"></span></div></div>
  <div id="resource-cards" class="resource-cards" aria-live="polite"></div>
  <div id="save-reminder" class="save-reminder" role="status" hidden><p><strong>Unsaved changes.</strong> Save the JSON to your laptop before leaving, so you can resume later.</p><button id="save-reminder-button">Save JSON now</button></div>
  <p id="resource-validation" class="negative" role="alert" hidden></p>
 </div>
-<details class="current-panel" aria-labelledby="current-heading">
+<details id="panel-before" class="current-panel guide-panel" aria-labelledby="current-heading">
  <summary id="current-heading">Compare before and after (optional)</summary>
  <p id="current-summary" class="hint"></p>
  <p class="hint"><strong>Example:</strong> record 1,000 GB, edit the design to 800 GB, and see a −200 GB difference. This only records comparison totals; it does not read or change OCI. Use Save scenario to keep them in a file.</p>
  <div class="actions"><button id="capture-baseline">Record “Before” values</button><button id="clear-baseline">Remove comparison</button></div>
 </details>
-<section class="setup" aria-labelledby="site-heading">
+<section id="panel-machine" class="setup guide-panel" aria-labelledby="site-heading">
 <div class="section-top"><h2 id="site-heading">Machine settings</h2><span>Capacity is fixed by hardware shape</span></div>
+<label class="intent-field">What do you need for this machine?<select id="planning-intent"><option value="workload">Suggest hardware from workload needs</option><option value="allocation">Check a known machine and its allocations</option></select></label>
+<p id="draft-hardware-note" class="draft-note">Hardware will be selected in step 3.</p>
 <div class="machine-form-grid">
  <fieldset class="form-group"><legend>Site and machine</legend><div class="fields"><label>Site / location<input id="location" maxlength="80" placeholder="e.g. DC or DR"></label><label>Machine name<input id="site-name" maxlength="80"></label></div></fieldset>
- <fieldset class="form-group"><legend>Hardware</legend><div class="fields"><label>DB server shape<select id="profile"></select></label><label>DB servers<input id="node-count" type="number" min="2" max="32" step="1"></label></div></fieldset>
+ <fieldset id="hardware-fields" class="form-group"><legend>Hardware</legend><div class="fields"><label>DB server shape<select id="profile"></select></label><label>DB servers<input id="node-count" type="number" min="2" max="32" step="1"></label></div></fieldset>
  <fieldset class="form-group buffer-form-group"><legend>Optional buffer</legend><label>Local storage buffer (%)<input id="buffer" type="number" min="0" max="90" step="1"></label><p class="hint">Free space you prefer to keep. A warning only.</p></fieldset>
 </div>
-<p class="hint">If other clusters already use this machine, enter their allocations below.</p>
-<details><summary>Hardware capacity and other allocations</summary><p class="hint">The hardware preset fixes the capacity values. Use the “Other” columns for resources already allocated outside this plan. Choose Custom only for a different configuration you have verified.</p><div class="fields compact"><label>AVMC image overhead / VM (GB)<input id="image" type="number" min="0" max="1000" step="1"></label><label>Extra local storage to include per VM (GB)<input id="allowance" type="number" min="0" max="1000" step="0.5"></label></div><p class="hint">184 GB for X8M / X9M / X10M / X11M; 137 GB for X7-2 / X8-2. For other shapes, select Custom and enter console capacity. Extra local storage is an optional amount you add to the estimated allocation.</p><div class="table-wrap"><table id="server-inputs"><thead><tr><th>Server</th><th>Local capacity GB<br><small>Fixed by shape</small></th><th>Other local GB</th><th>VM limit<br><small>Fixed by shape</small></th><th>Other VMs</th><th>ECPU capacity</th><th>Other ECPUs</th><th>Memory GB</th><th>Other memory GB</th></tr></thead><tbody></tbody></table></div></details></section>
-<section aria-labelledby="design-heading">
+<p id="other-allocations-hint" class="hint">If other clusters already use this machine, enter their allocations below.</p>
+<details id="other-allocations"><summary>Hardware capacity and other allocations</summary><p class="hint">The hardware preset fixes the capacity values. Use the “Other” columns for resources already allocated outside this plan. Choose Custom only for a different configuration you have verified.</p><div class="fields compact"><label>AVMC image overhead / VM (GB)<input id="image" type="number" min="0" max="1000" step="1"></label><label>Extra local storage to include per VM (GB)<input id="allowance" type="number" min="0" max="1000" step="0.5"></label></div><p class="hint">184 GB for X8M / X9M / X10M / X11M; 137 GB for X7-2 / X8-2. For other shapes, select Custom and enter console capacity. Extra local storage is an optional amount you add to the estimated allocation.</p><div class="table-wrap"><table id="server-inputs"><thead><tr><th>Server</th><th>Local capacity GB<br><small>Fixed by shape</small></th><th>Other local GB</th><th>VM limit<br><small>Fixed by shape</small></th><th>Other VMs</th><th>ECPU capacity</th><th>Other ECPUs</th><th>Memory GB</th><th>Other memory GB</th></tr></thead><tbody></tbody></table></div></details></section>
+<section id="panel-avmc" class="guide-panel" aria-labelledby="design-heading">
 <div class="section-top"><div><h2 id="design-heading">Edit AVMC allocations</h2><p class="hint">Choose an AVMC to edit. Its maximum ACD count reserves local storage before those ACDs are created.</p></div><button id="add-cluster" class="primary">+ Add AVMC</button></div>
 <div class="allocation-workspace">
- <div class="allocation-editor"><label class="check"><input id="compute" type="checkbox"> Include CPU and memory checks</label><p class="hint">Open CPU &amp; memory inside each AVMC when needed. Local-storage controls are shown first.</p><div id="clusters"></div></div>
+ <div class="allocation-editor"><div id="manual-compute-controls"><label class="check"><input id="compute" type="checkbox"> Include CPU and memory checks</label><p class="hint">Open CPU &amp; memory inside each AVMC when needed. Local-storage controls are shown first.</p></div><p id="sizing-path-note" class="hint">Enter workload needs inside each AVMC. Hardware and AVMC allocations will be selected in step 3.</p><div id="sizing-inputs"><div id="clusters"></div></div></div>
  <aside class="allocation-visual" aria-labelledby="map-heading"><h3 id="map-heading">AVMC → ACD slots</h3><p class="hint">Boxes show reserved slots from the maximum ACD setting. Actual ACD and ADB names are not loaded. All GB values sum the selected DB servers.</p><div id="allocation-map"></div></aside>
 </div>
 </section>
 
-<section aria-labelledby="sizing-heading">
+<section id="panel-sizing" class="guide-panel" data-print-skip aria-labelledby="sizing-heading">
 <h2 id="sizing-heading">Suggest DB-server hardware from workload needs</h2>
 <p class="hint">Enter total ECPUs and RAM needed by the workloads in each AVMC. This compares new X11M layouts with every AVMC on all selected DB servers. It does not prove application performance or an in-place hardware change.</p>
 <div class="fields growth-fields"><label>Extra ECPU allowance (%)<input id="sizing-extra" type="number" min="0" max="200" step="1"></label><label>Minimum DB servers<input id="sizing-min" type="number" min="2" max="32" step="1"></label><label>Maximum DB servers<input id="sizing-max" type="number" min="2" max="32" step="1"></label></div>
 <p class="hint">50% extra ECPU is an editable planning assumption, not Oracle's computed failover reservation. This check assumes every maximum ACD slot becomes an ACD. CPU sizing includes ACD minimums and 40 ECPUs/VM; memory ratios round up in 0.5 GB steps. Confirm ACD reservations, autoscaling, failover and placement separately. “ACDs without sized workloads” receive only the empty-ACD CPU minimum; their future databases still need sizing.</p>
-<div id="sizing-inputs"></div><button id="suggest-sizing" class="primary">Compare DB-server options</button><div id="sizing-results" aria-live="polite"></div>
+<button id="suggest-sizing" class="primary">Compare DB-server options</button><div id="sizing-results" aria-live="polite"></div>
 <p class="hint">Suggestions use the requirements currently entered. For a multi-year plan, check every year before choosing hardware. Shared storage servers, backup capacity, network, licensing and prices are outside this comparison. Existing “Other” allocations are retained on their DB servers. <a href="https://docs.oracle.com/en/cloud/paas/autonomous-database/dedicated/adbaa/compute-management-in-autonomous-ai-database-on-dedicated.html" target="_blank" rel="noopener noreferrer">Oracle CPU allocation rules</a>.</p>
 </section>
-<section aria-labelledby="compare-heading">
+<section id="panel-layouts" class="guide-panel" data-print-skip aria-labelledby="compare-heading">
 <div class="section-top"><div><h2 id="compare-heading" tabindex="-1">Compare AVMC layouts</h2>
 <p class="hint">Compare the maximum ACD count for each layout. These limits cover local storage; each option uses all DB servers. A buffer is your preferred free capacity, so missing it shows a warning. You can still preview and use a layout that fits the hardware.</p></div></div>
 <div class="table-wrap"><table id="combinations"><thead><tr><th>AVMCs</th><th>Maximum ACDs<br><small>Storage limit</small></th><th>ACDs keeping your buffer</th><th>ACDs per AVMC<br><small>Suggested layout</small></th><th>Local GB free<br><small>Suggested layout</small></th><th></th></tr></thead><tbody></tbody></table></div>
@@ -76,9 +84,9 @@
  <div class="actions"><button id="apply-preview" class="primary" disabled>Use this layout</button><button id="cancel-preview">Cancel preview</button></div>
 </div>
 </section>
-<section aria-labelledby="audit-heading">
-<h2 id="audit-heading">Compare with OCI console</h2>
-<p class="hint">Compare calculated allocations with the OCI console. These are resources assigned to AVMCs, not live workload usage. Check the memory formula selected above.</p>
+<details id="panel-audit" class="guide-panel review-panel optional-panel" aria-labelledby="audit-heading">
+<summary id="audit-heading">Compare with OCI console (optional)</summary>
+<p class="hint">Compare calculated allocations with the OCI console. These are resources assigned to AVMCs, not live workload usage. Each row shows the memory formula used.</p>
 <div id="allocation-audit"></div>
 <details><summary>Compare totals for this machine</summary>
 <div class="fields growth-fields">
@@ -86,8 +94,8 @@
 <label>Console allocated local storage (GB)<input id="observed-local" type="number" min="0" step="0.1" placeholder="Whole machine"></label>
 <label>Allowed difference (GB)<input id="reconcile-tolerance" type="number" min="0" max="100" step="0.1"></label>
 </div><div id="reconciliation-results"></div></details>
-</section>
-<section aria-labelledby="candidate-heading">
+</details>
+<section id="panel-candidate" class="guide-panel" data-print-skip aria-labelledby="candidate-heading">
 <h2 id="candidate-heading">Will one more AVMC fit?</h2>
 <p class="hint">A new AVMC needs at least 40 ECPUs and 135 GB memory per node. Local storage depends on the hardware and maximum ACD count.</p>
 <div class="fields growth-fields">
@@ -96,7 +104,7 @@
 <label>New AVMC maximum ACDs<input id="candidate-slots" type="number" min="1" max="16" step="1"></label>
 </div><div id="candidate-results"></div>
 </section>
-<section aria-labelledby="growth-heading"><h2 id="growth-heading" tabindex="-1">Allocated and free capacity</h2>
+<section id="panel-capacity" class="guide-panel review-panel" aria-labelledby="growth-heading"><h2 id="growth-heading" tabindex="-1">Allocated and free capacity</h2>
 <p class="hint">A buffer is capacity you would like to keep free. Falling below it is a warning, not a blocker. Actual hardware limits and Oracle resource requirements still apply. These targets do not change what Oracle has already allocated.</p>
 <div class="fields growth-fields"><label>CPU buffer (%)<input id="cpu-buffer" type="number" min="0" max="90"></label><label>Memory buffer (%)<input id="memory-buffer" type="number" min="0" max="90"></label><label>Exadata storage buffer (%)<input id="storage-buffer" type="number" min="0" max="90"></label></div>
 <div id="resource-budgets" aria-live="polite"></div>
@@ -105,7 +113,7 @@
 <details><summary>Before resizing: requirements and memory formula</summary><p class="hint">A lower estimate does not guarantee OCI will allow the change. Check ACD CPU allocations and reservations, used storage, and the console minimums. Changing ECPUs per VM or maximum ACDs triggers rolling restarts. Check the maintenance impact before changing memory per CPU. <a href="https://docs.oracle.com/en/cloud/paas/autonomous-database/dedicated/adbaa/manage-autonomous-exadata-vm-clusters.html" target="_blank" rel="noopener noreferrer">Oracle scaling guidance</a>.</p>
 <div class="issues">Current memory rule: <strong>(ECPUs per VM × GB per ECPU + 40 + 0.3 × ECPUs per VM) × 1.02 × VM count</strong>. Applies to AVMCs created after 22 September 2026 and existing AVMCs after memory per CPU changes. Confirmed legacy AVMCs omit the 0.3 term. Planning uses decimal 300 MB = 0.3 GB and budgets at least 135 GB per VM for the current rule; check the console for rounding differences.</div></details>
 </section>
-<details class="capacity-guidance"><summary>Which changes free capacity?</summary>
+<details id="panel-guidance" class="capacity-guidance guide-panel"><summary>Which changes free capacity?</summary>
 <ul>
 <li><strong>ADB autoscaling:</strong> borrows idle CPU within its parent ACD. It does not resize the AVMC allocation. Autoscaling reservations can constrain later AVMC scale-down. <a href="https://docs.oracle.com/en/cloud/paas/autonomous-database/dedicated/adbaa/compute-management-in-autonomous-ai-database-on-dedicated.html" target="_blank" rel="noopener noreferrer">Compute management</a>.</li>
 <li><strong>Lowering ADB ECPUs:</strong> is not an AVMC memory resize. Released CPU can remain reclaimable in the ACD until its restart; check reservations before shrinking the AVMC.</li>
@@ -115,18 +123,20 @@
 </ul>
 <p class="hint">Use this calculator to compare resource changes. Oracle Support or the account team must confirm a customer-specific recommendation and maintenance plan.</p>
 </details>
-<details class="optional-panel"><summary>ADB session planning · optional</summary><section aria-labelledby="session-heading"><h2 id="session-heading">ADB session planning</h2><p class="hint">A separate estimate for one Autonomous Database. Dedicated 75 and shared/MTS 325 sessions per ECPU are <strong>editable assumptions, not verified public Dedicated service limits</strong>. Confirm applicability with Oracle for your database. Switching this selector does not enable shared server.</p>
+<details id="panel-sessions" class="optional-panel guide-panel review-panel"><summary>ADB session planning · optional</summary><section aria-labelledby="session-heading"><h2 id="session-heading">ADB session planning</h2><p class="hint">A separate estimate for one Autonomous Database. Dedicated 75 and shared/MTS 325 sessions per ECPU are <strong>editable assumptions, not verified public Dedicated service limits</strong>. Confirm applicability with Oracle for your database. Switching this selector does not enable shared server.</p>
 <div class="fields"><label>ADB base ECPUs<input id="adb-ecpu" type="number" min="0.001" step="0.1" placeholder="One ADB"></label><label>Connection type (estimate)<select id="session-mode"><option value="dedicated">Dedicated · assumed 75 / ECPU</option><option value="shared">Shared / MTS · assumed 325 / ECPU</option><option value="custom">Custom ratio</option></select></label><label>Sessions per ECPU<input id="session-rate" type="number" min="1" step="1"></label><label>Expected sessions (optional)<input id="session-demand" type="number" min="0" step="1"></label></div><div id="session-results" aria-live="polite"></div>
 <p class="hint">This estimate does not add autoscaling capacity. Shared server can support more connections, but does not add CPU power. Check application compatibility, session limits and connection pooling. <a href="https://docs.oracle.com/en/database/oracle/oracle-database/26/netag/understanding-shared-server-architecture.html" target="_blank" rel="noopener noreferrer">Oracle shared-server architecture</a>.</p></section></details>
-<details class="all-checks"><summary>Checks for all machines</summary><div class="table-wrap"><table id="overview"><thead><tr><th>Site</th><th>Machine</th><th>Shape</th><th>AVMCs / ACD slots</th><th>Local capacity GB</th><th>Free local GB</th><th>Check</th></tr></thead><tbody></tbody></table></div></details>
-<details class="method"><summary>Formulas, assumptions and sources</summary><h2>How the calculation works</h2><p>For each AVMC, <var>N</var> is its configured maximum ACD count and <var>V</var> is its selected DB-server count.</p><div class="formula">Local GB = [ image + (100 + 50 × N) × 1.03 + 2 ] × V</div><p>For two X11M nodes: <strong>578 GB per AVMC + 103 GB per reserved ACD slot.</strong> Each ACD is counted once, even though its storage is allocated on every selected node. An AVMC can have at most 16 ACDs.</p><details><summary>Assumptions, source differences and scope</summary><ul><li>The result is a reservation estimate, not measured disk usage. Check capacity on every selected server.</li><li>Oracle’s detailed formula gives 681 GB for one ACD on two X11M nodes; its worked example shows 682 GB. Other summary examples also differ. This calculator consistently uses the detailed formula and shows decimal GB. Confirm final reservations in the console.</li><li>All buffers are user-selected: local storage starts at 10%; CPU, memory and manually entered Exadata storage start at 30%. These are planning assumptions, not Oracle-mandated margins.</li><li>Memory uses the current or confirmed legacy rule per AVMC. Old scenarios without a rule are unconfirmed and use the conservative current estimate; saved reference totals stay unchanged. ACD creation additionally requires available CPU per node.</li><li>Local GB belongs to database servers. Shared Exadata storage is separate; the optional TB check uses manually entered console capacity and total allocations. It does not derive internal overheads or backup reservations.</li><li>Custom and mixed-service deployments require console confirmation of VM limits. Current X11M Autonomous presets use Oracle’s documented 6 VMs/server, or 2 for Base.</li><li>Conventional VMC filesystem and VM-backup calculations will use a separate model. For now, include their console-reported local allocations as “Other local GB”. Exascale support in the conventional service does not establish Autonomous support.</li></ul></details><div id="sources"></div></details>
+<details id="panel-overview" class="all-checks guide-panel" open><summary>Checks for all machines</summary><div class="table-wrap"><table id="overview"><thead><tr><th>Site</th><th>Machine</th><th>Shape</th><th>AVMCs / ACD slots</th><th>Local capacity GB</th><th>Free local GB</th><th>Check</th></tr></thead><tbody></tbody></table></div></details>
+<details id="panel-formulas" class="method guide-panel"><summary>Formulas, assumptions and sources</summary><h2>How the calculation works</h2><p>For each AVMC, <var>N</var> is its configured maximum ACD count and <var>V</var> is its selected DB-server count.</p><div class="formula">Local GB = [ image + (100 + 50 × N) × 1.03 + 2 ] × V</div><p>For two X11M nodes: <strong>578 GB per AVMC + 103 GB per reserved ACD slot.</strong> Each ACD is counted once, even though its storage is allocated on every selected node. An AVMC can have at most 16 ACDs.</p><details><summary>Assumptions, source differences and scope</summary><ul><li>The result is a reservation estimate, not measured disk usage. Check capacity on every selected server.</li><li>Oracle’s detailed formula gives 681 GB for one ACD on two X11M nodes; its worked example shows 682 GB. Other summary examples also differ. This calculator consistently uses the detailed formula and shows decimal GB. Confirm final reservations in the console.</li><li>All buffers are user-selected: local storage starts at 10%; CPU, memory and manually entered Exadata storage start at 30%. These are planning assumptions, not Oracle-mandated margins.</li><li>Memory uses the current or confirmed legacy rule per AVMC. Old scenarios without a rule are unconfirmed and use the conservative current estimate; saved reference totals stay unchanged. ACD creation additionally requires available CPU per node.</li><li>Local GB belongs to database servers. Shared Exadata storage is separate; the optional TB check uses manually entered console capacity and total allocations. It does not derive internal overheads or backup reservations.</li><li>Custom and mixed-service deployments require console confirmation of VM limits. Current X11M Autonomous presets use Oracle’s documented 6 VMs/server, or 2 for Base.</li><li>Conventional VMC filesystem and VM-backup calculations will use a separate model. For now, include their console-reported local allocations as “Other local GB”. Exascale support in the conventional service does not establish Autonomous support.</li></ul></details><div id="sources"></div></details>
+<section id="review-actions" class="review-actions"><h3>Keep or share this proposal</h3><p>Save JSON to keep all machines and resume later. Print / PDF captures the visible planning details for discussion. Neither action provisions OCI resources.</p><div class="actions"><button id="review-save" class="primary">Save proposal JSON</button><button id="review-print">Print / PDF</button><button id="review-add">Next machine</button></div></section>
+<div class="guide-footer"><button id="guide-back">Back</button><p id="guide-footer-note"></p><button id="guide-next" class="primary">Next: AVMCs &amp; workloads</button></div>
 </div></div>
 </main>
 <aside id="local-dock" class="local-dock" data-level="fit" aria-label="Live local-storage summary">
  <div class="dock-context"><strong id="dock-machine"></strong><span id="dock-mode"></span><span id="dock-unsaved" hidden></span></div>
  <div class="dock-capacity"><span id="dock-label">Local storage left</span><output id="dock-free" aria-live="polite" aria-atomic="true">—</output></div>
  <div class="dock-detail"><span id="dock-allocation"></span><strong id="dock-status"></strong></div>
- <div class="dock-actions"><a class="button" href="#growth-heading">Details</a><button id="undo" disabled>Undo last change</button><button id="dock-save">Save JSON</button></div>
+ <div class="dock-actions"><button id="dock-review">Review</button><button id="undo" disabled>Undo last change</button><button id="dock-save">Save JSON</button></div>
 </aside>
 <footer>Independent planning aid · Public Oracle documentation · Sources checked <span id="checked"></span> · No Oracle endorsement implied · <a href="CHANGELOG.md" target="_blank" rel="noopener">Changelog</a></footer>
 </body></html>

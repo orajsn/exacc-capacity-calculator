@@ -2,16 +2,19 @@
 const S=window.ExaSizing;
 let sizingResults=null;
 
+function requirementFields(c,i){
+ const q={unsizedACDs:0,minRatio:2,...c.requirements};
+ return `<div class="workload-fields"><h4>Workload needs for this AVMC</h4><p class="hint">Enter totals across the workload, not ECPUs per VM. Allocations will be calculated in step 3.</p><div class="sizing-fields">${[['ecpu','Workload ECPUs (total)',0,100000],['ramGB','RAM needed (GB)',0,1000000],['unsizedACDs','ACDs without sized workloads',0,c.slots],['minRatio','Minimum GB/ECPU',2,5]].map(([key,label,min,max])=>`<label>${label}<input type="number" min="${min}" max="${max}" step="${key==='unsizedACDs'?'1':'0.5'}" data-requirement="${i}" data-key="${key}" value="${q[key]??''}" aria-label="${escapeHTML(c.name)} ${label}"></label>`).join('')}</div><label class="check"><input type="checkbox" data-incomplete="${i}" ${q.incomplete?'checked':''}>Some workload needs are still missing</label></div>`;
+}
 function renderSizing(){
  const p=S.config(site());
  for(const [id,key] of [['sizing-extra','extraCPUPercent'],['sizing-min','minNodes'],['sizing-max','maxNodes']])$(id).value=p[key];
- $('sizing-inputs').innerHTML=site().clusters.map((c,i)=>{
-  const q={unsizedACDs:0,minRatio:2,...c.requirements};
-  return `<fieldset class="sizing-request"><legend>${escapeHTML(c.name)}</legend><div class="sizing-fields">${[['ecpu','Workload ECPUs (total)',0,100000],['ramGB','RAM needed (GB)',0,1000000],['unsizedACDs','ACDs without sized workloads',0,c.slots],['minRatio','Minimum GB/ECPU',2,5]].map(([key,label,min,max])=>`<label>${label}<input type="number" min="${min}" max="${max}" step="${key==='unsizedACDs'?'1':'0.5'}" data-requirement="${i}" data-key="${key}" value="${q[key]??''}" aria-label="${escapeHTML(c.name)} ${label}"></label>`).join('')}</div><label class="check"><input type="checkbox" data-incomplete="${i}" ${q.incomplete?'checked':''}>Some workload needs are still missing</label></fieldset>`;
- }).join('')||'<p class="hint">Add AVMCs above, then enter their workload needs here.</p>';
+ site().clusters.forEach((c,i)=>{const box=$('requirements-box-'+i);if(box)box.innerHTML=requirementFields(c,i);});
 }
 function clearSizingResults(){sizingResults=null;$('sizing-results').innerHTML='';}
 function runSizing(){
+ goGuideStep(3);
+ cancelPreview();
  try{
   S.validate(site(),true);const suggestion=S.suggest(site(),M,P);sizingResults={signature:JSON.stringify(state),active,suggestion};
   const selected=suggestion.rows.filter(r=>r.fit).slice(0,12);
@@ -20,10 +23,10 @@ function runSizing(){
  }catch(error){clearSizingResults();$('sizing-results').textContent=error.message;}
 }
 function initSizing(){
- for(const [id,key] of [['sizing-extra','extraCPUPercent'],['sizing-min','minNodes'],['sizing-max','maxNodes']])$(id).addEventListener('input',()=>safeUpdate(()=>{site().sizing={...S.config(site()),[key]:$(id).value===''?NaN:Number($(id).value)};S.validate(site());}));
+ for(const [id,key] of [['sizing-extra','extraCPUPercent'],['sizing-min','minNodes'],['sizing-max','maxNodes']])$(id).addEventListener('input',()=>safeUpdate(()=>{site().sizing={...S.config(site()),[key]:$(id).value===''?NaN:Number($(id).value)};S.validate(site());needsNewSizing();}));
  $('sizing-inputs').oninput=event=>{
   const el=event.target;if(el.dataset.requirement===undefined)return;
-  safeUpdate(()=>{const c=site().clusters[Number(el.dataset.requirement)];c.requirements={ecpu:null,ramGB:null,unsizedACDs:0,minRatio:2,incomplete:false,...c.requirements};c.requirements[el.dataset.key]=el.value===''?null:Number(el.value);if(['ecpu','unsizedACDs'].includes(el.dataset.key))delete c.requirements.acdEcpus;S.validate(site());});
+  safeUpdate(()=>{const c=site().clusters[Number(el.dataset.requirement)];c.requirements={ecpu:null,ramGB:null,unsizedACDs:0,minRatio:2,incomplete:false,...c.requirements};c.requirements[el.dataset.key]=el.value===''?null:Number(el.value);if(['ecpu','unsizedACDs'].includes(el.dataset.key))delete c.requirements.acdEcpus;S.validate(site());needsNewSizing();});
  };
  $('sizing-inputs').onchange=event=>{const el=event.target;if(el.dataset.incomplete===undefined)return;safeUpdate(()=>{const c=site().clusters[Number(el.dataset.incomplete)];c.requirements={ecpu:null,ramGB:null,unsizedACDs:0,minRatio:2,...c.requirements,incomplete:el.checked};});};
  $('suggest-sizing').onclick=runSizing;
@@ -32,6 +35,6 @@ function initSizing(){
   if(!sizingResults||sizingResults.active!==active||sizingResults.signature!==JSON.stringify(state)){clearSizingResults();message('Inputs changed. Compare machines again.');return;}
   const row=sizingResults.suggestion.rows.find(r=>r.profile===b.dataset.sizeProfile&&r.nodes===Number(b.dataset.sizeNodes));
   if(!row||!row.fit)return;
-  const before=snapshot();state.sites[active]=row.candidate;rememberChange(before);clearSizingResults();cancelPreview();render();message('Hardware and AVMC allocations updated in this plan. Check the console before provisioning.');
+  const before=snapshot();state.sites[active]=row.candidate;site().hardwareChosen=true;rememberChange(before);clearSizingResults();cancelPreview();render();goGuideStep(4);message('Option selected for this machine. Review the capacity and assumptions, then save the JSON.');
  };
 }

@@ -1,6 +1,6 @@
 (function(root,factory){const api=factory();if(typeof module==='object'&&module.exports)module.exports=api;else root.ExaCapacity=api;})(typeof globalThis!=='undefined'?globalThis:this,function(){
  'use strict';
- const VERSION='1.7.0',CHECKED='2026-11-06';
+ const VERSION='1.8.0',CHECKED='2026-11-06';
  const SOURCES={formula:'https://docs.oracle.com/en/cloud/paas/autonomous-database/dedicated/adbaa/create-an-autonomous-exadata-vm-cluster.html',hardware:'https://docs.oracle.com/en/cloud/paas/autonomous-database/dedicated/adbaa/characteristics-of-infrastructure-shapes.html',limits:'https://docs.oracle.com/en/cloud/paas/autonomous-database/dedicated/adbaa/plan-and-observe-capacity-for-autonomous-ai-database-on.html',compute:'https://docs.oracle.com/en/cloud/paas/autonomous-database/dedicated/adbaa/compute-management-in-autonomous-ai-database-on-dedicated.html',vmc:'https://docs.oracle.com/en/engineered-systems/exadata-cloud-at-customer/ecccm/ecc-manage-vm-clusters.html'};
  const PROFILES={
   'x11m-standard':{label:'X11M Standard',image:184,local:2243,memory:1390,cpu:760,vms:6},
@@ -20,6 +20,8 @@
   if(!Array.isArray(site.nodes)||site.nodes.length<2||site.nodes.length>32)throw new Error('Choose 2 to 32 DB servers.');
   if(site.profile==='x11m-base'&&site.nodes.length!==2)throw new Error('The X11M Base preset has exactly two DB servers. Use Custom for another verified configuration.');
   if(typeof site.checkCompute!=='boolean')throw new Error('Compute-check setting must be true or false.');
+  if(site.planningIntent!==undefined&&!['workload','allocation'].includes(site.planningIntent))throw new Error('Choose a valid planning task.');
+  if(site.hardwareChosen!==undefined&&typeof site.hardwareChosen!=='boolean')throw new Error('Invalid hardware-selection status.');
   if(!Array.isArray(site.clusters)||site.clusters.length>32)throw new Error('At most 32 AVMCs can be modelled.');
   const ids=new Set();site.nodes.forEach(n=>{number(n.id,1,32,'Server ID',true);if(ids.has(n.id))throw new Error('Duplicate server ID.');ids.add(n.id);for(const k of ['local','memory','cpu'])number(n[k],1,100000,`DB ${n.id} ${k}`);for(const k of ['otherLocal','otherMemory','otherCPU'])number(n[k],0,100000,`DB ${n.id} ${k}`);number(n.maxVMs,1,32,'VM limit',true);number(n.otherVMs,0,32,'Other VMs',true);});
   site.clusters.forEach((c,i)=>{if(typeof c.name!=='string'||c.name.length>80)throw new Error('AVMC name must be at most 80 characters.');number(c.slots,1,64,`AVMC ${i+1} slots`,true);number(c.cpu,0,10000,'ECPU per VM',true);number(c.memoryPerCPU,2,5,'Memory per ECPU');if(!Array.isArray(c.nodes)||c.nodes.length<2||new Set(c.nodes).size!==c.nodes.length||c.nodes.some(id=>!ids.has(id)))throw new Error(`${c.name}: select at least two distinct existing DB servers.`);});

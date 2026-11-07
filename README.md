@@ -4,6 +4,15 @@ A static, browser-only planning calculator for Autonomous VM Cluster capacity an
 
 Release history is maintained in [CHANGELOG.md](CHANGELOG.md). Update its release entry alongside the calculator version before publishing.
 
+## Presales workflow
+
+1. **Machines:** add one entry per ExaC@C infrastructure and name the site/machine. Choose whether to suggest hardware from workload needs or check known hardware.
+2. **AVMCs & workloads:** add AVMCs and their maximum ACD counts. Enter workload ECPUs/RAM for a new sizing, or CPU/memory allocations for a known machine.
+3. **Compare options:** review assumptions and select a DB-server option, or compare layouts on the known hardware. Buffer targets remain advisory.
+4. **Review & save:** inspect capacity, missing inputs and the all-machine summary. Save JSON to continue later; Print / PDF provides a discussion copy.
+
+New workload plans begin with a blank machine and no example AVMC allocation. Capacity remains unselected until a hardware option is chosen. Editing quantitative requirements marks the selection for review again. Saved imports keep their allocations. You can jump between steps or save an unfinished draft; there is no deployment action.
+
 ## Save on your laptop and resume later
 
 1. Click **Save scenario (.json)** to download `exacc-scenario.json`. Your browser uses Downloads or the location you choose. Check that the download completed; this static page cannot confirm the file reached disk.
@@ -25,7 +34,7 @@ This records comparison totals, not a complete configuration that can be restore
 - Maximum ACD slots, local reservations, other allocations, user-selected buffer and explicit 16-ACD limit.
 - Comparison of 1 through the available VM count, showing both absolute and buffered local-storage ceilings.
 - Optional ECPU pool and memory-allocation checks, formula breakdown, scenario JSON import/export and print/PDF.
-- A fixed local-storage summary shows the active machine's remaining GB while you edit on desktop or a narrow screen. It also shows a labelled preview before you apply it, and restores the plan values on cancel. Undo, Save JSON and Details are available in the bar. It is hidden in print/PDF.
+- A fixed local-storage summary shows the active machine's remaining GB while you edit on desktop or a narrow screen. It also shows a labelled preview before you apply it, and restores the plan values on cancel. Undo, Save JSON and Review are available in the bar. It is hidden in print/PDF.
 - A live AVMC → reserved ACD-slot diagram shows where local storage is allocated. Each box is a configured slot, not proof that an ACD exists. Per-server balances stay visible below the diagram because free capacity cannot be pooled between servers. Use Edit on a diagram card to open that AVMC's form.
 - Machine inputs are grouped by purpose. AVMC forms expand individually, with CPU/memory controls grouped below the local-storage inputs. The optional Before / After tools can be expanded when needed.
 - Enter workload ECPUs/RAM per AVMC to compare X11M DB-server options. The suggestion panel separates physical fit from optional buffers and marks incomplete workload lists.

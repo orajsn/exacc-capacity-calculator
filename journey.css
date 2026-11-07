@@ -1,0 +1,22 @@
+.presales-intro{display:flex;justify-content:space-between;align-items:center;gap:18px;padding:20px 0}
+.presales-intro h2{font-size:22px;margin:0 0 7px}.presales-intro p{margin:0;max-width:850px;font-size:14px;line-height:1.6;color:var(--muted)}
+.guide-steps{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px;margin:0 0 18px}
+.guide-steps button{white-space:normal;text-align:left;padding:12px;border-radius:5px;line-height:1.4;font-size:13px;background:#fffefa}
+.guide-steps button[aria-current=step]{background:#312d2a;color:#fff;border-color:#312d2a}
+.guide-header{padding:0 0 20px;border-bottom:1px solid var(--line)}
+.guide-header h2{font-size:25px;margin:8px 0}.guide-header p{margin:7px 0;font-size:14px;line-height:1.6;max-width:900px}
+#guide-machine{font-size:13px;font-weight:600;color:var(--accent)}#guide-context{font-size:12px;color:var(--muted)}
+.intent-field{max-width:600px;margin:18px 0}
+.guide-footer{display:flex;justify-content:space-between;gap:14px;align-items:center;padding:22px 0;border-top:1px solid var(--line)}
+.guide-footer p{font-size:12px;color:var(--muted);max-width:420px;line-height:1.5;margin:0}
+.guide-footer button{white-space:normal}
+.review-actions{background:#eeeae3;padding:18px;border:1px solid var(--line);border-radius:6px;margin:20px 0}
+.review-actions h3{margin:0 0 12px}.review-actions p{font-size:13px;line-height:1.5}
+.workload-fields{margin:16px 0;padding:14px;border:1px solid var(--line);border-radius:5px;background:#f7f3ed}
+.workload-fields h4{font-size:13px;margin:0 0 10px}.workload-fields .sizing-fields{grid-template-columns:1fr 1fr}
+.draft-note{padding:12px 14px;background:#fff6df;border-left:3px solid #b47928;font-size:13px;line-height:1.5;margin:14px 0}
+.draft-topology-note{font-size:12px;line-height:1.5;color:#805412}
+.guide-review-notice{padding:14px;background:#fff6df;border-left:3px solid #b47928;margin:18px 0}
+.guide-review-notice p{margin:0 0 10px;font-size:13px}
+@media(max-width:760px){.presales-intro{align-items:flex-start;flex-direction:column}.guide-steps{grid-template-columns:1fr 1fr}.guide-footer{flex-wrap:wrap}.guide-footer p{order:3;max-width:none}.workload-fields .sizing-fields{grid-template-columns:1fr}}
+@media print{.guide-steps,.guide-header,.guide-footer,.presales-intro,.review-actions{display:none!important}.guide-panel[hidden]{display:block!important}.guide-panel[data-print-skip]{display:none!important}.review-panel[hidden]{display:none!important}}

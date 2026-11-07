@@ -67,6 +67,16 @@ function clearFloatingLocal(note) {
 
 function renderFloatingLocal(s, result, isPreview = false) {
  renderTopology(s, result, isPreview);
+ if(!hardwareReady(s)&&!isPreview){
+  $('local-dock').dataset.level='warning';
+  $('dock-machine').textContent=`${s.siteName||'Site not named'} / ${s.name}`;
+  $('dock-mode').textContent='Workload sizing';
+  $('dock-label').textContent='Hardware not selected';
+  $('dock-free').textContent='—';
+  $('dock-allocation').textContent=`${s.clusters.length} AVMCs planned`;
+  $('dock-status').textContent='Enter workloads in step 2, then choose hardware in step 3.';
+  $('dock-save').disabled=false;$('dock-save').title='Save this draft to continue later.';return;
+ }
  const local = P.resources(s, result).find(row => row.name === 'Local storage');
  const worst = result.nodes.reduce((a,n) => n.free < a.free ? n : a);
  const hasError = local.status === 'Over capacity' || result.errors.length > 0;
@@ -128,6 +138,7 @@ function updateWorkflow() {
   ? `Recorded “Before”: ${s.baseline.avmcs} AVMCs · ${s.baseline.slots} ACD slots · ${fmt(s.baseline.local)} GB local allocated. Edit the allocations below; the Before / After table will show the difference. These recorded totals stay fixed until you replace or remove them.`
   : 'Optional: record the numbers you have entered, then edit the design to compare Before versus After. Skip this if you only need capacity totals.';
  if (preview && (preview.active !== active || preview.signature !== JSON.stringify(state))) cancelPreview();
+ refreshJourney();
 }
 
 function clearResourceCards() {
@@ -155,6 +166,7 @@ function renderResourceCards(s, result) {
 }
 
 function showPreview(count, fullCapacity = false) {
+ goGuideStep(3);
  M.validate(site());
  P.validate(site());
  const preserve = count === site().clusters.length && site().clusters.every(c => c.nodes.length === site().nodes.length);
@@ -227,6 +239,7 @@ function initWorkflow() {
   copy.name = `${copy.name.slice(0, 65)} (copy)`;
   state.sites.push(copy);
   active = state.sites.length - 1;
+  guideStep=1;
  }, true);
  $('remove-site').onclick = () => safeUpdate(() => {
   if (state.sites.length === 1) throw Error('Keep at least one machine in the scenario.');
@@ -251,7 +264,6 @@ function initWorkflow() {
   cancelPreview();
   render();
   message('Layout applied to this plan. Use Undo to go back.');
-  $('growth-heading').scrollIntoView({behavior: 'smooth', block: 'start'});
-  $('growth-heading').focus({preventScroll: true});
+  goGuideStep(4);
  };
 }

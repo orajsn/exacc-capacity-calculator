@@ -1,5 +1,16 @@
 # Changelog
 
+## 1.8.0 — 2026-11-07
+
+### Improved
+
+- A four-step presales workflow per machine: Machines, AVMCs & workloads, Compare options, Review & save.
+- Separate paths for sizing new hardware from workload needs and checking a known machine's allocations. Each step explains what to enter and what comes next.
+- New machines start without example AVMCs. New workload plans do not show free-capacity figures until hardware is selected.
+- Workload inputs now sit inside the matching AVMC editor. Selecting hardware opens Review & save; changing quantitative workload inputs marks hardware for re-selection.
+- Review includes the all-machine summary, missing-workload warnings and clear JSON/PDF actions. Steps remain freely navigable and drafts can be saved.
+- Existing scenario files retain their saved allocations and remain usable. Resource formulas and hardware presets are unchanged.
+
 ## 1.7.0 — 2026-11-06
 
 ### Added
