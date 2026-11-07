@@ -1,5 +1,17 @@
 # Changelog
 
+## 1.9.0 — 2026-11-07
+
+### Improved
+
+- Rebuilt the interface around one shared stylesheet with consistent spacing, typography, controls, tables and responsive layouts. The independent Oracle-inspired appearance uses warm neutrals and restrained red accents.
+- A compact header and machine sidebar replace repeated introductory text. Two visible choices explain new-machine sizing versus checking known hardware.
+- The live capacity bar now includes the next step, keeping navigation available while editing. Review offers a direct return to AVMCs.
+- Hardware comparison scrolls to its results. Optional buffers, saving instructions and calculation details expand when needed.
+- Mobile forms appear before the allocation diagram; preview values stay explicitly labelled. Focus indicators and reduced-motion preferences are supported.
+- Styles and scripts carry the release version in their URLs to prevent mixed cached releases.
+- Resource formulas, hardware presets and saved JSON format are unchanged.
+
 ## 1.8.0 — 2026-11-07
 
 ### Improved

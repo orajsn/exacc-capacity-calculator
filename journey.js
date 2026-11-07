@@ -17,7 +17,9 @@ function goGuideStep(step){
 function refreshJourney(){
  const s=site(),intent=planningIntent(s),ready=hardwareReady(s);
  $('planning-intent').value=intent;
- $('guide-heading').textContent=`${guideStep}. ${guideTitles[guideStep-1]}`;
+ $('guide-heading').textContent=guideTitles[guideStep-1];
+ $('mode-workload').setAttribute('aria-pressed',String(intent==='workload'));
+ $('mode-allocation').setAttribute('aria-pressed',String(intent==='allocation'));
  const instructions=intent==='workload'?[
   'Add one entry for each ExaC@C infrastructure you are sizing. Name the site and machine; hardware will be suggested in step 3.',
   'Add the planned AVMCs and maximum ACD slots. Enter workload ECPUs and RAM inside each AVMC. Mark any requirements that are still missing.',
@@ -30,8 +32,8 @@ function refreshJourney(){
   'Review the calculated capacity and warnings. Compare with console figures if available, then save the JSON.'
  ];
  $('guide-instruction').textContent=instructions[guideStep-1];
- $('guide-machine').textContent=`Working on ${s.siteName?`${s.siteName} / `:''}${s.name}`;
- $('guide-context').textContent=`${state.sites.length} machine${state.sites.length===1?'':'s'} in this file · follow the steps for each machine`;
+ $('guide-machine').textContent=`${s.siteName?`${s.siteName} / `:''}${s.name}`;
+ $('guide-context').textContent=`Step ${guideStep} of 4 · ${state.sites.length} machine${state.sites.length===1?'':'s'} in this plan`;
  for(let i=1;i<=4;i++)$('guide-step-'+i).setAttribute('aria-current',i===guideStep?'step':'false');
  const panels={
   'panel-machine':guideStep===1,'panel-avmc':guideStep===2,'panel-before':guideStep===2&&ready,
@@ -55,6 +57,9 @@ function refreshJourney(){
  $('guide-back').disabled=guideStep===1;
  $('guide-next').hidden=guideStep===4;
  $('guide-next').textContent=guideStep<4?`Next: ${guideTitles[guideStep]}`:'';
+ $('dock-next').hidden=guideStep===4;
+ $('dock-next').textContent=guideStep<4?`Next: ${['','AVMCs','Compare','Review'][guideStep]}`:'';
+ $('dock-review').hidden=guideStep!==4;
  $('guide-footer-note').textContent=guideStep===4?'Save one JSON file for all machines. Keep the assumptions with your proposal.':'You can revisit any step. Values stay in this tab until you save JSON.';
  $('review-save').disabled=!!preview;
  $('review-add').textContent=active<state.sites.length-1?'Next machine':'Back to machines';
@@ -64,7 +69,8 @@ function initJourney(){
  $('guide-back').onclick=()=>goGuideStep(guideStep-1);
  $('guide-next').onclick=()=>goGuideStep(guideStep+1);
  $('guide-open').onclick=()=>$('import').click();
- $('dock-review').onclick=()=>goGuideStep(4);
+ $('dock-review').onclick=()=>goGuideStep(2);
+ $('dock-next').onclick=()=>goGuideStep(guideStep+1);
  $('review-choose').onclick=()=>goGuideStep(3);
  $('review-save').onclick=()=>$('save').click();
  $('review-print').onclick=()=>$('print').click();
@@ -74,4 +80,8 @@ function initJourney(){
   site().hardwareChosen=site().planningIntent==='allocation';
   clearSizingResults();cancelPreview();
  },true);
+ for(const mode of ['workload','allocation'])$('mode-'+mode).onclick=()=>{
+  if(planningIntent(site())===mode)return;
+  $('planning-intent').value=mode;$('planning-intent').onchange();
+ };
 }

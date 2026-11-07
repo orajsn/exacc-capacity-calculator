@@ -68,12 +68,12 @@ function clearFloatingLocal(note) {
 function renderFloatingLocal(s, result, isPreview = false) {
  renderTopology(s, result, isPreview);
  if(!hardwareReady(s)&&!isPreview){
-  $('local-dock').dataset.level='warning';
+  $('local-dock').dataset.level='draft';
   $('dock-machine').textContent=`${s.siteName||'Site not named'} / ${s.name}`;
   $('dock-mode').textContent='Workload sizing';
   $('dock-label').textContent='Hardware not selected';
   $('dock-free').textContent='—';
-  $('dock-allocation').textContent=`${s.clusters.length} AVMCs planned`;
+  $('dock-allocation').textContent=`${s.clusters.length} AVMC${s.clusters.length===1?'':'s'} planned`;
   $('dock-status').textContent='Enter workloads in step 2, then choose hardware in step 3.';
   $('dock-save').disabled=false;$('dock-save').title='Save this draft to continue later.';return;
  }
@@ -85,7 +85,7 @@ function renderFloatingLocal(s, result, isPreview = false) {
  $('dock-machine').title = $('dock-machine').textContent;
  $('dock-mode').textContent = isPreview ? 'Preview · not applied' : 'Editing now';
  const shortfall = result.free < -1e-7;
- $('dock-label').textContent = shortfall ? 'Local storage shortfall' : 'Local storage left';
+ $('dock-label').textContent = `${isPreview?'Preview · ':''}${shortfall ? 'Local storage shortfall' : 'Local storage left'}`;
  $('dock-free').textContent = `${fmt(shortfall ? -result.free : Math.max(0, result.free))} GB`;
  $('dock-allocation').textContent = `${fmt(result.used + result.other)} / ${fmt(result.capacity)} GB allocated · ${s.clusters.length} AVMC${s.clusters.length===1?'':'s'} · ${result.slots} max ACDs`;
  $('dock-status').textContent = worst.free < -1e-7

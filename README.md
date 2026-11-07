@@ -4,6 +4,8 @@ A static, browser-only planning calculator for Autonomous VM Cluster capacity an
 
 Release history is maintained in [CHANGELOG.md](CHANGELOG.md). Update its release entry alongside the calculator version before publishing.
 
+When changing the release version, also update the CSS/script `?v=` values in `index.html` so returning visitors receive the matching assets.
+
 ## Presales workflow
 
 1. **Machines:** add one entry per ExaC@C infrastructure and name the site/machine. Choose whether to suggest hardware from workload needs or check known hardware.
@@ -13,11 +15,17 @@ Release history is maintained in [CHANGELOG.md](CHANGELOG.md). Update its releas
 
 New workload plans begin with a blank machine and no example AVMC allocation. Capacity remains unselected until a hardware option is chosen. Editing quantitative requirements marks the selection for review again. Saved imports keep their allocations. You can jump between steps or save an unfinished draft; there is no deployment action.
 
+## Interface
+
+The machine setup offers **Size a new machine** and **Check known hardware**. The capacity bar keeps Next, Undo and Save JSON available while you edit. On Review, Edit AVMCs returns to the inputs. Calculation assumptions and optional controls expand in place.
+
+`ui.css` contains the shared color, spacing and component styles, including mobile and print layouts. It replaces the earlier layered stylesheets. The appearance is independently authored and Oracle-inspired, with system fonts and no proprietary assets or external downloads. Oracle's [Redwood theme guidance](https://docs.oracle.com/cd/F26413_61/books/FundOUI/c-About-the-Redwood-Theme.html) informed the neutral color treatment; this is not an official Oracle application or a Redwood component library.
+
 ## Save on your laptop and resume later
 
-1. Click **Save scenario (.json)** to download `exacc-scenario.json`. Your browser uses Downloads or the location you choose. Check that the download completed; this static page cannot confirm the file reached disk.
+1. Click **Save JSON** to download `exacc-scenario.json`. Your browser uses Downloads or the location you choose. Check that the download completed; this static page cannot confirm the file reached disk.
 2. Keep the JSON file. It includes all machines, allocations, planning inputs and recorded Before totals. Apply any preview first if you want it saved.
-3. Return to the calculator and use **Open saved JSON** to resume. Download a new copy after further edits.
+3. Return to the calculator and use **Open JSON** to resume. Download a new copy after further edits.
 
 The page shows an unsaved-work reminder and registers a close/refresh warning while edits differ from the last opened/downloaded scenario. Browsers control the warning text and may suppress it, especially on mobile. Keep the JSON file as your backup. The calculator does not automatically store your scenario in the browser, on GitHub, on OCI or on a server. A printed PDF is a report, not a resumable configuration.
 
@@ -34,7 +42,7 @@ This records comparison totals, not a complete configuration that can be restore
 - Maximum ACD slots, local reservations, other allocations, user-selected buffer and explicit 16-ACD limit.
 - Comparison of 1 through the available VM count, showing both absolute and buffered local-storage ceilings.
 - Optional ECPU pool and memory-allocation checks, formula breakdown, scenario JSON import/export and print/PDF.
-- A fixed local-storage summary shows the active machine's remaining GB while you edit on desktop or a narrow screen. It also shows a labelled preview before you apply it, and restores the plan values on cancel. Undo, Save JSON and Review are available in the bar. It is hidden in print/PDF.
+- A fixed local-storage summary shows the active machine's remaining GB while you edit on desktop or a narrow screen. It also shows a labelled preview before you apply it, and restores the plan values on cancel. Undo, Save JSON and Next are available in the bar; Review offers Edit AVMCs. The bar is hidden in print/PDF.
 - A live AVMC → reserved ACD-slot diagram shows where local storage is allocated. Each box is a configured slot, not proof that an ACD exists. Per-server balances stay visible below the diagram because free capacity cannot be pooled between servers. Use Edit on a diagram card to open that AVMC's form.
 - Machine inputs are grouped by purpose. AVMC forms expand individually, with CPU/memory controls grouped below the local-storage inputs. The optional Before / After tools can be expanded when needed.
 - Enter workload ECPUs/RAM per AVMC to compare X11M DB-server options. The suggestion panel separates physical fit from optional buffers and marks incomplete workload lists.
