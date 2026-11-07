@@ -84,3 +84,33 @@ test('maximum layout is available above the buffer target and respects actual li
  site.nodes[0].otherLocal=2100;
  assert.throws(()=>M.applyDesign(site,1,null,true),/exceeds local-storage capacity/);
 });
+test('named ACD/ADB mapping survives same-layout previews and blocks replacement',()=>{
+ const site=M.newSite();site.clusters[0].uid='avmc-1';site.clusters[0].topology={acds:[{id:'acd-1',name:'App container',adbs:[{id:'adb-1',name:'App',ecpu:8}]}]};
+ const before=M.clone(site),same=M.applyDesign(site,1);
+ assert.deepEqual(same.clusters[0].topology,before.clusters[0].topology);
+ assert.throws(()=>M.applyDesign(site,2,{cpu:160,memoryPerCPU:2}),/named ACD\/ADB/);assert.deepEqual(site,before);
+ site.clusters[0].topology.acds=Array.from({length:16},(_,i)=>({id:`acd-${i}`,name:`ACD ${i}`,adbs:[]}));
+ site.nodes[0].otherLocal=1800;assert.throws(()=>M.applyDesign(site,1),/fewer slots/);
+});
+test('node shrink cannot discard other reserved resources',()=>{
+ for(const key of ['otherLocal','otherCPU','otherMemory','otherVMs']){
+  const site=M.newSite('Three','x11m-standard',3);site.nodes[2][key]=1;const before=M.clone(site);
+  assert.throws(()=>M.resizeNodes(site,2),/other allocations/);assert.deepEqual(site,before);
+ }
+});
+test('aggregate CPU and memory spare capacity cannot conceal an overloaded DB server',()=>{
+ const site=M.newSite('Four','x11m-standard',4);site.clusters[0].nodes=[1,2];site.nodes[0].otherCPU=700;site.nodes[0].otherMemory=1100;
+ const r=M.calculate(site);assert.ok(r.nodes.reduce((s,n)=>s+n.cpu-n.cpuUsed-n.otherCPU,0)>0);
+ assert.ok(r.nodes.reduce((s,n)=>s+n.memory-n.memoryUsed-n.otherMemory,0)>0);
+ assert.ok(r.errors.some(e=>e.includes('DB 1: allocated ECPUs')));assert.ok(r.errors.some(e=>e.includes('DB 1: estimated memory')));
+});
+test('existing and unknown low-CPU allocations warn without being rejected as new AVMCs',()=>{
+ const site=M.newSite();site.clusters[0].cpu=20;
+ assert.ok(M.calculate(site).errors.some(x=>x.includes('40 ECPUs')));
+ for(const kind of ['existing','unknown',undefined]){
+  if(kind===undefined)delete site.clusters[0].allocationKind;else site.clusters[0].allocationKind=kind;
+  const result=M.calculate(site);assert.equal(result.errors.length,0);assert.equal(result.status,'warning');assert.match(result.warnings.join(' '),/existing console allocation/);
+ }
+ site.clusters[0].allocationKind='invalid';assert.throws(()=>M.validate(site),/allocation/);
+ site.clusters[0].allocationKind='existing';site.clusters[0].cpu=0;site.checkCompute=false;assert.throws(()=>M.validate(site),/ECPU per VM/);
+});

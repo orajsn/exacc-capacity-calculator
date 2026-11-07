@@ -33,7 +33,7 @@
  }
  function candidate(site, result, model) {
   const a = validate(site);
-  const cluster = {name:'Proposed new AVMC',cpu:a.newCPU,memoryPerCPU:a.newRatio,slots:a.newSlots,nodes:site.nodes.map(n=>n.id),memoryRule:'current'};
+  const cluster = {name:'Proposed new AVMC',cpu:a.newCPU,memoryPerCPU:a.newRatio,slots:a.newSlots,nodes:site.nodes.map(n=>n.id),memoryRule:'current',allocationKind:'new'};
   const cost = model.clusterCost(cluster,site.image,site.allowance);
   const rows = result.nodes.map(n => {
    const localGap = Math.max(0,cost.perVM-n.free);

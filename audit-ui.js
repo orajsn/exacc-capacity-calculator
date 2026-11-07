@@ -9,9 +9,9 @@ function memoryChecklist(c, i) {
   <option value="legacy" ${rule==='legacy'?'selected':''}>Older AVMC (complete the checks below)</option>
   <option value="unknown" ${rule==='unknown'?'selected':''}>Not sure (use the new formula)</option>
  </select></label>${rule==='legacy'?`<div class="legacy-checklist">
-  <label class="check"><input type="checkbox" data-legacy="${i}" data-key="legacyCreatedBeforeCutoff" ${c.legacyCreatedBeforeCutoff?'checked':''}>Created before 22 September 2026</label>
+  <label class="check"><input type="checkbox" data-legacy="${i}" data-key="legacyCreatedBeforeCutoff" ${c.legacyCreatedBeforeCutoff?'checked':''}>Created before 29 September 2026</label>
   <label class="check"><input type="checkbox" data-legacy="${i}" data-key="legacyRatioUnchanged" ${c.legacyRatioUnchanged?'checked':''}>Memory per CPU unchanged since the formula rollout</label>
- </div>`:''}<p class="hint">${escapeHTML(M.memorySizing(c).label)}. Changing GB per ECPU switches to the new formula. For an AVMC created on 22 September 2026, confirm which formula applies in OCI.</p></div>`;
+ </div>`:''}<p class="hint">${escapeHTML(M.memorySizing(c).label)}. Changing GB per ECPU switches to the new formula. For an AVMC created on 29 September 2026, confirm which formula applies in OCI.</p></div>`;
 }
 
 function renderAuditInputs() {

@@ -6,7 +6,7 @@ function hardwareReady(s){return planningIntent(s)==='allocation'||s.hardwareCho
 function newPlanningMachine(name='Machine 1',intent='workload'){
  const s=M.newSite(name);s.siteName='';s.clusters=[];s.planningIntent=intent;s.hardwareChosen=intent==='allocation';return s;
 }
-function needsNewSizing(){if(planningIntent(site())==='workload')site().hardwareChosen=false;}
+function needsNewSizing(){site().clusters.forEach(c=>delete c.sizingDetail);if(planningIntent(site())==='workload')site().hardwareChosen=false;}
 function goGuideStep(step){
  if(!Number.isInteger(step)||step<1||step>4)return;
  if(step!==3&&preview)cancelPreview();
@@ -41,7 +41,10 @@ function refreshJourney(){
   'panel-candidate':guideStep===3&&intent==='allocation','panel-resources':guideStep===4&&ready,
   'panel-capacity':guideStep===4&&ready,'panel-audit':guideStep===4&&ready,
   'panel-overview':guideStep===4,'panel-guidance':guideStep===4,'panel-sessions':guideStep===4&&ready,
-  'panel-formulas':guideStep===4,'review-actions':guideStep===4
+  'panel-formulas':guideStep===4,'review-actions':guideStep===4,
+  'panel-topology':guideStep===2,'panel-import':guideStep===2,'panel-scenarios':guideStep===3,
+  'panel-assessment':guideStep===4,'panel-coverage':guideStep===4,'panel-topology-review':guideStep===4,
+  'panel-conventional':guideStep===1&&intent==='allocation'
  };
  for(const [id,visible] of Object.entries(panels))$(id).hidden=!visible;
  $('hardware-fields').hidden=intent==='workload';

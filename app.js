@@ -1,19 +1,33 @@
 'use strict';
-const M=window.ExaCapacity,$=id=>document.getElementById(id),fmt=n=>Number(n).toLocaleString('en-US',{maximumFractionDigits:1});
-let state={schema:'exacc-capacity/v1',sites:[newPlanningMachine()]},active=0;
+const M=window.ExaCapacity,C=window.ExaConventional,F=window.ExaScenarios,R=window.ExaRules,$=id=>document.getElementById(id),fmt=n=>Number(n).toLocaleString('en-US',{maximumFractionDigits:1});
+let state={schema:'exacc-capacity/v1',ruleSet:{version:R.VERSION,checked:R.CHECKED,scope:R.SCOPE},sites:[newPlanningMachine()]},active=0;
 const site=()=>state.sites[active];
 const fixedCapacity=new Set(['local','maxVMs','cpu','memory']);
 const escapeHTML=x=>String(x).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+function validateMachines(sites){sites.forEach(s=>{M.validate(s);P.validate(s);A.validate(s);S.validate(s);C.validate(s);});T.validateState({sites});}
+function validateWorkspace(value){validateMachines(value.sites);F.validateExtras(value,M,validateMachines);return value;}
+function importWorkspace(raw){
+ const next=F.preserveExtras(M.importScenario(raw),raw,M,validateMachines);T.ensureIds(next);validateWorkspace(next);return next;
+}
+function workspaceForDownload(){
+ validateWorkspace(state);
+ const payload={...state,calculatorVersion:M.VERSION,ruleSet:{version:R.VERSION,checked:R.CHECKED,scope:R.SCOPE}};
+ if(new Blob([JSON.stringify(payload,null,2)]).size>10000000)throw Error('This plan exceeds the 10 MB JSON limit. Remove saved alternatives or split the plan before downloading.');
+ return payload;
+}
 function message(text){$('message').textContent=text;$('message').hidden=!text;}
 function download(name,data,type){const url=URL.createObjectURL(new Blob([data],{type}));const a=document.createElement('a');a.href=url;a.download=name;a.click();setTimeout(()=>URL.revokeObjectURL(url),1000);}
 function safeUpdate(fn, rerender = false) {
  const before = snapshot();
  try {
   fn();
+  T.ensureIds(state);
+  if(rerender)validateWorkspace(state);
   rememberChange(before);
   message('');
   if (rerender) render(); else results();
  } catch (e) {
+  if(rerender){state=before.state;active=before.active;cancelPreview();render();message(e.message);return;}
   rememberChange(before);
   message(e.message);
   overview();
@@ -24,13 +38,13 @@ function safeUpdate(fn, rerender = false) {
   clearResourceCards();
  }
 }
-function render(){const s=site();renderNavigation();$('site-name').value=s.name;$('location').value=s.siteName||'';$('profile').value=s.profile;$('node-count').value=s.nodes.length;$('buffer').value=s.bufferPercent;$('image').value=s.image;$('image').readOnly=s.profile!=='custom';$('allowance').value=s.allowance;$('compute').checked=s.checkCompute;
+function render(){T.ensureIds(state);const s=site();renderNavigation();$('site-name').value=s.name;$('location').value=s.siteName||'';$('profile').value=s.profile;$('node-count').value=s.nodes.length;$('buffer').value=s.bufferPercent;$('image').value=s.image;$('image').readOnly=s.profile!=='custom';$('allowance').value=s.allowance;$('compute').checked=s.checkCompute;
  const keys=['local','otherLocal','maxVMs','otherVMs','cpu','otherCPU','memory','otherMemory'];$('server-inputs').querySelector('tbody').innerHTML=s.nodes.map((n,i)=>`<tr><td>DB ${n.id}</td>${keys.map(k=>`<td><input aria-label="DB ${n.id} ${k}" type="number" min="0" step="${k.includes('VM')?'1':'0.5'}" value="${n[k]}" data-node="${i}" data-key="${k}" ${s.profile!=='custom'&&fixedCapacity.has(k)?'readonly aria-readonly="true" title="Fixed by the selected hardware shape"':''}></td>`).join('')}</tr>`).join('');
  renderClusterEditors(s);
  $('add-site').disabled=state.sites.length>=8;
  $('replacement-cpu').value='';
  $('replacement-ratio').value='';
- renderPlanning();renderAuditInputs();renderSizing();results();}
+ renderPlanning();renderAuditInputs();renderSizing();renderTopologyEditor();renderConventional();renderScenarios();renderWorkloadImport();results();}
 function overview() {
  $('overview').querySelector('tbody').innerHTML = state.sites.map((s, i) => {
   let r, summary;
@@ -106,7 +120,8 @@ $('clusters').oninput = e => {
 };
 $('clusters').onchange = e => {
  const el=e.target;
- if(el.dataset.memoryRule!==undefined) safeUpdate(()=>{
+ if(el.dataset.allocationKind!==undefined)safeUpdate(()=>{site().clusters[Number(el.dataset.allocationKind)].allocationKind=el.value;},true);
+ else if(el.dataset.memoryRule!==undefined) safeUpdate(()=>{
   site().clusters[Number(el.dataset.memoryRule)].memoryRule=el.value;
  },true);
  else if(el.dataset.legacy!==undefined) safeUpdate(()=>{
@@ -118,7 +133,7 @@ $('clusters').onchange = e => {
  });
 };
 $('clusters').onclick=e=>{const compute=e.target.closest('[data-compute-summary]');if(compute?.dataset.computeSummary!==undefined){e.preventDefault();toggleComputeEditor(Number(compute.dataset.computeSummary));return;}const summary=e.target.closest('[data-editor-summary]');if(summary?.dataset.editorSummary!==undefined){e.preventDefault();openClusterEditor(Number(summary.dataset.editorSummary),true);return;}const b=e.target.closest('[data-remove]');if(b)safeUpdate(()=>{site().clusters.splice(Number(b.dataset.remove),1);needsNewSizing();},true);};
-$('add-cluster').onclick=()=>{guideStep=2;safeUpdate(()=>{if(site().clusters.length>=32)throw Error('At most 32 AVMCs can be modelled.');activeAVMCEditor=site().clusters.length;site().clusters.push({name:`AVMC ${site().clusters.length+1}`,slots:1,nodes:site().nodes.map(n=>n.id),cpu:40,memoryPerCPU:2,memoryRule:'current'});needsNewSizing();},true);};
+$('add-cluster').onclick=()=>{guideStep=2;safeUpdate(()=>{if(site().clusters.length>=32)throw Error('At most 32 AVMCs can be modelled.');activeAVMCEditor=site().clusters.length;site().clusters.push({name:`AVMC ${site().clusters.length+1}`,slots:1,nodes:site().nodes.map(n=>n.id),cpu:40,memoryPerCPU:2,memoryRule:'current',allocationKind:'new'});needsNewSizing();},true);};
 $('add-site').onclick=()=>safeUpdate(()=>{if(state.sites.length>=8)throw Error('Up to eight machines per scenario.');const next=newPlanningMachine(`Machine ${state.sites.length+1}`,planningIntent(site()));state.sites.push(next);active=state.sites.length-1;activeAVMCEditor=0;guideStep=1;},true);
 $('combinations').onclick = e => {
  const button = e.target.closest('[data-apply]');
@@ -129,7 +144,7 @@ $('combinations').onclick = e => {
   message(error.message);
  }
 };
-$('save').onclick=()=>{try{state.sites.forEach(s=>{M.validate(s);P.validate(s);A.validate(s);S.validate(s);});download('exacc-scenario.json',JSON.stringify({...state,calculatorVersion:M.VERSION},null,2),'application/json');savedSignature=JSON.stringify(state);savedLabel='JSON download requested · check your Downloads folder';updateWorkflow();message('JSON download requested: exacc-scenario.json. Check your browser Downloads or chosen folder. To resume later, use Open JSON. If you cancelled the download, save again before leaving; this page cannot confirm the file reached your laptop.');}catch(e){message(e.message);}};
-$('import').onchange=async e=>{const file=e.target.files[0];if(!file)return;try{if(file.size>250000)throw Error('Scenario file is too large (maximum 250 KB).');const next=M.importScenario(JSON.parse(await file.text()));next.sites.forEach(P.validate);next.sites.forEach(A.validate);next.sites.forEach(s=>S.validate(s));const before=snapshot();state=next;active=0;activeAVMCEditor=0;guideStep=1;rememberChange(before);savedSignature=JSON.stringify(state);savedLabel='Opened JSON · no new edits';cancelPreview();message('Resumed from your JSON file. Save JSON again after making changes to keep an updated copy on your laptop.');render();}catch(err){message(`Could not open scenario: ${err.message}`);}e.target.value='';};
+$('save').onclick=()=>{try{const payload=workspaceForDownload();download('exacc-scenario.json',JSON.stringify(payload,null,2),'application/json');savedSignature=JSON.stringify(state);savedLabel='JSON download requested · check your Downloads folder';updateWorkflow();message('JSON download requested: exacc-scenario.json. Check Downloads or your chosen folder. Use Open JSON to resume. If you cancelled, save again; this page cannot confirm the file reached your laptop.');}catch(e){message(e.message);}};
+$('import').onchange=async e=>{const file=e.target.files[0];if(!file)return;try{if(file.size>10000000)throw Error('Scenario file is too large (maximum 10 MB).');const next=importWorkspace(JSON.parse(await file.text()));const before=snapshot();state=next;active=0;activeAVMCEditor=0;guideStep=1;rememberChange(before);savedSignature=JSON.stringify(state);savedLabel='Opened JSON · no new edits';cancelPreview();message('Resumed from JSON. Results use the current rules; review any rule-version or open-check warnings. Save JSON after editing to keep your changes.');render();}catch(err){message(`Could not open scenario: ${err.message}`);}e.target.value='';};
 $('print').onclick=()=>{goGuideStep(4);window.print();};$('version').textContent=M.VERSION;$('checked').textContent=M.CHECKED;
-$('sources').innerHTML=Object.entries({formula:'Oracle sizing formula',hardware:'Hardware capacities',limits:'ACD and AVMC limits',compute:'Compute management',vmc:'Conventional VMC scope'}).map(([key,label])=>`<a href="${M.SOURCES[key]}" target="_blank" rel="noopener noreferrer">${label} ↗</a>`).join('');initPlanning();initAudit();initLayout();initSizing();initJourney();initWorkflow();render();
+$('sources').innerHTML=Object.entries({formula:'Oracle sizing formula',hardware:'Hardware capacities',limits:'ACD and AVMC limits',compute:'Compute management',vmc:'Conventional VMC scope'}).map(([key,label])=>`<a href="${M.SOURCES[key]}" target="_blank" rel="noopener noreferrer">${label} ↗</a>`).join('');T.ensureIds(state);initPlanning();initAudit();initLayout();initSizing();initJourney();initTopology();initConventional();initScenarios();initWorkloadImport();initAssessment();initDrafts();initWorkflow();render();

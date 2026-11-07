@@ -1,143 +1,90 @@
-# ExaC@C Capacity Calculator
+# ExaC@C Capacity Planner
 
-A static, browser-only planning calculator for Autonomous VM Cluster capacity and resizing on Exadata Cloud@Customer. Open `index.html` locally or serve the folder through GitHub Pages. No build, runtime dependencies, backend, analytics, cookies or automatic persistence.
+A browser-only presales planner for Exadata Cloud@Customer. Build a multi-site plan, compare resource allocations, map database groups and export the reasoning. No account, backend, analytics or data upload. Optional device recovery is off until the user enables it.
 
-Release history is maintained in [CHANGELOG.md](CHANGELOG.md). Update its release entry alongside the calculator version before publishing.
+[Open the planner](https://orajsn.github.io/exacc-capacity-calculator/) · [Product goals](PRODUCT_GOALS.md) · [Release history](CHANGELOG.md) · [Test catalogue](TESTING.md)
 
-When changing the release version, also update the CSS/script `?v=` values in `index.html` so returning visitors receive the matching assets.
+## Start in four steps
 
-## Presales workflow
+1. **Machines:** add one entry per ExaC@C infrastructure. Choose **Size a new machine** or **Check known hardware**. Hardware preset capacities are locked; Custom accepts verified console values.
+2. **AVMCs & workloads:** enter AVMC allocations or workload ECPU/RAM needs. Optionally import Excel/CSV and name the ACDs and databases. **Use database totals for sizing** is an explicit action.
+3. **Compare options:** compare hardware, alternative AVMC layouts or saved plans. Save separate growth and migration-overlap options without changing the working plan.
+4. **Review & save:** inspect the limiting resource, warnings and open checks. Save JSON to resume, or download the report for all-machine executive and technical views.
 
-1. **Machines:** add one entry per ExaC@C infrastructure and name the site/machine. Choose whether to suggest hardware from workload needs or check known hardware.
-2. **AVMCs & workloads:** add AVMCs and their maximum ACD counts. Enter workload ECPUs/RAM for a new sizing, or CPU/memory allocations for a known machine.
-3. **Compare options:** review assumptions and select a DB-server option, or compare layouts on the known hardware. Buffer targets remain advisory.
-4. **Review & save:** inspect capacity, missing inputs and the all-machine summary. Save JSON to continue later; Print / PDF provides a discussion copy.
+The capacity bar keeps Next, Undo, Redo and Save available. Detailed inputs are optional. Buffers are preferred free capacity: missing a buffer warns; it does not reduce physical capacity.
 
-New workload plans begin with a blank machine and no example AVMC allocation. Capacity remains unselected until a hardware option is chosen. Editing quantitative requirements marks the selection for review again. Saved imports keep their allocations. You can jump between steps or save an unfinished draft; there is no deployment action.
+## Database placement and DR
 
-## Interface
+The map distinguishes reserved ACD slots from named ACD/ADB inventory. Named records are a proposed design, not a live OCI inventory. A primary ACD can link to up to two standby ACDs; every copy is sized on its own machine. Links never copy or add resource allocations automatically.
 
-The machine setup offers **Size a new machine** and **Check known hardware**. The capacity bar keeps Next, Undo and Save JSON available while you edit. On Review, Edit AVMCs returns to the inputs. Calculation assumptions and optional controls expand in place.
+Databases in one ACD share its Data Guard switchover boundary. A request for independent switchover is checked against the entered grouping. Configured peer CPU/storage checks require both rows to be explicitly confirmed as proposed peer settings; workload demand alone does not prove a configured mismatch. Autoscaling, lifecycle, version, protection mode, network and operational readiness remain open checks.
 
-`ui.css` contains the shared color, spacing and component styles, including mobile and print layouts. It replaces the earlier layered stylesheets. The appearance is independently authored and Oracle-inspired, with system fonts and no proprietary assets or external downloads. Oracle's [Redwood theme guidance](https://docs.oracle.com/cd/F26413_61/books/FundOUI/c-About-the-Redwood-Theme.html) informed the neutral color treatment; this is not an official Oracle application or a Redwood component library.
+## Import Excel or CSV
 
-## Save on your laptop and resume later
+- Import standard, unencrypted .xlsx or UTF-8 CSV. Choose the worksheet and header row, map columns, preview, then apply.
+- One row per database: site, machine, AVMC, ACD, ADB, role, ECPUs, RAM GB, database storage TB and independent-switchover preference. Download the CSV template for the exact columns.
+- Blank values remain unknown. The importer does not guess CPU conversions, hardware shapes or DR peer links.
+- Add inventory or explicitly replace named inventory on the active machine. Changed source selections or plan inputs require another preview.
+- Workbook formulas are not evaluated. Cached results can be stale; missing/error results remain blank with warnings. External links are not followed.
+- Legacy .xls, encrypted workbooks, macro-enabled files and unsupported ZIP features require CSV export. Workbook input is limited to 10 MB, bounded XML/text expansion and 100,000 output cells; CSV import accepts at most 5,000 database rows.
 
-1. Click **Save JSON** to download `exacc-scenario.json`. Your browser uses Downloads or the location you choose. Check that the download completed; this static page cannot confirm the file reached disk.
-2. Keep the JSON file. It includes all machines, allocations, planning inputs and recorded Before totals. Apply any preview first if you want it saved.
-3. Return to the calculator and use **Open JSON** to resume. Download a new copy after further edits.
+## Compare plans
 
-The page shows an unsaved-work reminder and registers a close/refresh warning while edits differ from the last opened/downloaded scenario. Browsers control the warning text and may suppress it, especially on mobile. Keep the JSON file as your backup. The calculator does not automatically store your scenario in the browser, on GitHub, on OCI or on a server. A printed PDF is a report, not a resumable configuration.
+Saved options are complete snapshots of all machines. Loading one changes the working plan; Undo restores the previous state. Exact machine IDs take precedence over explicitly identified name-based matching of older files.
 
-## Optional Before / After comparison
+Growth options scale entered CPU/RAM requirements by the chosen percentages. Unknowns stay unknown and hardware must be compared again. Migration overlap copies selected AVMC allocations into a separate option, counts both footprints and clears copied DR links. Neither feature predicts application performance or verifies failure capacity.
 
-**Record Before values** keeps the allocation totals currently entered for the selected machine. Continue editing to see the difference in the Before / After table. For example, recording 1,000 GB and then modelling 800 GB shows a −200 GB change.
+The older **Record Before values** tool remains an optional totals comparison. Use named saved options when a complete restorable configuration is needed.
 
-This records comparison totals, not a complete configuration that can be restored. It does not fetch or change OCI resources. You can ignore this feature and still use every capacity calculation. **Save scenario** downloads the full editable scenario, including any recorded Before totals. Applying a preview without an existing reference records the previous design's totals automatically.
+## Conventional VM clusters
 
-## What it does
+A separate console/proposal footprint mode accepts the full local allocation, ECPU capacity and memory per VM on selected servers. It does not reuse the AVMC formula or calculate conventional filesystems/backups.
 
-- X11M Standard, Large, Extra Large and Base presets, plus manually entered console values.
-- Multiple sites and machines, AVMC placement on selected DB servers and per-server capacity checks.
-- Maximum ACD slots, local reservations, other allocations, user-selected buffer and explicit 16-ACD limit.
-- Comparison of 1 through the available VM count, showing both absolute and buffered local-storage ceilings.
-- Optional ECPU pool and memory-allocation checks, formula breakdown, scenario JSON import/export and print/PDF.
-- A fixed local-storage summary shows the active machine's remaining GB while you edit on desktop or a narrow screen. It also shows a labelled preview before you apply it, and restores the plan values on cancel. Undo, Save JSON and Next are available in the bar; Review offers Edit AVMCs. The bar is hidden in print/PDF.
-- A live AVMC → reserved ACD-slot diagram shows where local storage is allocated. Each box is a configured slot, not proof that an ACD exists. Per-server balances stay visible below the diagram because free capacity cannot be pooled between servers. Use Edit on a diagram card to open that AVMC's form.
-- Machine inputs are grouped by purpose. AVMC forms expand individually, with CPU/memory controls grouped below the local-storage inputs. The optional Before / After tools can be expanded when needed.
-- Enter workload ECPUs/RAM per AVMC to compare X11M DB-server options. The suggestion panel separates physical fit from optional buffers and marks incomplete workload lists.
+Choose whether the existing Other values already include those footprints. Inclusion, updates and removal use a tracked contribution to avoid double counting. Manual edits that conflict with tracked totals require reconciliation. Mixed-service VM limits and older OCPU conversions still require console confirmation.
 
-## Requirement-based hardware suggestions
+## Saving and recovery
 
-The suggestion panel compares an all-server layout across X11M memory tiers and a configurable DB-server count. Results are ranked by fewer DB servers, then smaller memory tier; this is not a price comparison or an in-place upgrade recommendation.
+**Save JSON** downloads all machines, named inventory, saved options, assumptions and rule metadata. Check that the download completed. **Open JSON** resumes it. Existing v1 scenario files remain readable; results are recalculated using current rules, and imported rule differences are shown.
 
-CPU allocation includes the entered workload, ACD minimums and an editable extra-ECPU planning allowance (initially 50%). This allowance is not Oracle's actual calculated failover reservation. If per-ACD input detail is available, each ACD is floored at 8 ECPUs per node; otherwise the calculator uses an aggregate floor plus the explicitly unsized ACD count. AVMC CPU is at least 40 ECPUs per VM. Memory ratios round up to 0.5 GB/ECPU within 2–5 and use the current memory formula. A requirement above that range must be reviewed, not silently reduced.
+Optional device drafts store the plan only in the current browser/device. They do not sync or upload. Recovery is offered explicitly on reopening, and Clear stored draft does not delete the working plan. A downloaded JSON remains the portable backup.
 
-These checks cover the entered requirements only. Confirm per-ADB/ACD and per-node availability, autoscaling/failover reservations, shared-storage/backup capacity, quotas, deployment support and application performance before provisioning. Hardware for a multi-year plan must fit every relevant year.
+There is one recovery slot for this site in a browser. Other tabs can replace it; leaving-page checks verify that the stored draft still matches the current plan. Use separate JSON files for separate projects.
 
-## Buffer targets are warnings
+JSON export/import is bounded to 10 MB in UTF-8; keep at most 20 alternatives per file. Device drafts are bounded to 2 MB and may also be limited by browser storage permissions/quota. A failed draft save is shown and does not claim that current edits were saved. Undo/Redo retains up to 20 changes in the current tab; it is not exported.
 
-A buffer is the percentage of capacity you would like to keep free. It does not allocate resources or reduce the machine's real capacity. Resource cards show the calculated free capacity, with the buffer target underneath.
+## Reports and coverage
 
-- **Green:** meets the buffer target.
-- **Amber:** fits the checked capacity, but is below the buffer target. You can still use the layout.
-- **Red:** exceeds a checked hardware or service limit. Adjust the inputs before applying the preview.
+**Download report** creates self-contained HTML with an executive summary, all machines, named database groups, saved alternatives, technical figures, assumptions, sources and open checks. Open it locally and use Print / Save as PDF. Reports can contain customer-entered information; the tool does not publish them.
 
-Layout comparisons prefer an option that keeps the requested local-storage buffer. If none is possible, they still offer a layout that fits the physical storage. **Preview maximum** shows the maximum ACD slots when that differs from the option with the buffer. CPU and memory are checked in the preview when enabled. Actual Oracle allocations and reservations still count; the optional buffer is separate.
+| Area | Current scope |
+| --- | --- |
+| AVMC local storage | Per-selected-DB-server reservations, maximum ACD slots and configured VM limits |
+| CPU and memory | Allocation checks, current/confirmed legacy memory rules, qualified aggregate workload sizing |
+| Hardware selection | X11M presets; rank by server count then memory tier, not price |
+| Named topology | Entered ACD/ADB hierarchy and up to two standby links; partial DR validation |
+| Shared Exadata storage | Optional manually entered usable/allocated totals; no cell/backup sizing |
+| Conventional VMC | Explicit console/proposal footprints; no automatic filesystem reservation model |
+| Provisioning and scale-down | Not approved by a capacity fit; live reservations and console minima need review |
+| Failures, RTO/RPO, performance, licensing and prices | Not checked |
 
-The preset initial buffer of 10% is a user-adjustable planning assumption, not an Oracle recommendation. Comparison designs replace current modelled AVMCs, span all machine DB servers and retain other allocations. The maximum local-storage count is not a guarantee that all ACDs or workloads can be provisioned.
+The eight-machine, 32-AVMC-entry, 1,000-database-row-per-ACD and 20-option bounds are calculator input limits, not Oracle service limits. Platform-specific limits are checked separately.
 
-## Version 1.4 — memory rules and allocation evidence
+## Rules and source differences
 
-- Current memory formula: `(ECPU/VM × GB/ECPU + 40 + 0.3 × ECPU/VM) × 1.02 × VM count`. Applies to AVMCs created after 22 September 2026, or existing AVMCs after memory per CPU changes. The calculator uses decimal 300 MB = 0.3 GB and a minimum current-rule budget of 135 GB per VM. The raw formula at 40 ECPUs and 2 GB/ECPU is 134.64 GB; the budget uses the documented 135 GB minimum. Console rounding remains authoritative.
-- Legacy checklist: creation before the cutoff and unchanged memory-per-CPU setting must both be confirmed before using the earlier `+40 GB` formula. Creation on the cutoff date requires console confirmation. A memory-ratio edit switches the proposal to the current rule.
-- Older scenarios without memory-rule fields remain readable, but their memory history is unconfirmed and capacity checks use the conservative current estimate. Local-storage calculations and saved reference totals remain unchanged. Reconfirm legacy eligibility where appropriate; do not assume an imported snapshot is a fresh console allocation.
-- Per-AVMC memory and local-storage estimates, optional console observations, and infrastructure-total reconciliation with a user-entered tolerance. Console observations remain fixed when proposals change and never override the formula.
-- A proposed additional AVMC is checked on every DB server for CPU, memory, local storage and VM slots. This is a physical-capacity check without optional growth reserves. Shared storage, quotas, ACD reservations and scale-down minima still require console review.
-- An independent Oracle-inspired appearance uses local CSS, system fonts and no proprietary brand assets. No customer data, internal guides or private links are embedded.
+The dated registry in rules.js records formulas, scope, source links and unresolved source differences. Current source review: 7 November 2026.
 
-## Version 1.3 — current configuration to proposed changes
+- Local reservation uses the detailed creation formula consistently; worked examples on other Oracle pages do not always reconcile.
+- Current memory uses the additional 0.3 GB per ECPU overhead and a conservative 135 GB/VM creation budget. The documented cutoff is **after 29 September 2026**, or after an existing AVMC's memory ratio changes. The 22 September feature announcement is a different date; exact-cutoff eligibility still needs console confirmation.
+- New AVMC proposals enforce the current 40-ECPU/VM creation minimum. Existing or unknown older positive allocations below it receive a console-confirmation warning; they are not declared unsupported merely from the new-creation rule.
+- When RAM needs more than the maximum entered memory ratio permits, sizing can propose additional **database ECPUs**. It preserves requested inputs and requires per-ADB review; spare AVMC CPU alone does not establish the required ADB memory.
+- The extra ECPU percentage is a user planning assumption, not Oracle's computed failover reservation. Available, reserved and reclaimable CPU remain distinct.
 
-- One site-to-machine navigator with add, duplicate and remove controls. Removing the last machine is disabled.
-- Four resource cards show free capacity after the growth reserve, allocation totals, unchecked resources and capacity warnings. The cards and Undo stay visible while editing on desktop; on narrow screens they remain in normal page flow.
-- Set the current reference above the editor. Subsequent edits are labelled as the proposed configuration. Existing saved references remain readable.
-- Preview a layout before applying it. Replacement allocations are requested only when needed, and the preview shows resource changes and warnings. Applying without a reference captures the previous design as the current reference.
-- Undo restores the most recent change, including a removed AVMC or machine, an imported scenario, or an applied layout. Undo history stays in the current tab and is not exported.
-- Unsaved-change status tracks the scenario against its last opened or downloaded version. The browser warns before leaving with changes, where supported. There is still no automatic persistence or network upload.
-- Detailed formulas, per-server tables, resize caveats and optional session planning are available in expandable sections. The sizing formulas and scenario schema are unchanged.
+Primary references: [Create AVMC](https://docs.oracle.com/en/cloud/paas/autonomous-database/dedicated/adbaa/create-an-autonomous-exadata-vm-cluster.html), [hardware shapes](https://docs.oracle.com/en/cloud/paas/autonomous-database/dedicated/adbaa/characteristics-of-infrastructure-shapes.html), [capacity terminology](https://docs.oracle.com/en/cloud/paas/autonomous-database/dedicated/adbaa/plan-and-observe-capacity-for-autonomous-ai-database-on.html), [Data Guard scope](https://docs.oracle.com/en/cloud/paas/autonomous-database/dedicated/adbaa/protect-critical-databases-from-failures-and-disasters-using.html).
 
-## Version 1.2 — expansion and resize planning
+## Development and publication
 
-### 1.2.1 fixes
+Static HTML/CSS/JavaScript; no build or runtime dependency. Serve this directory over HTTP for complete workbook import and device-storage behavior. Open index.html directly only for basic local use.
 
-- Applying a local-storage combination preserves names and compute allocations when the AVMC count and all-server placement match. A different layout requires explicit replacement ECPUs and memory ratio; it never silently resets compute to minimums.
-- The machine overview includes every enabled resource check, including CPU/memory buffers and manual Exadata storage. Unchecked resources are labelled, and invalid inputs clear stale overview status.
-- Changing DB-server count preserves imported IDs, assigns unused IDs to added nodes, and validates placement before committing a change. Rejected changes leave the existing design intact.
+Run npm test for the public model/integration suite. Update model.js, package.json, CHANGELOG.md and the CSS/script version queries in index.html together. Keep customer files, examples derived from customer data and internal evidence outside this public repository. Verify the published commit and changed assets after deployment.
 
-### Planning features
-
-- Independent buffers: local 10%, CPU 30%, memory 30%, and Exadata storage 30%. All are editable percentages of total capacity, not Oracle service limits or mandatory best practices. Existing saved local buffers remain unchanged.
-- New designs include CPU/memory allocation checks by default. Existing scenario check settings are preserved. Change per-VM ECPUs and the 2–5 GB/ECPU memory ratio to explore allocations; checks include every selected server.
-- Capture a machine baseline, then compare proposed AVMC count, ACD slots and resource allocations. Negative deltas indicate modelled release; OCI resize permission, workload fit and maintenance impact require console review.
-- Exadata storage is a separate optional manual check of console usable TB and total allocated TB, including internal/backup reservations. It is not derived from database-server local storage or recalculated when cluster fields change.
-- Session arithmetic takes one ADB's base ECPUs and an editable sessions/ECPU assumption. 75 dedicated and 325 shared/MTS are illustrative, not verified public Dedicated service limits. No node-count or autoscaling multiplier is applied. This is not a throughput or availability guarantee.
-- Version 1.2 used the legacy memory formula. Version 1.4 adds the documented current rule and per-AVMC eligibility checks above.
-
-Additional public references: [AVMC scaling and rolling restarts](https://docs.oracle.com/en/cloud/paas/autonomous-database/dedicated/adbaa/manage-autonomous-exadata-vm-clusters.html) and [shared-server architecture](https://docs.oracle.com/en/database/oracle/oracle-database/26/netag/understanding-shared-server-architecture.html). These support operating caveats; the architecture page does not substantiate the numerical session assumptions.
-
-Run `node --test model.test.cjs planning.test.cjs audit.test.cjs sizing.test.cjs` for the public model checks. Keep every sibling JavaScript and CSS file beside `index.html`.
-
-## Hardware inputs
-
-Preset shapes lock local capacity, ECPU capacity, memory, VM limit and AVMC image overhead. Existing reservations stay editable without changing the shape. Select Custom / console values to enter another verified configuration. Imported scenarios whose capacities differ from their named preset are labelled Custom, preserving their values.
-
-## Multiple sites and machines
-
-Use **+ Site / machine** once per ExaC@C infrastructure. Give each entry a site/location and a machine name; reuse the site name for multiple machines in that location (for example DC / Machine 1, DC / Machine 2, DR / Machine 1). The overview shows all entries together, with separate hardware, reservations, AVMC design and checks. No capacity is pooled across machines. Save/open includes the whole scenario, up to eight machines. Older scenario files remain readable with an unspecified site label.
-
-## Formula and evidence
-
-Per AVMC: `VM count × [image overhead + (100 + 50 × configured maximum ACDs) × 1.03 + 2]` GB. Two-node X11M simplifies to `578 + 103 × slots`. Configured slots reserve storage before ACD creation. Each AVMC supports at most 16 ACDs.
-
-Public Oracle memory, CPU-allocation and X11M references checked 2026-11-06:
-
-- [Detailed resource formula](https://docs.oracle.com/en/cloud/paas/autonomous-database/dedicated/adbaa/create-an-autonomous-exadata-vm-cluster.html)
-- [Infrastructure shapes](https://docs.oracle.com/en/cloud/paas/autonomous-database/dedicated/adbaa/characteristics-of-infrastructure-shapes.html)
-- [Service limits](https://docs.oracle.com/en/cloud/paas/autonomous-database/dedicated/adbaa/plan-and-observe-capacity-for-autonomous-ai-database-on.html)
-- [Compute management](https://docs.oracle.com/en/cloud/paas/autonomous-database/dedicated/adbaa/compute-management-in-autonomous-ai-database-on-dedicated.html)
-
-The detailed formula gives 681 GB for a two-node one-slot X11M AVMC, whereas Oracle's worked example shows 682 GB. The calculator deliberately uses the detailed formula, with optional additional allowance, and requires final console reconciliation. X11M presets follow the Autonomous hardware table's 6-VM/server limit (2 for Base); mixed-service limits require separate validation.
-
-CPU checks compare AVMC allocation totals and creation minimums. They do not establish ACD creation availability, autoscaling, failover reserves, application performance, database data/backup storage or migration overlap. No customer inventory is embedded.
-
-## Conventional VMC extension
-
-Keep a separate model for conventional VMCs. Their local use depends on configured filesystems and Oracle-managed VM backups and whether each uses DB-server or Exascale storage. Current version accepts their console-reported allocations in “Other local GB”. It does not apply the ACD formula to them. [Conventional VMC documentation](https://docs.oracle.com/en/engineered-systems/exadata-cloud-at-customer/ecccm/ecc-manage-vm-clusters.html).
-
-## Run and test
-
-Open `index.html` with its sibling files present. Run `node --test model.test.cjs planning.test.cjs audit.test.cjs` for formula, placement, buffer, boundary, resize, session, reconciliation and import checks. No package installation required.
-
-## Publish
-
-Use a dedicated public repository containing only this folder. Enable GitHub Pages from `main`, root `/`. The site will be public. Scenario files are user downloads and should not be committed. This project is an independent planning aid and is not endorsed by Oracle.
+ui.css owns the shared visual system, responsive layouts and print styles. The independent Oracle-inspired appearance uses system fonts and no proprietary brand assets. This is not an official Oracle application or deployment approval.

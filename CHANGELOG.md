@@ -1,5 +1,30 @@
 # Changelog
 
+## 2.0.0 — 2026-11-07
+
+### Added
+
+- Dated rule registry, explicit coverage and qualified all-machine assessment with per-node bottlenecks and open checks.
+- Named Site → Machine → AVMC → ACD → ADB mapping, independent-switchover findings and up to two standby ACD links.
+- Local XLSX/CSV worksheet and column mapping, validated preview, unknown-value preservation and source-change/race protection.
+- Full named alternatives, restore/comparison, growth and migration-overlap options. Stable machine identities take priority over legacy name matching.
+- Separate conventional VMC console/proposal footprints with tracked inclusion in Other allocations to prevent double counting.
+- Optional local device recovery, 20-change Undo/Redo, and consistent 10 MB JSON export/import limits.
+- Self-contained executive/technical HTML report with sources and assumptions; printable locally.
+- Public product goals and regression catalogue. Existing scenario v1 files remain supported.
+
+### Corrected
+
+- Memory-rule cutoff follows the current creation documentation: after 29 September 2026. The 22 September feature announcement is a separate event.
+- New-creation CPU minimums are distinguished from older existing allocations requiring console confirmation.
+- High-memory sizing proposes explicit additional database ECPUs and preserves the original requirements for review.
+- Node shrinking cannot discard other allocations, and topology-changing previews cannot silently erase named database mappings.
+
+### Boundaries
+
+- Physical capacity fit does not prove immediate OCI provisioning/resize eligibility, failure capacity, workload performance or DR readiness.
+- Shared storage/backup sizing, conventional filesystem formulas, pricing and licensing remain separate or unchecked, visibly documented in coverage.
+
 ## 1.9.0 — 2026-11-07
 
 ### Improved

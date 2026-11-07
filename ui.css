@@ -256,6 +256,34 @@ td button{font-size:11px;min-height:32px;padding:6px 10px;white-space:nowrap}
 .local-dock[data-level=draft] .dock-detail strong{color:var(--muted);font-weight:400}
 .local-dock[data-level=draft] .dock-capacity output{font-size:20px;color:var(--muted)}
 footer{padding:var(--s5);font-size:10px;color:var(--muted);text-align:center;border-top:1px solid var(--line)}
+/* Detailed planning stays inside optional sections. */
+textarea{font:inherit;min-height:80px;resize:vertical;width:100%;padding:10px 12px;border:1px solid var(--line-strong);border-radius:var(--radius-sm);background:var(--surface);color:var(--ink)}
+textarea:focus-visible{outline:3px solid var(--focus);outline-offset:3px}
+.device-draft-controls{border-top:1px solid var(--line);margin-top:var(--s5);padding-top:var(--s3);max-width:850px}
+#draft-status{font-size:12px}.inventory-cluster{border-top:1px solid var(--line);padding-top:var(--s5);margin-top:var(--s5)}
+.inventory-cluster .section-top{align-items:center}.inventory-cluster h3{margin-top:0}
+.inventory-acd{border:1px solid var(--line);border-radius:var(--radius-sm);padding:0 var(--s4) var(--s3);background:var(--surface-tint)}
+.inventory-acd>summary{padding:var(--s4) 0}.inventory-acd .actions{margin:var(--s4) 0}
+.inventory-adb{background:var(--surface);border:1px solid var(--line);border-radius:var(--radius-sm);padding:var(--s4);margin:var(--s3) 0}
+.inventory-adb>.fields{margin-top:0}.inventory-adb-actions{display:flex;justify-content:space-between;align-items:center;gap:var(--s3);flex-wrap:wrap}
+.inventory-adb-actions .check{margin:0}.inventory-totals{background:var(--surface-soft);padding:var(--s4);border-radius:var(--radius-sm);margin:var(--s4) 0}
+.topology-issues{font-size:12px;padding-left:var(--s5);line-height:1.7}.topology-issues li{margin-bottom:var(--s2)}
+.topology-review-table{min-width:740px}.topology-inventory{padding-bottom:var(--s4)}
+.assessment-counts{display:flex;flex-wrap:wrap;gap:var(--s3);margin:var(--s5) 0}
+.assessment-counts>span{background:var(--surface-soft);padding:var(--s3) var(--s4);border-radius:var(--radius-sm);font-size:12px}
+.assessment-counts strong{font-size:18px;margin-right:var(--s1)}
+.assessment-verdict p{font-size:12px;margin:var(--s2) 0 0}
+.assessment-machine{border-bottom:1px solid var(--line);padding:var(--s3) 0}.assessment-machine h3{margin:var(--s2) 0}.assessment-machine p{font-size:13px;margin-bottom:var(--s2)}
+#assessment-summary ul{font-size:12px;line-height:1.7;padding-left:var(--s5)}
+.coverage-status{display:inline-block;padding:4px 8px;border-radius:4px;font-size:11px;font-weight:600;background:var(--surface-soft);white-space:nowrap}
+.coverage-status[data-status=supported]{background:var(--success-soft);color:var(--success)}.coverage-status[data-status=partial]{background:var(--warning-soft);color:var(--warning)}
+#scenario-tools{padding:var(--s4) 0}#scenario-tools>h2{font-size:18px}.scenario-machine{padding:var(--s4) 0;border-top:1px solid var(--line)}
+#project-notes{min-height:85px}#csv-text{min-height:145px;font:12px/1.6 Consolas,monospace}#workload-import{padding-bottom:var(--s4)}
+#csv-mapping table{max-width:760px}#csv-mapping select{font-size:12px}#csv-preview-results{margin-top:var(--s4)}
+#conventional-editor{padding-bottom:var(--s4)}.conventional-list{margin-top:var(--s4)}#conventional-status p{font-size:12px;line-height:1.65}
+.adjustment-note{font-size:12px;background:var(--warning-soft);border-left:3px solid #b6842c;border-radius:var(--radius-sm);padding:var(--s4);margin:var(--s4) 0}
+.acd-slot{overflow-wrap:anywhere}.acd-slot[data-named=true]{border-style:solid;background:var(--accent-soft)}.acd-slot small{display:block;font-size:9px;color:var(--muted)}
+.map-databases{margin:var(--s2) 0 0}.map-databases>summary{font-size:11px;padding:var(--s2) 0}.map-databases>div{font-size:11px;padding:var(--s2) 0;border-top:1px solid var(--line)}.map-databases small{display:block;font-size:10px}.map-databases p{font-size:10px;margin:var(--s1) 0 0;overflow-wrap:anywhere}
 @media(min-width:1600px){.allocation-workspace{grid-template-columns:minmax(0,1.3fr) minmax(300px,1fr)}}
 @media(max-width:1150px){
   .workspace{grid-template-columns:180px minmax(0,1fr);gap:var(--s5)}

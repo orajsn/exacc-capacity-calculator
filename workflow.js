@@ -1,6 +1,7 @@
 'use strict';
 
 let undoSnapshot = null;
+let undoStack = [], redoStack = [];
 let savedSignature = null;
 let savedLabel = 'New scenario · no JSON downloaded';
 let preview = null;
@@ -11,7 +12,12 @@ function snapshot() {
 }
 
 function rememberChange(before) {
- if (JSON.stringify(before.state) !== JSON.stringify(state)) undoSnapshot = before;
+ if (JSON.stringify(before.state) === JSON.stringify(state)) return;
+ try{validateWorkspace(before.state);}catch{return;}
+ const previous=undoStack[undoStack.length-1];
+ if(!previous||JSON.stringify(previous.state)!==JSON.stringify(before.state))undoStack.push(before);
+ if(undoStack.length>20)undoStack.shift();
+ redoStack=[];undoSnapshot=undoStack[undoStack.length-1]||null;
 }
 
 function hasUnsavedChanges() {
@@ -19,7 +25,7 @@ function hasUnsavedChanges() {
 }
 
 function warnBeforeLeaving(event) {
- if (!hasUnsavedChanges()) return;
+ if (!hasUnsavedChanges()||deviceDraftIsCurrent()) return;
  event.preventDefault();
  event.returnValue = true;
 }
@@ -128,6 +134,7 @@ function updateWorkflow() {
  if(sizingResults&&(sizingResults.active!==active||sizingResults.signature!==JSON.stringify(state)))clearSizingResults();
  updateSaveReminder();
  $('undo').disabled = !undoSnapshot;
+ $('redo').disabled = !redoStack.length;
  $('remove-site').disabled = state.sites.length === 1;
  $('duplicate-site').disabled = state.sites.length >= 8;
  $('active-machine').textContent = `${s.siteName || 'Unspecified site'} / ${s.name}`;
@@ -139,6 +146,7 @@ function updateWorkflow() {
   : 'Optional: record the numbers you have entered, then edit the design to compare Before versus After. Skip this if you only need capacity totals.';
  if (preview && (preview.active !== active || preview.signature !== JSON.stringify(state))) cancelPreview();
  refreshJourney();
+ renderTopologyReview();renderAssessment();conventionalStatus();renderScenarioComparison();updateDeviceDraft();
 }
 
 function clearResourceCards() {
@@ -226,16 +234,22 @@ function initWorkflow() {
  });
  $('undo').onclick = () => {
   if (!undoSnapshot) return;
-  state = undoSnapshot.state;
-  active = undoSnapshot.active;
-  undoSnapshot = null;
+  redoStack.push(snapshot());const previous=undoStack.pop();
+  state = previous.state;
+  active = Math.min(previous.active,state.sites.length-1);
+  undoSnapshot = undoStack[undoStack.length-1]||null;
   cancelPreview();
   render();
   message('Last change undone.');
  };
+ $('redo').onclick=()=>{
+  if(!redoStack.length)return;
+  undoStack.push(snapshot());const next=redoStack.pop();state=next.state;active=Math.min(next.active,state.sites.length-1);undoSnapshot=undoStack[undoStack.length-1]||null;
+  cancelPreview();render();message('Change restored.');
+ };
  $('duplicate-site').onclick = () => safeUpdate(() => {
   if (state.sites.length >= 8) throw Error('Up to eight machines per scenario.');
-  const copy = structuredClone(site());
+  const copy = T.cloneMachine(site());
   copy.name = `${copy.name.slice(0, 65)} (copy)`;
   state.sites.push(copy);
   active = state.sites.length - 1;

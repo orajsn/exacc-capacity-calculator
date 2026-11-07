@@ -59,3 +59,9 @@ test('invalid audits and checklist data are rejected',()=>{
  delete site.audit;site.clusters[0].memoryRule='unexpected';assert.throws(()=>M.validate(site));
  site.clusters[0].memoryRule='legacy';site.clusters[0].legacyRatioUnchanged='true';assert.throws(()=>M.validate(site));
 });
+test('Base hardware candidate checks use its own per-node CPU and VM limits',()=>{
+ const site=M.newSite('Base','x11m-base');site.clusters=[];site.audit={newCPU:120,newRatio:4,newSlots:1};
+ assert.equal(A.candidate(site,M.calculate(site),M).fits,true);
+ site.audit.newCPU=121;const cpu=A.candidate(site,M.calculate(site),M);assert.equal(cpu.fits,false);assert.ok(cpu.rows.every(n=>n.cpuGap===1));
+ site.audit.newCPU=40;site.nodes[0].otherVMs=2;const vm=A.candidate(site,M.calculate(site),M);assert.equal(vm.fits,false);assert.equal(vm.rows[0].vmGap,1);assert.equal(vm.rows[1].vmGap,0);
+});
