@@ -39,6 +39,7 @@ function renderPlanList(){
 function showPlanLibrary(open=true){if($('start-options'))$('start-options').hidden=true;if(typeof startChoicesOpen!=='undefined')startChoicesOpen=false;$('plan-library').hidden=!open;$('planner-workspace').hidden=open;$('plan-context').hidden=open;for(const id of ['local-dock','save','print','save-status','save-help'])$(id).hidden=open;if(open){refreshPlanList();$('library-heading').focus({preventScroll:true});$('plan-library').scrollIntoView({block:'start',behavior:'smooth'});}}
 function announcePlanChange(meta,action='save'){try{libraryChannel?.postMessage({id:meta.id,revision:meta.revision,action});}catch{}}
 function resetLibraryBinding(binding=null,auto=false){
+ pendingBackup=null;
  clearTimeout(librarySaveTimer);librarySaveTimer=null;libraryGeneration++;libraryAutoEpoch++;libraryBinding=binding;libraryAuto=auto;librarySavedSignature=null;libraryConflict=null;libraryError='';$('plan-conflict').hidden=true;
 }
 function activatePlan(next,{binding=null,auto=false,sourceKept=false,label='Opened plan'}={}){

@@ -138,3 +138,10 @@ The five-minute first-use target in PRODUCT_GOALS.md still needs an independent 
 - Regressions cover stale/incomplete sizing flags in the comparison UI, a copy request waiting for storage while another plan is activated, and focus recovery when the walkthrough closes.
 - Browser review exercises the public entry flow, adding/editing, comparison preview/cancel, device save/reopen and narrow-screen controls. Row-specific preview names and a visible scroll hint address discoverability on phones and through keyboard/screen-reader navigation.
 - This is agent-led usability review, not an independent first-user study or a guarantee of no remaining defects.
+
+## 3.4.2 bounded release-quality pass
+
+- Independent synthetic fixtures exercise asymmetric placement/conservation, monotonic allocations, confirmed legacy/current/unknown memory, invalid profile names, exact decimal boundaries, disabled/unknown resources and exhaustive feasible-layout enumeration. They contain no customer data.
+- Backup regressions reproduce the prior false-saved state on a download request, and verify explicit receipt, stale edits, cancellation/failure and switching plans. Successful device saving remains independent.
+- Existing create/edit/compare/import/save/reopen, tour, malicious-input and delayed-storage cases remain in the full release suite. A private Borneo source snapshot is additionally rechecked without changing or publishing its files.
+- Native browser checks exercised quick planning, comparison preview/cancel, device save/reopen, tour, pasted CSV import and guide/review surfaces. Native file selection, PDF rendering and physical mobile keyboard behavior remain unverified; the Edge viewport override in this pass did not yield a narrow screenshot.

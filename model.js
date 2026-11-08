@@ -1,6 +1,6 @@
 (function(root,factory){const api=factory();if(typeof module==='object'&&module.exports)module.exports=api;else root.ExaCapacity=api;})(typeof globalThis!=='undefined'?globalThis:this,function(){
  'use strict';
- const VERSION='3.4.1',CHECKED='2026-11-07';
+ const VERSION='3.4.2',CHECKED='2026-11-07';
  const SOURCES={formula:'https://docs.oracle.com/en/cloud/paas/autonomous-database/dedicated/adbaa/create-an-autonomous-exadata-vm-cluster.html',hardware:'https://docs.oracle.com/en/cloud/paas/autonomous-database/dedicated/adbaa/characteristics-of-infrastructure-shapes.html',limits:'https://docs.oracle.com/en/cloud/paas/autonomous-database/dedicated/adbaa/plan-and-observe-capacity-for-autonomous-ai-database-on.html',compute:'https://docs.oracle.com/en/cloud/paas/autonomous-database/dedicated/adbaa/compute-management-in-autonomous-ai-database-on-dedicated.html',vmc:'https://docs.oracle.com/en/engineered-systems/exadata-cloud-at-customer/ecccm/ecc-manage-vm-clusters.html'};
  const PROFILES={
   'x11m-standard':{label:'X11M Standard',image:184,local:2243,memory:1390,cpu:760,vms:6},
@@ -13,7 +13,7 @@
  const number=(x,min,max,label,integer=false)=>{if(typeof x!=='number'||!Number.isFinite(x)||x<min||x>max||(integer&&!Number.isInteger(x)))throw new Error(`${label}: enter ${integer?'a whole number':'a number'} between ${min} and ${max}.`);return x;};
  function newSite(name='Machine 1',profile='x11m-standard',nodes=2){const p=PROFILES[profile];return{name,siteName:'Site 1',profile,image:p.image,bufferPercent:10,allowance:0,checkCompute:true,nodes:Array.from({length:nodes},(_,i)=>({id:i+1,local:p.local,memory:p.memory,cpu:p.cpu,maxVMs:p.vms,otherLocal:0,otherMemory:0,otherCPU:0,otherVMs:0})),clusters:[{name:'AVMC 1',slots:10,nodes:Array.from({length:nodes},(_,i)=>i+1),cpu:160,memoryPerCPU:2,memoryRule:'current',allocationKind:'new'}]};}
  function validate(site){
-  if(!site||typeof site!=='object'||!PROFILES[site.profile])throw new Error('Unknown hardware profile.');
+  if(!site||typeof site!=='object'||typeof site.profile!=='string'||!Object.prototype.hasOwnProperty.call(PROFILES,site.profile))throw new Error('Unknown hardware profile.');
   if(typeof site.name!=='string'||site.name.length>80)throw new Error('Machine name must be at most 80 characters.');
   if(site.siteName!==undefined&&(typeof site.siteName!=='string'||site.siteName.length>80))throw new Error('Site name must be at most 80 characters.');
   number(site.image,0,1000,'VM image GB');number(site.bufferPercent,0,90,'Buffer percent');number(site.allowance,0,1000,'Extra allowance per VM');
@@ -61,8 +61,8 @@
   const nodes=site.nodes.map(n=>{let used=0,cpu=0,memory=0,vms=0;site.clusters.forEach((c,i)=>{if(c.nodes.includes(n.id)){used+=costs[i].perVM;cpu+=c.cpu;memory+=costs[i].memoryPerVM;vms++;}});const buffer=n.local*site.bufferPercent/100,free=n.local-n.otherLocal-used;
    if(free< -1e-7)errors.push(`DB ${n.id}: local storage exceeds capacity by ${(-free).toFixed(1)} GB.`);else if(free+1e-7<buffer)warnings.push(`DB ${n.id}: remaining storage is below the ${site.bufferPercent}% planning buffer.`);
    if(vms+n.otherVMs>n.maxVMs)errors.push(`DB ${n.id}: ${vms+n.otherVMs} VMs exceeds the configured ${n.maxVMs}-VM limit.`);
-   if(site.checkCompute&&cpu+n.otherCPU>n.cpu)errors.push(`DB ${n.id}: allocated ECPUs exceed server capacity.`);
-   if(site.checkCompute&&memory+n.otherMemory>n.memory)errors.push(`DB ${n.id}: estimated memory exceeds server capacity.`);
+   if(site.checkCompute&&cpu+n.otherCPU-n.cpu>1e-7)errors.push(`DB ${n.id}: allocated ECPUs exceed server capacity.`);
+   if(site.checkCompute&&memory+n.otherMemory-n.memory>1e-7)errors.push(`DB ${n.id}: estimated memory exceeds server capacity.`);
    return{...n,used,free,buffer,afterBuffer:free-buffer,cpuUsed:cpu,memoryUsed:memory,vms};
   });
   const sum=k=>nodes.reduce((a,n)=>a+n[k],0);return{costs,nodes,errors,warnings,status:errors.length?'error':warnings.length?'warning':'fit',capacity:sum('local'),used:sum('used'),other:sum('otherLocal'),free:sum('free'),buffer:sum('buffer'),afterBuffer:sum('afterBuffer'),slots:site.clusters.reduce((a,c)=>a+c.slots,0)};

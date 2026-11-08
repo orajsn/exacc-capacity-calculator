@@ -1,5 +1,18 @@
 # Changelog
 
+## 3.4.2 — 2026-11-09
+
+### Fixed
+
+- Existing/unknown low-CPU allocation warnings now remain visible in summaries and comparisons instead of appearing as an unqualified fit.
+- Hardware-profile validation rejects inherited JavaScript property names rather than accepting them as profiles.
+- Exact decimal CPU/memory boundaries use the same small numerical tolerance as storage checks, preventing floating-point noise from creating false shortfalls. Real shortages still fail.
+- A JSON download request no longer clears unsaved-work protection. Confirm receipt with I have the JSON file; a cancelled, failed or outdated download cannot mark current edits as backed up.
+
+### Verified
+
+- Added independent synthetic boundary regressions for per-node conservation, placement, monotonic changes, memory history, invalid inputs, missing checks and layout enumeration. Customer reconciliation files remain private.
+
 ## 3.4.1 — 2026-11-08
 
 ### Fixed

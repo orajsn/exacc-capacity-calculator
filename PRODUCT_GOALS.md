@@ -112,3 +112,11 @@ The guide documents supported cases and unassessed areas; it does not claim exha
 | G32. Compare realistic alternatives | Working plan plus two saved options; per-machine hardware, counts, allocations/free capacity, buffer and node-shortage checks; explicit unknowns and identity assumptions. | Implemented in 3.4 |
 | G33. Review the actual import effect | Added/changed/removed/unchanged rows, field deltas, missing values, group/slot/peer effects and complete paginated review before explicit Apply. | Implemented in 3.4 |
 | G34. Keep review read-only | Selection and previews preserve state; edits invalidate stale import previews; no silent workload reapplication or best-option claim. | Regression tested in 3.4 |
+
+## 3.4.2 — bounded release-quality goal
+
+| Goal | Acceptance criteria | Delivery |
+| --- | --- | --- |
+| G35. Calculation confidence | Synthetic independent boundary cases plus private source reconciliation, with no speculative formula or platform changes. | Verified in 3.4.2 |
+| G36. Dependable saving | Download requests cannot silently clear unsaved protection; receipt, failure, later edits and plan-switch paths tested. | Implemented in 3.4.2 |
+| G37. End-to-end release review | Core journeys exercised, full regression suite clean, documentation aligned and deployed assets checked; unavailable browser cases stated separately. | Verified in 3.4.2 |

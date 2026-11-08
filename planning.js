@@ -21,13 +21,19 @@
   if (result.errors.length) details.unshift('Exceeds a hardware or service limit');
   const unconfirmed = site.checkCompute && result.costs.some(c => !c.memorySizing.verified);
   if (unconfirmed) details.push('Memory rules unconfirmed; current estimate used');
+  // Buffer and memory-history warnings already have a summary above. Retain
+  // other model warnings so an existing low-CPU allocation cannot appear green.
+  const additionalWarnings = result.warnings.filter(warning =>
+   !/^DB \d+: remaining storage is below the [\d.]+% planning buffer\.$/.test(warning) &&
+   !warning.endsWith(': memory rule unconfirmed; using the new formula. Complete the legacy checklist if this is an older AVMC.'));
+  details.push(...additionalWarnings);
   if (!site.checkCompute) details.push('CPU / memory not checked');
   const p = config(site);
   if (p.storageCapacity === null || p.storageAllocated === null) details.push('Shared database storage not checked');
   return {
    status: result.errors.length || rows.some(row => row.status === 'Over capacity') ? 'error'
-    : problems.length || unconfirmed ? 'warning' : 'fit',
-   text: [problems.length || result.errors.length || unconfirmed ? null : 'Fits the checked limits', ...details].filter(Boolean).join(' · ')
+    : problems.length || result.warnings.length || unconfirmed ? 'warning' : 'fit',
+   text: [problems.length || result.errors.length || result.warnings.length || unconfirmed ? null : 'Fits the checked limits', ...details].filter(Boolean).join(' · ')
   };
  }
  function statusText(status) {

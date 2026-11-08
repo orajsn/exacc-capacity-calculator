@@ -3,6 +3,7 @@
 let undoSnapshot = null;
 let undoStack = [], redoStack = [];
 let savedSignature = null;
+let pendingBackup = null;
 let savedLabel = 'New scenario · no JSON downloaded';
 let preview = null;
 let leaveWarningActive = false;
@@ -33,6 +34,9 @@ function warnBeforeLeaving(event) {
 function updateSaveReminder() {
  const dirty = hasUnsavedChanges();
  const savedHere=deviceDraftIsCurrent();
+ if(pendingBackup&&pendingBackup.planId!==state.project.id)pendingBackup=null;
+ $('backup-confirm').hidden=!pendingBackup;
+ if(pendingBackup)$('backup-confirm-text').textContent=pendingBackup.signature===JSON.stringify(state)?`Download requested: ${pendingBackup.name}. Confirm only after you have the JSON file.`:'That download contains earlier values. Download a fresh backup to keep the latest edits.';
  $('save-status').textContent = savedHere?'Saved on this device · JSON is your portable backup':dirty ? 'Unsaved changes · save on device or download JSON' : savedLabel;
  $('save-reminder').hidden = !dirty||savedHere;
  $('dock-unsaved').textContent = dirty ? savedHere?'Saved on this device':'Unsaved changes' : '';

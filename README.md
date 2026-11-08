@@ -18,6 +18,8 @@ Existing saved plans and recovery prompts retain priority on startup. **New plan
 
 **Plans & files** groups starting a new plan, opening device copies, importing a JSON file, downloading a backup and printing. **Save on this device** remains beside the working plan. Customer/project fields and Save as new copy are under **Plan name & details**. Saving help is at the bottom of the workspace and linked from the footer.
 
+After requesting a JSON backup, check the file arrived and select **I have the JSON file**. The browser does not tell the planner whether a download was kept. Until receipt is confirmed, unsaved-work protection remains; newer edits require a new backup. A successful device save protects its current version independently.
+
 ## Saved plans: customers, projects and owner labels
 
 **Saved plans** lists the projects saved in this browser, grouped by customer. Search by customer, project, optional owner/alias, site, machine or full Plan ID. Each plan keeps its own machines, database inventory and alternatives.
