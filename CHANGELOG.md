@@ -1,5 +1,13 @@
 # Changelog
 
+## 2.5.0 — 2026-11-08
+
+### Improved
+
+- Enlarged screen text: 16px helper copy and form labels, with at least 14px secondary labels, diagram captions and capacity status. Headings and key allocation values have clearer emphasis.
+- Added lightweight, theme-aware icons for the three starting choices and an accessible Machine → AVMC → ACD → ADB explainer. These are vector/HTML visuals with no external image dependency.
+- Preserved compact phone balances, existing print type sizes and all calculation and saved-plan behavior.
+
 ## 2.4.0 — 2026-11-08
 
 ### Improved

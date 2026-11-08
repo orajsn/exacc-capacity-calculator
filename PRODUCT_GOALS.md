@@ -74,6 +74,6 @@ No new hardware formulas, customer data, dependencies or shared storage service 
 
 | Goal | Acceptance criteria | Delivery |
 | --- | --- | --- |
-| G19. Consistent typography | Self-hosted licensed Geist Sans; shared type styles; 16px explanatory text, 14px controls/tables and 12px secondary metadata; tabular numeric values. | Implemented in 2.4 |
+| G19. Consistent typography | Self-hosted licensed Geist Sans; shared type styles; 16px explanatory text and controls, 14px tables and secondary metadata; tabular numeric values. | Implemented in 2.4 |
 | G20. Reach the task sooner | Less framing, compact phone navigation and optional tools below the primary task, without removing functionality. | Implemented in 2.4 |
 | G21. Preserve reliable planning | Saved-plan format and calculations unchanged; regression suite and light/dark responsive browser checks. | Verified in 2.4 |

@@ -87,3 +87,9 @@ The five-minute first-use target in PRODUCT_GOALS.md still needs an independent 
 - Browser checks at 320, 390, 768 and 1280px found no page-level horizontal overflow in the checked views. Light desktop and tablet, dark mobile, optional controls and compact capacity feedback were inspected.
 - The browser reported loaded fonts and Geist Sans as the selected body family. This does not certify the rendered font of every glyph; system fallbacks remain available.
 - This pass checks responsive layout in a desktop browser. Physical-device keyboard behavior, independently timed usability and browser print pagination remain unverified.
+
+## 2.5.0 larger type and explanatory visuals
+
+- Existing model, save/import, theme and contrast checks remain passing. No calculator formulas or saved-plan schema changed.
+- Screen type roles increase to 14px secondary text and 16px UI/body text. Print caption/UI roles retain their previous sizes.
+- Starting-choice SVGs are decorative and hidden from assistive technology; the layer explainer uses a captioned figure and ordered text list. It illustrates resource hierarchy, not a physical storage map.
