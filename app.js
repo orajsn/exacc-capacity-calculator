@@ -75,7 +75,7 @@ function results(){overview();updateWorkflow();renderWorkloadImport();if(!$('pan
  renderAudit(s,r);
  $('combinations').querySelector('tbody').innerHTML=M.combinations(s).map(row=>{
   const actions=!row.absolute?'<button class="apply" disabled>Cannot fit</button>'
-   : `<button class="apply" data-apply="${row.avmcs}">${row.belowBuffer?'Preview · below buffer':'Preview option'}</button>${row.buffered&&row.absolute>row.buffered?`<button class="apply" data-apply="${row.avmcs}" data-full="true">Preview maximum</button>`:''}`;
+   : `<button class="apply" data-apply="${row.avmcs}" aria-label="Preview layout with ${row.avmcs} AVMC${row.avmcs===1?'':'s'}">${row.belowBuffer?'Preview · below buffer':'Preview option'}</button>${row.buffered&&row.absolute>row.buffered?`<button class="apply" data-apply="${row.avmcs}" data-full="true" aria-label="Preview maximum ACD slots with ${row.avmcs} AVMC${row.avmcs===1?'':'s'}">Preview maximum</button>`:''}`;
   return `<tr><td>${row.avmcs}</td><td>${row.absolute||'Cannot fit'}</td><td>${row.buffered||(row.absolute?'Below target':'Cannot fit')}</td><td>${row.distribution.join(' + ')||'—'}</td><td>${row.free===null?'—':fmt(row.free)}</td><td class="layout-actions">${actions}${row.belowBuffer?'<small class="buffer-warning">Fits storage; below your buffer target.</small>':''}</td></tr>`;
  }).join('')||'<tr><td colspan="6">No free VM slots. Check existing VM allocations above.</td></tr>';
 }

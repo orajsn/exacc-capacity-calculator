@@ -1,5 +1,18 @@
 # Changelog
 
+## 3.4.1 — 2026-11-08
+
+### Fixed
+
+- Comparison review now exposes stale and incomplete workload-sizing flags alongside allocation results.
+- Save as new copy cannot copy a different plan activated while device storage is still opening.
+- Exiting a walkthrough returns keyboard focus to a visible working control instead of leaving it in the hidden guide panel.
+
+### Improved
+
+- Clearer labels distinguish Start guided practice from Read the guide, and Design options from the saved-plan library. Plan name & details makes the naming fields easier to find.
+- Layout preview buttons have row-specific accessible names. Narrow screens show a persistent horizontal-scroll hint above layout options.
+
 ## 3.4.0 — 2026-11-08
 
 ### Added

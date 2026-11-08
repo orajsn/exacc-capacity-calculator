@@ -132,3 +132,9 @@ The five-minute first-use target in PRODUCT_GOALS.md still needs an independent 
 - UI-event tests verify selection limits and no state mutation, live comparison refresh, replacement deltas, unknown filters, pagination past 50 rows, stale-preview disabling, CSV drafts surviving mode changes and inert rendering of imported text.
 - Native browser checks verified working 3 slots versus saved 2/4 slots, expected free capacity and allocation deltas, a one-added/one-changed/one-removed CSV replacement, stale Apply protection and narrow-screen table scrolling. An initial suspected paste issue was retracted after actual typing showed draft preservation; it was automation fill behavior.
 - Guide images capture those generic numerical examples. A later browser-control timeout prevented refreshing the screenshots after minor hardware-detail/copy refinements. No final-current screenshot or physical-device certification is claimed.
+
+## 3.4.1 usability and bug audit
+
+- Regressions cover stale/incomplete sizing flags in the comparison UI, a copy request waiting for storage while another plan is activated, and focus recovery when the walkthrough closes.
+- Browser review exercises the public entry flow, adding/editing, comparison preview/cancel, device save/reopen and narrow-screen controls. Row-specific preview names and a visible scroll hint address discoverability on phones and through keyboard/screen-reader navigation.
+- This is agent-led usability review, not an independent first-user study or a guarantee of no remaining defects.

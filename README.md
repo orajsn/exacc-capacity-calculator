@@ -8,7 +8,7 @@ Use the sun/moon button to switch appearance. Plans & files → Use device appea
 
 The home page introduces the tool and offers task-specific starts. The guide contains screenshot walkthroughs and a generic CSV example. First visits use Light; explicit appearance preferences remain remembered. Existing saved plans remain available because the planner stays on the same website origin. Home and guide links inside the calculator open separately so working edits stay in place.
 
-First visits also offer **Show me around**. The guided example uses a fresh plan named Guided practice and actual planner controls. It confirms hardware, adds an AVMC, reserves two ACD slots, explains the live result and waits for a successful device save. Back, Skip step and Exit are always available; skipped or failed steps do not count as completed. Only a dismissed/completed flag is remembered locally. Restart from Guide & FAQ or Plans & files → Guided example. Practice plans you save remain in Saved plans and can be archived there.
+First visits also offer **Start guided practice**. The guided example uses a fresh plan named Guided practice and actual planner controls. It confirms hardware, adds an AVMC, reserves two ACD slots, explains the live result and waits for a successful device save. Back, Skip step and Exit are always available; skipped or failed steps do not count as completed. Only a dismissed/completed flag is remembered locally. Restart from Guide & FAQ or Plans & files → Guided practice. Practice plans you save remain in Saved plans and can be archived there.
 
 ## Start calculating
 
@@ -16,7 +16,7 @@ With no saved plans, the planner opens directly into a blank allocation check. I
 
 Existing saved plans and recovery prompts retain priority on startup. **New plan** opens a compact choice of blank capacity check, customer plan or illustrative production/DR example. Switching plans preserves the unsaved-work guard.
 
-**Plans & files** groups starting a new plan, opening device copies, importing a JSON file, downloading a backup and printing. **Save on this device** remains beside the working plan. Customer/project fields and Save as new copy are under **Plan details**. Saving help is at the bottom of the workspace and linked from the footer.
+**Plans & files** groups starting a new plan, opening device copies, importing a JSON file, downloading a backup and printing. **Save on this device** remains beside the working plan. Customer/project fields and Save as new copy are under **Plan name & details**. Saving help is at the bottom of the workspace and linked from the footer.
 
 ## Saved plans: customers, projects and owner labels
 
@@ -41,7 +41,7 @@ Switch views directly using the tabs. The capacity bar keeps balances, Undo and 
 
 The live bar shows remaining local storage, CPU and estimated memory. Choose **Whole machine** or an individual DB server; Review cards remain explicitly labelled whole-machine totals. A positive total does not hide a node shortage. Disabled or unavailable checks show no invented free capacity, and preview values remain labelled until applied.
 
-Under Compare saved plans, growth and migration, select up to two saved options alongside the working plan. The table shows hardware, AVMC/ACD/database counts, each machine's resource allocations/free capacity and warnings. Values are recalculated using the current rules; stored provenance is displayed. Selection is read-only, and loading an option remains a separate action. Unselected hardware and unchecked resources are not presented as zero usage or proof of fit.
+Under Design options, growth and migration, select up to two saved options alongside the working plan. The table shows hardware, AVMC/ACD/database counts, each machine's resource allocations/free capacity and warnings. Values are recalculated using the current rules; stored provenance is displayed. Selection is read-only, and loading an option remains a separate action. Unselected hardware and unchecked resources are not presented as zero usage or proof of fit.
 
 ## Which inputs drive sizing?
 

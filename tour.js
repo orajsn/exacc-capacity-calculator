@@ -10,7 +10,7 @@
  ];
  function create(options){
   const doc=options.document,env=options.window||{},get=id=>doc.getElementById(id),panel=get('tour-panel');
-  let session=null,queued=false,highlighted=[],observer=null,destroyed=false;
+  let session=null,queued=false,highlighted=[],lastTarget=null,observer=null,destroyed=false;
   const controls=Object.fromEntries(['title','step','instruction','status','back','next','skip','exit'].map(name=>[name,get('tour-'+name)]));
   function remember(value){try{const storage=env.localStorage;if(value==='dismissed'&&storage?.getItem(STORAGE_KEY)==='completed')return;storage?.setItem(STORAGE_KEY,value);}catch{}}
   function className(element,add){if(element.classList){element.classList[add?'add':'remove']('tour-target');return;}const classes=(element.getAttribute('class')||'').split(/\s+/).filter(c=>c&&c!=='tour-target');if(add)classes.push('tour-target');element.setAttribute('class',classes.join(' '));}
@@ -23,7 +23,14 @@
   }
   function measure(){if(!panel)return;const height=panel.hidden?0:Math.ceil(panel.getBoundingClientRect?.().height||260);doc.documentElement.style?.setProperty('--tour-panel-height',`${height}px`);}
   function showPanel(){panel.hidden=false;if(doc.body)doc.body.dataset.tourActive='true';measure();}
-  function close(){if(!session)return;if(!session.terminal)remember('dismissed');session.active=false;session.closed=true;clearTargets();panel.hidden=true;if(doc.body)delete doc.body.dataset.tourActive;measure();}
+  function connected(element){if(!element)return false;if(typeof element.isConnected==='boolean')return element.isConnected;if(doc.body?.contains)return doc.body.contains(element);return !!element.id&&get(element.id)===element;}
+  function coachHasFocus(){for(let element=doc.activeElement;element;element=element.parentElement)if(element===panel)return true;return false;}
+  function close(){
+   if(!session)return;const returnFocus=coachHasFocus();if(!session.terminal)remember('dismissed');session.active=false;session.closed=true;clearTargets();panel.hidden=true;if(doc.body)delete doc.body.dataset.tourActive;measure();
+   if(returnFocus){const sameContext=options.getState().project?.id===session.planId&&options.getMachine()?.uid===session.machineId,target=[sameContext?lastTarget:null,get('guide-heading'),get('library-heading'),get('start-heading')].find(element=>connected(element)&&visible(element)&&!element.disabled);
+    if(target){if(!['input','select','button','summary','textarea','a'].includes(String(target.tagName).toLowerCase())&&target.getAttribute('tabindex')===null)target.setAttribute('tabindex','-1');target.focus?.({preventScroll:true});}
+   }
+  }
   function finish(completed,message){
    session.active=false;session.terminal=true;clearTargets();remember(completed?'completed':'dismissed');showPanel();
    controls.title.textContent=completed?'Guided practice completed':'Guided practice not completed';controls.step.textContent='Practice summary';controls.instruction.textContent=message;
@@ -43,6 +50,7 @@
   function slotsValid(machine,cluster){const input=options.getSlotControl(session.clusterId);return !!cluster&&valid(machine)&&cluster.slots===2&&!!input&&String(input.value).trim()!==''&&Number(input.value)===2;}
   function visible(element){for(let p=element;p;p=p.parentElement){if(p.hidden)return false;if(String(p.tagName).toLowerCase()==='details'&&!p.open&&element!==p.querySelector?.('summary'))return false;}return true;}
   function updateTargets(list,focus=false){
+   if(list[0])lastTarget=list[0];
    const same=list.length===highlighted.length&&list.every((element,i)=>highlighted[i].element===element);
    if(!same){clearTargets();for(const element of list){const tabindex=element.getAttribute('tabindex');className(element,true);highlighted.push({element,tabindex});}}
    if(list[0]?.getBoundingClientRect&&env.innerWidth)panel.dataset.side=list[0].getBoundingClientRect().left>env.innerWidth*.5?'left':'right';
@@ -98,7 +106,7 @@
   return {start(){
    if(destroyed||!panel||Object.values(controls).some(value=>!value))return false;
    const state=options.getState(),machine=options.getMachine();if(!state.project?.id||!machine?.uid)return false;
-   clearTargets();session={planId:state.project.id,machineId:machine.uid,clusterId:null,index:0,active:true,terminal:false,closed:false,evidence:Array(STEPS.length).fill('pending')};const invitation=get('tour-invitation');if(invitation)invitation.hidden=true;enter(0);return true;
+   clearTargets();lastTarget=null;session={planId:state.project.id,machineId:machine.uid,clusterId:null,index:0,active:true,terminal:false,closed:false,evidence:Array(STEPS.length).fill('pending')};const invitation=get('tour-invitation');if(invitation)invitation.hidden=true;enter(0);return true;
   },refresh,next,back,skip,exit:close,getStatus:()=>session?{planId:session.planId,machineId:session.machineId,clusterId:session.clusterId,index:session.index,active:session.active,terminal:session.terminal,closed:session.closed,evidence:[...session.evidence]}:null,destroy(){
    close();destroyed=true;observer?.disconnect();for(const type of ['input','change','click'])doc.removeEventListener?.(type,eventChanged);doc.removeEventListener?.('keydown',escape);
    controls.next?.removeEventListener('click',next);controls.back?.removeEventListener('click',back);controls.skip?.removeEventListener('click',skip);controls.exit?.removeEventListener('click',close);

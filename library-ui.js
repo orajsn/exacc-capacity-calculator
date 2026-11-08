@@ -99,7 +99,9 @@ async function openStoredPlan(id){
  goGuideStep(planningIntent(site())==='allocation'?2:1);
 }
 async function saveWorkingCopy(){
- await libraryReady;if(!libraryStore){message('Device storage is unavailable. Download a backup instead.');return false;}
+ const requestedGeneration=libraryGeneration,requestedId=state.project.id;
+ await libraryReady;if(requestedGeneration!==libraryGeneration||requestedId!==state.project.id){message('The working plan changed. No new device copy was created.');return false;}
+ if(!libraryStore){message('Device storage is unavailable. Download a backup instead.');return false;}
  try{
   validateWorkspace(state);const before=planSignature(),autoEpoch=libraryAutoEpoch,copy=L.copyAsNew(state);copy.project.name=`${copy.project.name||'Untitled plan'} (copy)`.slice(0,120);
   const saved=await libraryStore.save(copy,{expectedRevision:0});announcePlanChange(saved.meta);
