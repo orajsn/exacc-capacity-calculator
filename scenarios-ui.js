@@ -1,7 +1,7 @@
 'use strict';
 const X=window.ExaScenarios;
 let csvSource=null,csvPreview=null,csvCandidate=null,csvSignature=null,csvWorkbook=null,csvSourceWarnings=[],csvWorksheetRows=null,csvReadGeneration=0;
-let scenarioProjectGeneration=null;
+let scenarioProjectGeneration=null,scenarioCompareIds=[],scenarioCompareInitialized=false;
 const scenarioValue=(id,fallback='')=>$(id)?$(id).value:fallback;
 function scenarioNumber(id,label){const value=scenarioValue(id);if(value==='')throw Error(`Enter ${label}.`);return Number(value);}
 function scenarioTopology(){return window.ExaTopology;}
@@ -23,7 +23,7 @@ function ensureScenarioControls(){
  container.addEventListener('click',event=>{
   const button=event.target.closest('[data-scenario-action]');if(!button)return;
   const action=button.dataset.scenarioAction;
-  if(action==='compare'){const select=$('compare-option');if(select)select.value=button.dataset.altId;renderScenarioComparison();return;}
+  if(action==='compare'){scenarioCompareIds=[button.dataset.altId];renderScenarios();return;}
   safeUpdate(()=>{
    if(action==='capture')state.alternatives=[...(state.alternatives||[]),X.capture(scenarioForSnapshot(),scenarioValue('alternative-name'),scenarioValue('alternative-kind','option'),M)];
    if(action==='growth')state.alternatives=[...(state.alternatives||[]),X.growth(scenarioForSnapshot(),{name:scenarioValue('growth-name'),ecpuPercent:scenarioNumber('growth-cpu','ECPU growth (%)'),ramPercent:scenarioNumber('growth-ram','RAM growth (%)')},M,scenarioTopology())];
@@ -44,24 +44,21 @@ function renderScenarios(){
  scenarioProjectGeneration=generation;
  const choices=$('migration-choices');if(choices)choices.innerHTML=site().clusters.length?site().clusters.map((c,i)=>`<label class="check"><input type="checkbox" data-overlap-cluster="${i}">${escapeHTML(c.name)} · ${c.nodes.length} VMs · ${c.slots} max ACDs</label>`).join(''):'<p class="hint">Add an AVMC to the active machine first.</p>';
  const target=$('saved-options');if(!target)return;
- const selected=$('compare-option')?.value,alternatives=state.alternatives||[];
- if(!alternatives.length){target.innerHTML='<p class="hint">No saved options yet. Save the working plan above to compare changes later.</p>';$('scenario-comparison').innerHTML='';return;}
- target.innerHTML=`<div class="table-wrap"><table><thead><tr><th>Saved option</th><th>Type</th><th>Machines</th><th>Actions</th></tr></thead><tbody>${alternatives.map(a=>`<tr><td>${escapeHTML(a.name)}</td><td>${escapeHTML(a.kind)}</td><td>${a.sites.length}</td><td><div class="actions"><button type="button" data-scenario-action="compare" data-alt-id="${escapeHTML(a.id)}">Compare</button><button type="button" data-scenario-action="restore" data-alt-id="${escapeHTML(a.id)}">Load into working plan</button><button type="button" class="remove" data-scenario-action="remove" data-alt-id="${escapeHTML(a.id)}">Remove option</button></div></td></tr>`).join('')}</tbody></table></div><label>Compare working plan with<select id="compare-option">${alternatives.map(a=>`<option value="${escapeHTML(a.id)}">${escapeHTML(a.name)}</option>`).join('')}</select></label><p class="hint">Loading changes the working plan. Undo restores the previous state. Saved options stay in this JSON file.</p>`;
- if(alternatives.some(a=>a.id===selected))$('compare-option').value=selected;
- $('compare-option').addEventListener('change',renderScenarioComparison);renderScenarioComparison();
-}
-function renderScenarioComparison(){
- const el=$('scenario-comparison'),selected=$('compare-option')?.value;if(!el||!selected)return;
- try{
-  const alternative=(state.alternatives||[]).find(a=>a.id===selected);if(!alternative){el.innerHTML='';return;}
-  const rows=X.compare(state,alternative,M,P),number=value=>value==null?'Not checked':fmt(value);
-  el.innerHTML=`<h3>Working plan → ${escapeHTML(alternative.name)}</h3>${alternative.notes?`<p class="issues">${escapeHTML(alternative.notes)}</p>`:''}<p class="hint">Each machine is checked separately. Differences below are allocations, not workload performance, price or DR approval. Missing or unselected hardware remains unassessed.</p>${rows.map(row=>`<div class="scenario-machine"><h4>${escapeHTML(row.site?row.site+' / ':'')}${escapeHTML(row.name)}</h4><p class="hint">${escapeHTML(row.relationship)} · Working: ${escapeHTML(row.current?.label||'Not present')} · Saved: ${escapeHTML(row.saved?.label||'Not present')}</p>${row.resources.length?`<div class="table-wrap"><table><thead><tr><th>Resource</th><th>Working allocation</th><th>Saved allocation</th><th>Change</th><th>Saved free capacity</th></tr></thead><tbody>${row.resources.map(r=>`<tr><td>${escapeHTML(P.resourceLabel?.(r.name)||r.name)} (${escapeHTML(r.unit)})</td><td>${number(r.current?.allocated)}</td><td>${number(r.saved?.allocated)}</td><td>${r.allocationChange==null?'Not comparable':(r.allocationChange>0?'+':'')+fmt(r.allocationChange)}</td><td>${number(r.saved?.free)}</td></tr>`).join('')}</tbody></table></div>`:''}</div>`).join('')}`;
- }catch(error){el.textContent=error.message;}
+ const alternatives=state.alternatives||[];if(changed){scenarioCompareIds=[];scenarioCompareInitialized=false;}scenarioCompareIds=scenarioCompareIds.filter(id=>alternatives.some(a=>a.id===id));if(!scenarioCompareInitialized&&alternatives.length){scenarioCompareIds=alternatives.slice(0,2).map(a=>a.id);scenarioCompareInitialized=true;}
+ if(!alternatives.length){scenarioCompareInitialized=false;scenarioCompareIds=[];target.innerHTML='<p class="hint">No saved options yet. Save the working plan above to compare changes later.</p>';$('scenario-comparison').innerHTML='';return;}
+ target.innerHTML=`<div class="table-wrap"><table><thead><tr><th>Saved option</th><th>Type</th><th>Machines</th><th>Actions</th></tr></thead><tbody>${alternatives.map(a=>`<tr><td>${escapeHTML(a.name)}</td><td>${escapeHTML(a.kind)}</td><td>${a.sites.length}</td><td><div class="actions"><button type="button" data-scenario-action="compare" data-alt-id="${escapeHTML(a.id)}">Compare</button><button type="button" data-scenario-action="restore" data-alt-id="${escapeHTML(a.id)}">Load into working plan</button><button type="button" class="remove" data-scenario-action="remove" data-alt-id="${escapeHTML(a.id)}">Remove option</button></div></td></tr>`).join('')}</tbody></table></div>${comparisonSelectors(alternatives)}<p class="hint">Loading changes the working plan. Undo restores the previous state. Saved options stay in this JSON file.</p>`;
+ for(const checkbox of target.querySelectorAll('[data-compare-option]'))checkbox.addEventListener('change',()=>{
+  const id=checkbox.dataset.compareOption;
+  if(checkbox.checked&&scenarioCompareIds.length>=2){checkbox.checked=false;message('Choose at most two saved options alongside the working plan.');return;}
+  scenarioCompareIds=checkbox.checked?[...scenarioCompareIds,id]:scenarioCompareIds.filter(value=>value!==id);
+  renderScenarioComparison();
+ });
+ renderScenarioComparison();
 }
 function initScenarios(){ensureScenarioControls();}
 
 function invalidateCSVPreview(note='Inputs changed. Preview again before applying.'){
- csvPreview=null;csvCandidate=null;csvSignature=null;
+ csvPreview=null;csvCandidate=null;csvSignature=null;inventoryReview=null;
  if($('csv-apply'))$('csv-apply').disabled=true;
  if($('csv-preview-results'))$('csv-preview-results').innerHTML=`<p class="hint">${escapeHTML(note)}</p>`;
 }
@@ -144,9 +141,11 @@ function ensureImportControls(){
    csvPreview=X.previewCSV(csvSource,mapping);
    if(csvPreview.errors.length){csvCandidate=null;csvSignature=null;$('csv-apply').disabled=true;$('csv-preview-results').innerHTML=`<div class="issues error"><strong>Resolve these rows before importing</strong><ul>${csvPreview.errors.slice(0,100).map(e=>`<li>Line ${e.line}: ${escapeHTML(e.message)}</li>`).join('')}</ul>${csvPreview.errors.length>100?'<p>Only the first 100 errors are shown.</p>':''}</div>`;return;}
    const result=X.buildCSVImport(state,csvPreview,{mode:scenarioValue('csv-mode'),siteIndex:active},M,scenarioTopology());
+   const diff=window.ExaReview.inventoryDiff(state,result.candidate,{mode:scenarioValue('csv-mode'),siteIndex:active},scenarioTopology());
    csvCandidate=result.candidate;csvSignature=JSON.stringify({state,active});$('csv-apply').disabled=false;
    const warnings=[...new Set([...csvSourceWarnings,...result.warnings])];
-   $('csv-preview-results').innerHTML=`<p class="issues fit"><strong>${csvPreview.summary.adbs} database row(s) ready for review.</strong> Adds ${result.report.machinesAdded} machine(s), ${result.report.avmcsAdded} AVMC(s), ${result.report.acdsAdded} ACD(s) and ${result.report.adbsAdded} database(s). ${scenarioValue('csv-mode')==='replace-active'?'Existing named inventory on the active machine will be replaced.':'Existing inventory is retained.'}</p>${warnings.length?`<div class="issues warning"><ul>${warnings.map(w=>`<li>${escapeHTML(w)}</li>`).join('')}</ul></div>`:''}<div class="table-wrap"><table><thead><tr><th>Line</th><th>Site / machine</th><th>AVMC / ACD / ADB</th><th>ECPUs</th><th>RAM GB</th><th>Storage TB</th></tr></thead><tbody>${csvPreview.rows.slice(0,100).map(r=>`<tr><td>${r.line}</td><td>${escapeHTML(r.site)} / ${escapeHTML(r.machine)}</td><td>${escapeHTML(r.avmc)} / ${escapeHTML(r.acd)} / ${escapeHTML(r.adb)}</td><td>${r.ecpu??'Unknown'}</td><td>${r.ram_gb??'Unknown'}</td><td>${r.storage_tb??'Unknown'}</td></tr>`).join('')}</tbody></table></div>${csvPreview.rows.length>100?'<p class="hint">First 100 rows shown. All validated rows will be imported.</p>':''}`;
+   $('csv-preview-results').innerHTML=`<p><strong>${csvPreview.summary.adbs} incoming database row(s).</strong> ${scenarioValue('csv-mode')==='replace-active'?'The active machine’s named inventory will be replaced.':'Existing inventory is retained; imported rows are added.'}</p><p class="hint">New machine entries: ${result.report.machinesAdded}. New AVMC entries: ${result.report.avmcsAdded}.${result.report.startingEntryReplaced?' The unused starting machine is replaced.':''}</p>${inventoryReviewHTML(diff)}${warnings.length?`<details class="import-notes"><summary>Import notes (${warnings.length})</summary><ul>${warnings.map(w=>`<li>${escapeHTML(w)}</li>`).join('')}</ul></details>`:''}`;
+   bindInventoryReview();
   }catch(error){invalidateCSVPreview(error.message);}
  };
  $('csv-apply').onclick=()=>{

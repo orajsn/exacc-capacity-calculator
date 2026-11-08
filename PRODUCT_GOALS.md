@@ -104,3 +104,11 @@ The guide documents supported cases and unassessed areas; it does not claim exha
 | G29. Optional first-use walkthrough | Offer a practice tour without forcing it; remember dismissal/completion and allow restart from Guide/menu. | Implemented in 3.3 |
 | G30. Evidence-based progress | Advance through actual valid input/actions; successful current-plan saving required; skipped steps, failures and identity changes cannot silently complete the tour. | Regression tested in 3.3 |
 | G31. Preserve work and responsiveness | Fresh generic practice plan, separate tab from existing work, Back/Skip/Exit, visible mobile controls, no polling or new hosted service. | Implemented in 3.3 |
+
+## 3.4 — compare and review changes
+
+| Goal | Acceptance criteria | Delivery |
+| --- | --- | --- |
+| G32. Compare realistic alternatives | Working plan plus two saved options; per-machine hardware, counts, allocations/free capacity, buffer and node-shortage checks; explicit unknowns and identity assumptions. | Implemented in 3.4 |
+| G33. Review the actual import effect | Added/changed/removed/unchanged rows, field deltas, missing values, group/slot/peer effects and complete paginated review before explicit Apply. | Implemented in 3.4 |
+| G34. Keep review read-only | Selection and previews preserve state; edits invalidate stale import previews; no silent workload reapplication or best-option claim. | Regression tested in 3.4 |

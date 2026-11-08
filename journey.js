@@ -57,6 +57,7 @@ function refreshJourney(){
   'panel-conventional':guideStep===1&&intent==='allocation'
  };
  for(const [id,visible] of Object.entries(panels))$(id).hidden=!visible;
+ if(guideStep===3&&typeof renderScenarioComparison==='function')renderScenarioComparison();
  $('hardware-fields').hidden=intent==='workload';
  $('other-allocations').hidden=intent==='workload';
  $('other-allocations-hint').hidden=intent==='workload';

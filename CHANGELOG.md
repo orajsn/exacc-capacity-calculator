@@ -1,5 +1,18 @@
 # Changelog
 
+## 3.4.0 — 2026-11-08
+
+### Added
+
+- Side-by-side comparison of the working plan and up to two saved designs. Hardware, counts, allocations, remaining capacity, buffer status and warnings are shown per machine. Unchecked resources remain unknown, and per-server shortages stay visible.
+- Import change review based on the actual proposed plan: added, changed, removed and unchanged databases; field-level changes; ACD groups, slot reservations, DR links and missing values. Filters and 50-record pages keep the complete review accessible.
+- Guide walkthroughs and generic screenshots for both features.
+
+### Preserved
+
+- Selecting comparisons does not load or modify plans. Import still requires explicit Apply and a current preview; aggregate workload sizing still requires separate review.
+- Renamed/moved inventory paths are added/removed rather than inferred identities. Ambiguous paths and legacy machine-name matches are explicitly qualified.
+
 ## 3.3.0 — 2026-11-08
 
 ### Added

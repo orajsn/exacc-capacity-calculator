@@ -124,3 +124,11 @@ The five-minute first-use target in PRODUCT_GOALS.md still needs an independent 
 - Invitation tests cover first-use visibility, no initial writes, remembered dismissal/completion and blocked storage. Navigation tests preserve existing recovery, saved-plan and pending-edit guards.
 - Native browser checks completed the five-step flow at 390px in dark mode, rejected invalid slot input, exercised Back/Skip/Exit and confirmed original unsaved work survives a separate practice tab. A 320px light view kept targets above the panel; desktop placement was also inspected.
 - Failed saving was reproduced in controlled tests, not forced in the native browser. Physical mobile keyboard behavior remains unverified.
+
+## 3.4.0 design comparison and import change review
+
+- Review-model tests cover three designs, read-only/frozen inputs, exact machine identity before qualified legacy names, unmatched/ambiguous machines, node shortages despite a positive total, unchecked resources, stale requirements and invalid counts remaining unknown.
+- Import-model tests use actual CSV candidates and cover regenerated IDs, case/trim name paths, null versus zero, role/switchover/confirmation changes, group removals, slot increases and peer links cleared on another machine. A 5,000-row case verifies complete counts and bounded name reads.
+- UI-event tests verify selection limits and no state mutation, live comparison refresh, replacement deltas, unknown filters, pagination past 50 rows, stale-preview disabling, CSV drafts surviving mode changes and inert rendering of imported text.
+- Native browser checks verified working 3 slots versus saved 2/4 slots, expected free capacity and allocation deltas, a one-added/one-changed/one-removed CSV replacement, stale Apply protection and narrow-screen table scrolling. An initial suspected paste issue was retracted after actual typing showed draft preservation; it was automation fill behavior.
+- Guide images capture those generic numerical examples. A later browser-control timeout prevented refreshing the screenshots after minor hardware-detail/copy refinements. No final-current screenshot or physical-device certification is claimed.

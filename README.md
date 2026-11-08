@@ -41,6 +41,8 @@ Switch views directly using the tabs. The capacity bar keeps balances, Undo and 
 
 The live bar shows remaining local storage, CPU and estimated memory. Choose **Whole machine** or an individual DB server; Review cards remain explicitly labelled whole-machine totals. A positive total does not hide a node shortage. Disabled or unavailable checks show no invented free capacity, and preview values remain labelled until applied.
 
+Under Compare saved plans, growth and migration, select up to two saved options alongside the working plan. The table shows hardware, AVMC/ACD/database counts, each machine's resource allocations/free capacity and warnings. Values are recalculated using the current rules; stored provenance is displayed. Selection is read-only, and loading an option remains a separate action. Unselected hardware and unchecked resources are not presented as zero usage or proof of fit.
+
 ## Which inputs drive sizing?
 
 Each AVMC selects **Manual totals** or **Database inventory**. Manual totals stay independent of named database rows. Inventory totals are applied through a review showing current values, proposed totals, changes and missing data; applying never silently resizes known AVMC allocations.
@@ -61,6 +63,8 @@ Databases in one ACD share its Data Guard switchover boundary. A request for ind
 - One row per database: site, machine, AVMC, ACD, ADB, role, ECPUs, RAM GB, database storage TB and independent-switchover preference. Download the CSV template for the exact columns.
 - Blank values remain unknown. The importer does not guess CPU conversions, hardware shapes or DR peer links.
 - Add inventory or explicitly replace named inventory on the active machine. Changed source selections or plan inputs require another preview.
+- Preview compares the actual candidate with the current plan. It shows database additions/removals/field changes, group and slot changes, and DR-link effects, including other affected machines. Filters and 50-record pages expose the full review. Missing-value counts cover the whole resulting plan.
+- Inventory matching uses normalized full name paths; renamed/moved rows appear as removed and added. Ambiguous paths are flagged. A replacement file's regenerated IDs alone do not count as a change.
 - Workbook formulas are not evaluated. Cached results can be stale; missing/error results remain blank with warnings. External links are not followed.
 - Legacy .xls, encrypted workbooks, macro-enabled files and unsupported ZIP features require CSV export. Workbook input is limited to 10 MB, bounded XML/text expansion and 100,000 output cells; CSV import accepts at most 5,000 database rows.
 
