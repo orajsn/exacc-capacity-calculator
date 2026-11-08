@@ -63,7 +63,7 @@ test('Base candidates keep the fixed two-node shape and respect asymmetric exist
 test('stale inventory blocks hardware suggestions while saved allocation capacity remains readable',()=>{
  const site=sample(),c=site.clusters[0],a=T.newACD();a.adbs=[{...T.newADB(),ecpu:100,ramGB:400,storageTB:1}];c.topology={acds:[a]};c.requirements=Q.inventoryRequirements(c);
  const before=M.calculate(site);assert.ok(S.suggest(site,M,P).minimum);
- a.adbs[0].ecpu=150;S.validate(site);assert.deepEqual(M.calculate(site),before);assert.throws(()=>S.validate(site,true),/Review and apply/);assert.throws(()=>S.suggest(site,M,P),/inventory totals changed/);
+ a.adbs[0].ecpu=150;S.validate(site);assert.deepEqual(M.calculate(site),before);assert.throws(()=>S.validate(site,true),/Review and apply/);assert.throws(()=>S.suggest(site,M,P),/applied inventory sizing needs review/);
  c.requirements=Q.inventoryRequirements(c);assert.doesNotThrow(()=>S.validate(site,true));
 });
 test('old inventory records and changed reserved slots remain loadable until explicitly reviewed',()=>{

@@ -1,5 +1,5 @@
 const test=require('node:test'),assert=require('node:assert/strict');
-const X=require('./scenarios.js'),M=require('./model.js'),P=require('./planning.js'),S=require('./sizing.js');
+const X=require('./scenarios.js'),M=require('./model.js'),P=require('./planning.js'),S=require('./sizing.js'),T=require('./topology.js'),Q=require('./requirements.js');
 const clone=x=>JSON.parse(JSON.stringify(x));
 function workspace(){const s=M.newSite('Production');s.siteName='DC';s.uid='machine-a';s.clusters[0].uid='avmc-a';s.planningIntent='allocation';return {schema:'exacc-capacity/v1',sites:[s]};}
 function topology(){return {acds:[{id:'acd-a',name:'Payments',role:'primary',peerId:'acd-dr',peerIds:['acd-dr'],adbs:[{id:'adb-a',name:'PaymentsDB',ecpu:16,ramGB:64,storageTB:1,independentSwitchover:true}]}]};}
@@ -180,4 +180,49 @@ test('CSV cannot exceed named-ACD cap or apply an erroneous preview',()=>{
  const rows=Array.from({length:17},(_,i)=>`DC,Prod,Core,ACD${i},DB${i},unprotected,4,16,,no,ECPU`);
  const p=X.previewCSV(header+'\n'+rows.join('\n'));assert.ok(p.errors.some(e=>/more than 16/.test(e.message)));
  assert.throws(()=>X.applyCSV(workspace(),p,{mode:'add'},M),/Resolve/);
+});
+
+test('CSV replacement retains applied inventory provenance and CPU floors until explicitly reapplied',()=>{
+ for(const source of ['database-inventory','database-topology',undefined]){
+  const w=workspace(),c=w.sites[0].clusters[0];c.name='Core';c.slots=2;c.topology=topology();
+  c.topology.acds[0].role='unprotected';c.topology.acds[0].peerId='';delete c.topology.acds[0].peerIds;
+  c.requirements=Q.inventoryRequirements(c);if(source===undefined)delete c.requirements.source;else c.requirements.source=source;
+  const applied=clone(c.requirements),same=X.applyCSV(w,X.previewCSV(csv()),{mode:'replace-active',siteIndex:0},M,T).sites[0].clusters[0];
+  assert.deepEqual(same.requirements,applied);assert.equal(Q.source(same),'database-inventory');assert.equal(Q.status(same).stale,false);
+  const changed=X.applyCSV(w,X.previewCSV(csv('DC,Production,Core,Payments,PaymentsDB,unprotected,40,160,1,yes,ECPU')),{mode:'replace-active',siteIndex:0},M,T).sites[0];
+  assert.deepEqual(changed.clusters[0].requirements,applied);assert.equal(Q.status(changed.clusters[0]).stale,true);assert.throws(()=>S.validate(changed,true),/Review and apply/);
+  changed.clusters[0].requirements=Q.inventoryRequirements(changed.clusters[0]);assert.equal(changed.clusters[0].requirements.ecpu,40);assert.doesNotThrow(()=>S.validate(changed,true));
+ }
+});
+
+test('growth and overlap preserve legacy inventory assumptions and saved manual totals',()=>{
+ const w=workspace(),c=w.sites[0].clusters[0];c.slots=2;c.topology=topology();
+ c.requirements={ecpu:80,ramGB:320,unsizedACDs:0,minRatio:4,incomplete:true};c.requirements=Q.inventoryRequirements(c);c.requirements.source='database-topology';
+ const applied=clone(c.requirements),grown=X.growth(w,{name:'Future',ecpuPercent:25,ramPercent:50},M,T).sites[0].clusters[0];
+ assert.deepEqual(grown.requirements,applied);assert.equal(grown.topology.acds[0].adbs[0].ecpu,20);assert.equal(grown.topology.acds[0].adbs[0].ramGB,96);
+ assert.equal(Q.status(grown).stale,true);grown.requirements=Q.inventoryRequirements(grown);assert.equal(grown.requirements.ecpu,20);assert.equal(grown.requirements.ramGB,96);assert.equal(grown.requirements.userIncomplete,true);assert.equal(grown.requirements.incomplete,true);assert.deepEqual(grown.requirements.manualTotals,applied.manualTotals);
+ const copied=X.migration(w,{name:'Overlap',siteIndex:0,clusterIndexes:[0]},M,T).sites[0].clusters[1];
+ assert.equal(copied.requirements.userIncomplete,true);assert.deepEqual(copied.requirements.manualTotals,applied.manualTotals);assert.deepEqual(copied.requirements.acdEcpus,applied.acdEcpus);assert.equal(Q.status(copied).stale,false);
+ c.topology.acds[0].adbs[0].ecpu=32;
+ const staleCopy=X.migration(w,{name:'Stale overlap',siteIndex:0,clusterIndexes:[0]},M,T).sites[0].clusters[1];
+ assert.equal(staleCopy.requirements.ecpu,16);assert.equal(Q.status(staleCopy).stale,true,'overlap must not silently apply changed inventory');
+});
+
+test('growth keeps the exact applied inventory snapshot for current and inferred source metadata',()=>{
+ for(const explicitSource of [true,false]){
+  const w=workspace(),c=w.sites[0].clusters[0];c.slots=2;c.topology=topology();c.requirements=Q.inventoryRequirements(c);if(!explicitSource){delete c.requirements.source;delete c.requirements.topologySignature;}
+  const applied=clone(c.requirements),grown=X.growth(w,{name:'Future',ecpuPercent:25,ramPercent:50},M,T).sites[0];
+  assert.deepEqual(grown.clusters[0].requirements,applied);assert.equal(Q.source(grown.clusters[0]),'database-inventory');assert.equal(Q.status(grown.clusters[0]).stale,true);assert.throws(()=>S.validate(grown,true),/Review and apply/);
+  grown.clusters[0].requirements=Q.inventoryRequirements(grown.clusters[0]);assert.equal(grown.clusters[0].requirements.ecpu,20);assert.equal(grown.clusters[0].requirements.ramGB,96);assert.equal(Q.status(grown.clusters[0]).stale,false);
+ }
+});
+
+test('CSV inventory edits preserve independent manual CPU details unless imported groups increase the slots',()=>{
+ const w=workspace(),c=w.sites[0].clusters[0];c.name='Core';c.slots=2;c.requirements={source:'manual',ecpu:401,ramGB:802,minRatio:2,unsizedACDs:0,acdEcpus:[400,1],incomplete:false};
+ const rows='DC,Production,Core,Heavy,CoreDB,unprotected,400,800,1,no,ECPU\nDC,Production,Core,Small,TinyDB,unprotected,1,2,1,no,ECPU';
+ const same=X.applyCSV(w,X.previewCSV(csv(rows)),{mode:'replace-active',siteIndex:0},M,T).sites[0];
+ assert.deepEqual(same.clusters[0].requirements.acdEcpus,[400,1]);assert.equal(same.clusters[0].requirements.ecpu,401);assert.equal(Q.source(same.clusters[0]),'manual');assert.equal(S.allocation(same.clusters[0],2,0).cpu,208);assert.doesNotThrow(()=>S.validate(same,true));
+ const expanded=X.applyCSV(w,X.previewCSV(csv(rows+'\nDC,Production,Core,Future,FutureDB,unprotected,0,0,1,no,ECPU')),{mode:'replace-active',siteIndex:0},M,T).sites[0];
+ assert.equal(expanded.clusters[0].slots,3);assert.equal(expanded.clusters[0].requirements.acdEcpus,undefined);assert.equal(expanded.clusters[0].requirements.ecpu,401);assert.equal(expanded.clusters[0].requirements.incomplete,true);assert.doesNotThrow(()=>S.validate(expanded,true));
+ assert.deepEqual(c.requirements.acdEcpus,[400,1]);assert.equal(c.slots,2);
 });

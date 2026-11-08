@@ -10,7 +10,7 @@ function requirementFields(c,i,known=false){
 }
 function requirementSourceStatus(c,i){
  const review=Q.status(c),inventory=review.source==='database-inventory';
- const note=inventory?review.stale?'Inventory changed · review totals before comparing hardware.':'Inventory totals applied · CPU/RAM inputs match.':'Manual totals selected.';
+ const note=inventory?review.stale?'Inventory sizing needs review · check totals and per-ACD CPU details before comparing hardware.':'Inventory totals applied · CPU/RAM inputs match.':'Manual totals selected.';
  const missing=review.inventory.requirements.incomplete?`<p class="hint">Inventory CPU/RAM is incomplete: ${review.missing.ecpu} missing ECPU value${review.missing.ecpu===1?'':'s'}, ${review.missing.ramGB} missing RAM value${review.missing.ramGB===1?'':'s'}${!review.inventory.counts.databases?'; no database rows':''}.</p>`:'';
  return `<p class="${review.stale?'buffer-warning':'hint'}"><strong>${note}</strong></p>${missing}<button type="button" data-review-inventory="${i}" ${review.canApply?'':'disabled'}>${inventory?'Review inventory totals':'Preview database totals'}</button>`;
 }

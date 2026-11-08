@@ -11,7 +11,7 @@
    if(typeof q!=='object'||Array.isArray(q))throw Error('Workload requirements must be an object.');
    Q.validateMetadata(c);
    const inventory=Q.source(c)==='database-inventory'?Q.status(c):null,stale=!!inventory?.stale;
-   if(requireAll&&stale)throw Error(`${c.name}: inventory totals changed. Review and apply the database totals in step 2 before comparing hardware.`);
+   if(requireAll&&stale)throw Error(`${c.name}: applied inventory sizing needs review. Review and apply the database totals in step 2 before comparing hardware.`);
    for(const [key,min,max,label,integer] of [['ecpu',0,100000,'Workload ECPUs',false],['ramGB',0,1000000,'Workload RAM',false],['unsizedACDs',0,stale?16:c.slots,'ACDs without sized workloads',true],['minRatio',2,5,'Minimum GB per ECPU',false]]){
     if(q[key]==null&&!requireAll)continue;number(q[key],min,max,`${c.name} ${label}`,integer);
    }

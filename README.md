@@ -105,6 +105,8 @@ The eight-machine, 32-AVMC-entry, 1,000-database-row-per-ACD and 20-option bound
 
 The dated registry in rules.js records formulas, scope, source links and unresolved source differences. Current source review: 7 November 2026.
 
+Version 2.2.1 repairs a v2.2 inventory re-import defect that could lose per-ACD CPU details. For a plan re-imported in v2.2, review/apply its database totals and rerun hardware sizing before relying on the earlier recommendation. Applied snapshots with missing details now require review; existing allocations are not silently resized.
+
 - Local reservation uses the detailed creation formula consistently; worked examples on other Oracle pages do not always reconcile.
 - Current memory uses the additional 0.3 GB per ECPU overhead and a conservative 135 GB/VM creation budget. The documented cutoff is **after 29 September 2026**, or after an existing AVMC's memory ratio changes. The 22 September feature announcement is a different date; exact-cutoff eligibility still needs console confirmation.
 - New AVMC proposals enforce the current 40-ECPU/VM creation minimum. Existing or unknown older positive allocations below it receive a console-confirmation warning; they are not declared unsupported merely from the new-creation rule.

@@ -23,6 +23,30 @@ function validateAll(value){
 function resume(raw){const value=X.preserveExtras(M.importScenario(raw),raw,M,validateSites);T.ensureIds(value);return validateAll(value);}
 const assess=value=>A.assess(value,M,P,T,R,C);
 
+test('same-content CSV replacement cannot turn per-ACD CPU floor overcommit into a hardware fit',()=>{
+ const value=plan(),s=value.sites[0],c=s.clusters[0];s.siteName='DC';s.sizing={extraCPUPercent:0,minNodes:2,maxNodes:2};s.nodes.forEach(n=>n.otherCPU=555);c.name='Apps';
+ c.topology={acds:[{...T.newACD('Heavy'),adbs:[{...T.newADB('Core'),ecpu:400,ramGB:800,storageTB:1}]},{...T.newACD('Small'),adbs:[{...T.newADB('Tiny'),ecpu:1,ramGB:2,storageTB:1}]}]};
+ c.requirements=Q.inventoryRequirements(c);
+ const standard=site=>S.suggest(site,M,P).rows.find(r=>r.profile==='x11m-standard');
+ const before=standard(s);assert.equal(before.candidate.clusters[0].cpu,208);assert.equal(before.fit,false);
+ const csv='site,machine,avmc,acd,adb,ecpu,ram_gb,storage_tb\nDC,Production,Apps,Heavy,Core,400,800,1\nDC,Production,Apps,Small,Tiny,1,2,1';
+ const replaced=X.applyCSV(value,X.previewCSV(csv),{mode:'replace-active',siteIndex:0},M,T),next=resume(JSON.parse(JSON.stringify(replaced))).sites[0],after=standard(next);
+ assert.equal(Q.status(next.clusters[0]).stale,false);assert.equal(after.candidate.clusters[0].cpu,208);assert.equal(after.fit,false);assert.deepEqual(after.result.errors,before.result.errors);
+ // A previously damaged JSON from this import path must require review, too.
+ delete next.clusters[0].requirements.acdEcpus;assert.equal(Q.status(next.clusters[0]).stale,true);assert.throws(()=>S.suggest(next,M,P),/Review and apply/);
+ next.clusters[0].requirements=Q.inventoryRequirements(next.clusters[0]);const repaired=standard(next);
+ assert.equal(repaired.candidate.clusters[0].cpu,208);assert.equal(repaired.fit,false);assert.deepEqual(repaired.result.errors,before.result.errors);
+});
+
+test('CSV inventory replacement does not reduce an independent manual CPU floor allocation',()=>{
+ const value=plan(),s=value.sites[0],c=s.clusters[0];s.siteName='DC';s.sizing={extraCPUPercent:0,minNodes:2,maxNodes:2};s.nodes.forEach(n=>n.otherCPU=555);c.name='Apps';
+ c.requirements={source:'manual',ecpu:401,ramGB:802,minRatio:2,unsizedACDs:0,acdEcpus:[400,1],incomplete:false};
+ const standard=site=>S.suggest(site,M,P).rows.find(r=>r.profile==='x11m-standard'),before=standard(s);
+ const csv='site,machine,avmc,acd,adb,ecpu,ram_gb,storage_tb\nDC,Production,Apps,Heavy,Core,400,800,1\nDC,Production,Apps,Small,Tiny,1,2,1';
+ const replaced=X.applyCSV(value,X.previewCSV(csv),{mode:'replace-active',siteIndex:0},M,T),next=resume(JSON.parse(JSON.stringify(replaced))).sites[0],after=standard(next);
+ assert.equal(Q.source(next.clusters[0]),'manual');assert.deepEqual(next.clusters[0].requirements.acdEcpus,[400,1]);assert.equal(before.candidate.clusters[0].cpu,208);assert.equal(after.candidate.clusters[0].cpu,208);assert.equal(after.fit,false);assert.deepEqual(after.result.errors,before.result.errors);
+});
+
 test('manual totals remain independent while applied inventory totals become stale after CPU or RAM edits',()=>{
  const value=plan(),s=value.sites[0],a=databaseGroup(s),c=s.clusters[0];
  c.requirements={source:'manual',ecpu:40,ramGB:160,unsizedACDs:0,minRatio:4,incomplete:false};
@@ -196,12 +220,14 @@ test('growth is a distinct option that keeps unknown database values and invalid
  const value=plan(),a=databaseGroup(value.sites[0]);a.adbs.push({...T.newADB('FutureDB'),ecpu:null,ramGB:null,storageTB:null});
  value.sites[0].clusters[0].requirements=T.databaseTotals(value.sites[0].clusters[0]).requirements;
  const original=JSON.stringify(value),year=X.growth(value,{name:'Year 2',ecpuPercent:25,ramPercent:50},M,T);
- assert.equal(JSON.stringify(value),original);assert.equal(year.sites[0].clusters[0].requirements.ecpu,20);
- assert.equal(year.sites[0].clusters[0].requirements.ramGB,96);
+ const grown=year.sites[0].clusters[0];assert.equal(JSON.stringify(value),original);assert.deepEqual(grown.requirements,value.sites[0].clusters[0].requirements);
+ assert.equal(grown.topology.acds[0].adbs[0].ecpu,20);assert.equal(grown.topology.acds[0].adbs[0].ramGB,96);assert.equal(Q.status(grown).stale,true);
+ assert.throws(()=>S.suggest(year.sites[0],M,P),/Review and apply/);
  assert.equal(year.sites[0].clusters[0].topology.acds[0].adbs[1].ecpu,null);
  assert.equal(year.sites[0].hardwareChosen,false);
  const comparison=X.compare(value,year,M,P);assert.equal(comparison[0].saved.selected,false);
  const result=assess({schema:value.schema,sites:year.sites});assert.equal(result.machines[0].result,null);
+ grown.requirements=Q.inventoryRequirements(grown);assert.equal(grown.requirements.ecpu,20);assert.equal(grown.requirements.ramGB,96);assert.equal(grown.requirements.incomplete,true);assert.equal(Q.status(grown).stale,false);
 });
 
 test('migration overlap consumes both allocations, preserves the original and gives copies new identities',()=>{

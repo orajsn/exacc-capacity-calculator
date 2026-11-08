@@ -55,3 +55,21 @@ test('a claimed current signature cannot hide requirements that differ from the 
  const {c}=sample();c.requirements=Q.inventoryRequirements(c);c.requirements.ecpu=500;
  assert.equal(Q.status(c).stale,true);
 });
+
+test('inventory freshness requires the applied per-ACD CPU breakdown, even when aggregate totals and signature match',()=>{
+ const {c}=sample();c.topology.acds.push({...T.newACD('Small'),adbs:[{...T.newADB('Tiny'),ecpu:1,ramGB:2}]});
+ c.requirements=Q.inventoryRequirements(c);const applied=structuredClone(c.requirements);
+ for(const breakdown of [undefined,null,[],[101,0],[50,51],[100,'1'],[100,NaN]]){
+  c.requirements=structuredClone(applied);if(breakdown===undefined)delete c.requirements.acdEcpus;else c.requirements.acdEcpus=breakdown;
+  assert.equal(Q.status(c).stale,true,`reject inconsistent breakdown ${JSON.stringify(breakdown)}`);
+ }
+ c.requirements=structuredClone(applied);c.requirements.acdEcpus.reverse();assert.equal(Q.status(c).stale,false,'ACD order does not change floor allocation');
+ c.requirements=Q.inventoryRequirements(c);assert.equal(Q.status(c).stale,false);
+});
+
+test('an applied sizing signature preserves inventory provenance when legacy source fields are absent',()=>{
+ const {c}=sample();c.requirements=Q.inventoryRequirements(c);delete c.requirements.source;delete c.requirements.topologySignature;
+ assert.equal(Q.source(c),'database-inventory');assert.equal(Q.status(c).stale,false);
+ delete c.requirements.acdEcpus;assert.equal(Q.status(c).stale,true);
+ c.requirements.source='manual';assert.equal(Q.source(c),'manual');assert.equal(Q.status(c).stale,false);
+});

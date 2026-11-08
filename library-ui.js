@@ -3,15 +3,18 @@ const L=window.ExaLibrary;
 let libraryStore=null,libraryReady=null,libraryRecords=[],libraryBinding=null,libraryAuto=false,librarySavedSignature=null;
 let librarySaveTimer=null,librarySaving=null,libraryGeneration=0,libraryAutoEpoch=0,libraryTransitioning=false,libraryPendingAction=null,libraryConflict=null,libraryDeleteTarget=null,libraryChannel=null,libraryError='';
 const planSignature=()=>JSON.stringify(state);
+let planContextGeneration=-1;
 function planFilename(s){const p=s.project||{},clean=x=>String(x||'plan').replace(/[^a-zA-Z0-9_-]+/g,'-').slice(0,48);return `${clean(p.customer)}-${clean(p.name)}-${(p.id||'').slice(-8)}.json`;}
 function planSavedHere(){return !!libraryBinding&&librarySavedSignature===planSignature()&&!libraryConflict;}
 function planHasUnkeptChanges(){return hasUnsavedChanges()&&!planSavedHere();}
 function renderPlanContext(){
  const p=state.project||{};
+ const changed=planContextGeneration!==libraryGeneration;
  $('plan-context-name').textContent=`${p.customer||'Customer not named'} / ${p.name||'Untitled plan'}`;
  $('plan-context-owner').textContent=p.owner?`Owner: ${p.owner}`:'Owner alias is optional';
  $('plan-context-id').textContent=p.id?`Plan ID · ${p.id}`:'Plan ID will be assigned';
- for(const [id,key]of [['plan-customer','customer'],['plan-title','name'],['plan-owner','owner'],['project-name','name'],['project-notes','notes']]){const el=$(id);if(el&&document.activeElement!==el)el.value=p[key]||'';}
+ for(const [id,key]of [['plan-customer','customer'],['plan-title','name'],['plan-owner','owner'],['project-name','name'],['project-notes','notes']]){const el=$(id);if(el&&(changed||document.activeElement!==el))el.value=p[key]||'';}
+ planContextGeneration=libraryGeneration;
  $('plan-id').value=p.id||'';
  $('draft-optin').checked=libraryAuto;
  $('plan-save-device').disabled=!!librarySaving||!!preview;
@@ -113,10 +116,15 @@ async function createNamedPlan(){
 }
 async function checkPlanRevision(){
  if(!libraryStore||!libraryBinding)return;
- const binding=libraryBinding,generation=libraryGeneration;
- try{const latest=await libraryStore.getMeta(binding.id);if(generation!==libraryGeneration)return;if(latest.revision!==binding.revision||latest.archivedAt)showPlanConflict({code:latest.archivedAt?'archived':'conflict',latest});}
- catch(e){if(generation===libraryGeneration&&e.code==='notfound')showPlanConflict({code:'conflict',latest:null});}
- renderPlanContext();
+ const id=libraryBinding.id,generation=libraryGeneration;
+ try{
+  const latest=await libraryStore.getMeta(id),current=libraryBinding;
+  if(generation!==libraryGeneration||current?.id!==id||state.project.id!==id)return;
+  // A completed save may have advanced this binding while the read was pending.
+  if(latest.createdAt===current.createdAt&&latest.revision<current.revision)return;
+  if(latest.revision!==current.revision||latest.createdAt!==current.createdAt||latest.archivedAt)showPlanConflict({code:latest.archivedAt?'archived':'conflict',latest});
+ }catch(e){if(generation===libraryGeneration&&libraryBinding?.id===id&&state.project.id===id&&e.code==='notfound')showPlanConflict({code:'conflict',latest:null});}
+ renderPlanContext();updateSaveReminder();
 }
 function offerLegacyPlanRecovery(legacy,error){
  if(!legacy.draft&&!legacy.raw)return;
@@ -152,10 +160,23 @@ async function initLibrary(){
    if(action==='export'){const {scenario}=await libraryStore.load(id);validateWorkspace(scenario);download(planFilename(scenario),JSON.stringify(scenario,null,2),'application/json');return;}
    if(action==='copy'){const {scenario}=await libraryStore.load(id);const copy=L.copyAsNew(scenario);copy.project.name=`${copy.project.name||'Untitled plan'} (copy)`.slice(0,120);validateWorkspace(copy);const saved=await libraryStore.save(copy,{expectedRevision:0});announcePlanChange(saved.meta);await refreshPlanList();return;}
    if(action==='archive'){
-    const archive=async()=>{const current=libraryBinding?.id===id,revision=current?libraryBinding.revision:meta.revision;const saved=await libraryStore.archive(id,{expectedRevision:revision});announcePlanChange(saved.meta,'archive');if(current){activatePlan({schema:'exacc-capacity/v1',ruleSet:{version:R.VERSION,checked:R.CHECKED,scope:R.SCOPE},sites:[newPlanningMachine()]},{sourceKept:true,label:'New empty plan'});showPlanLibrary(true);}await refreshPlanList();};
+    const archive=async()=>{
+     const current=libraryBinding?.id===id,revision=current?libraryBinding.revision:meta.revision,generation=libraryGeneration,signature=planSignature();
+     const saved=await libraryStore.archive(id,{expectedRevision:revision});announcePlanChange(saved.meta,'archive');
+     if(current&&generation===libraryGeneration&&state.project.id===id){
+      if(signature===planSignature()){activatePlan({schema:'exacc-capacity/v1',ruleSet:{version:R.VERSION,checked:R.CHECKED,scope:R.SCOPE},sites:[newPlanningMachine()]},{sourceKept:true,label:'New empty plan'});showPlanLibrary(true);}
+      else{resetLibraryBinding(saved.meta);showPlanConflict({code:'archived',latest:saved.meta});renderPlanContext();updateSaveReminder();message('The saved copy was archived. Your newer edits are still open; restore the plan or save a new copy to keep them.');}
+     }
+     await refreshPlanList();
+    };
     if(libraryBinding?.id===id)requestPlanTransition(archive);else await archive();return;
    }
-   if(action==='restore'){const saved=await libraryStore.restore(id,{expectedRevision:meta.revision});announcePlanChange(saved.meta,'restore');await refreshPlanList();return;}
+   if(action==='restore'){
+    const current=libraryBinding?.id===id,generation=libraryGeneration;
+    const saved=await libraryStore.restore(id,{expectedRevision:meta.revision});announcePlanChange(saved.meta,'restore');
+    if(current&&generation===libraryGeneration&&libraryBinding?.id===id&&state.project.id===id){resetLibraryBinding(saved.meta);renderPlanContext();updateSaveReminder();message('The saved plan was restored. Save on this device to keep the current working version.');}
+    await refreshPlanList();return;
+   }
    if(action==='delete'){libraryDeleteTarget=meta;$('library-delete-confirm').hidden=false;$('library-delete-text').textContent=`Permanently delete the saved copy of ${meta.customer||'Customer not named'} / ${meta.name||'Untitled plan'} from this browser? Keep a JSON backup if you need it later.`;$('library-delete-confirm').scrollIntoView({block:'center'});}
   }catch(e){message(e.message);await refreshPlanList();}
  };

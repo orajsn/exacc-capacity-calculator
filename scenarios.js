@@ -1,4 +1,4 @@
-(function(root,factory){const api=factory();if(typeof module==='object'&&module.exports)module.exports=api;else root.ExaScenarios=api;})(typeof globalThis!=='undefined'?globalThis:this,function(){
+(function(root,factory){const api=typeof module==='object'&&module.exports?factory(require('./requirements.js')):factory(root.ExaRequirements);if(typeof module==='object'&&module.exports)module.exports=api;else root.ExaScenarios=api;})(typeof globalThis!=='undefined'?globalThis:this,function(Q){
  'use strict';
  const MAX_ALTERNATIVES=20,MAX_CSV_ROWS=5000,MAX_CSV_CHARS=2000000;
  const FIELDS=[
@@ -125,15 +125,13 @@
   for(const s of alternative.sites){let siteChanged=false;
    for(const c of s.clusters){
     const q=c.requirements;
-    if(q){if(q.ecpu!=null&&cpu!==0){q.ecpu=scaleValue(q.ecpu,cpu);if(q.acdEcpus){q.acdEcpus=q.acdEcpus.map(v=>scaleValue(v,cpu));q.ecpu=Math.round(q.acdEcpus.reduce((sum,v)=>sum+v,0)*1000000)/1000000;}changed++;siteChanged=true;}if(q.ramGB!=null&&ram!==0){q.ramGB=scaleValue(q.ramGB,ram);changed++;siteChanged=true;}}
+    if(q&&Q.source(c)==='manual'){if(q.ecpu!=null&&cpu!==0){q.ecpu=scaleValue(q.ecpu,cpu);if(q.acdEcpus){q.acdEcpus=q.acdEcpus.map(v=>scaleValue(v,cpu));q.ecpu=Math.round(q.acdEcpus.reduce((sum,v)=>sum+v,0)*1000000)/1000000;}changed++;siteChanged=true;}if(q.ramGB!=null&&ram!==0){q.ramGB=scaleValue(q.ramGB,ram);changed++;siteChanged=true;}}
     for(const a of c.topology?.acds||[])for(const d of a.adbs||[]){
      if(d.ecpu!=null&&cpu!==0){d.ecpu=scaleValue(d.ecpu,cpu);d.peerSettingsConfirmed=false;changed++;siteChanged=true;}
      if(d.ramGB!=null&&ram!==0){d.ramGB=scaleValue(d.ramGB,ram);d.peerSettingsConfirmed=false;changed++;siteChanged=true;}
     }
-    if(q?.source==='database-topology'){
-     if(topology?.databaseTotals)c.requirements={...topology.databaseTotals(c).requirements,minRatio:q.minRatio??2};
-     else delete q.topologySignature;
-    }
+    // Keep inventory provenance and saved manual inputs. Changed quantities must
+    // be reviewed explicitly before the grown inventory becomes an applied total.
    }
    if(siteChanged){s.planningIntent='workload';s.hardwareChosen=false;}
   }
@@ -148,7 +146,6 @@
   while(existingNames.has(key(name)))name=`${base} (overlap ${++suffix})`;
   copy.name=name;existingNames.add(key(name));
   for(const a of copy.topology?.acds||[]){a.id=id('acd');a.peerId='';delete a.peerIds;a.role='unprotected';for(const d of a.adbs||[]){d.id=id('adb');d.peerSettingsConfirmed=false;}}
-  if(copy.requirements?.source==='database-topology')delete copy.requirements.topologySignature;
   return copy;
  }
  function migration(state,opts,model,topology){
@@ -160,7 +157,7 @@
   const a=capture(state,opts.name,'migration',model),target=a.sites[opts.siteIndex],names=new Set(target.clusters.map(c=>key(c.name)));
   target.clusters.push(...selected.map(i=>{
    const copied=freshCluster(source.clusters[i],names);
-   if(copied.requirements?.source==='database-topology'&&topology?.databaseTotals)copied.requirements={...topology.databaseTotals(copied).requirements,minRatio:copied.requirements.minRatio??2};
+   if(Q.source(copied)==='database-inventory'&&!Q.status(copied).stale&&copied.requirements.topologySignature&&topology?.topologySignature)copied.requirements.topologySignature=topology.topologySignature(copied);
    return copied;
   }));
   a.notes=`Temporary coexistence: ${selected.length} AVMC allocation(s) copied on ${source.name}. Both old and new allocations consume resources. Copied ACDs have no DR peer links. This is a capacity comparison, not an execution or migration supportability plan.`;
@@ -265,7 +262,7 @@
   if(opts.mode==='replace-active'){
    const target=next.sites[opts.siteIndex];if(!target)throw Error('Choose the active machine to replace.');
    if(preview.rows.some(r=>key(r.site)!==key(target.siteName)||key(r.machine)!==key(target.name)))throw Error('For replacement, every row must match the active machine site and name. Use Add inventory for multiple machines.');
-   for(const c of target.clusters){for(const a of c.topology?.acds||[])removedACDs.add(a.id);c.topology={acds:[]};if(c.requirements)c.requirements.incomplete=true;}
+   for(const c of target.clusters){for(const a of c.topology?.acds||[])removedACDs.add(a.id);c.topology={acds:[]};if(c.requirements&&Q.source(c)!=='database-inventory')c.requirements.incomplete=true;}
    affected.add(opts.siteIndex);warnings.push('The active machine’s named ACD/ADB inventory will be replaced. AVMC allocations and reserved slots are retained.');
   }
   for(const s of next.sites)for(const c of s.clusters)for(const a of c.topology?.acds||[]){
@@ -287,7 +284,9 @@
    if(a.adbs.length>=1000)throw Error(`Line ${row.line}: the ACD exceeds the calculator input guard of 1,000 database records.`);
    a.adbs.push({id:id('adb'),name:row.adb,ecpu:row.ecpu,ramGB:row.ram_gb,storageTB:row.storage_tb,independentSwitchover:row.independent_switchover});report.adbsAdded++;
    if(c.topology.acds.length>c.slots){c.slots=c.topology.acds.length;warnings.push(`${c.name}: maximum ACD slots will increase to ${c.slots} to hold the imported inventory.`);if(s.planningIntent!=='allocation')s.hardwareChosen=false;}
-   if(c.requirements){c.requirements.incomplete=true;delete c.requirements.topologySignature;delete c.requirements.acdEcpus;}
+   // Inventory requirements are the last applied snapshot, including the ACD
+   // breakdown used for CPU floors. Preserve it until the user reapplies totals.
+   if(c.requirements&&Q.source(c)!=='database-inventory'){c.requirements.incomplete=true;delete c.requirements.topologySignature;if(c.requirements.acdEcpus?.length!==c.slots)delete c.requirements.acdEcpus;}
   }
   next.sites.forEach(model.validate);
   if(topology){topology.ensureIds?.(next);topology.validateState?.(next);}

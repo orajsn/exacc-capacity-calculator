@@ -1,5 +1,18 @@
 # Changelog
 
+## 2.2.1 — 2026-11-08
+
+### Fixed
+
+- Inventory re-import no longer drops per-ACD CPU details and understates required AVMC CPU. Valid manual breakdowns are retained when slot counts are unchanged; inventory snapshots remain subject to explicit review.
+- Missing or inconsistent applied CPU breakdowns cannot appear current. Growth and migration retain source metadata, manual snapshots and completeness flags instead of silently replacing them.
+- Archive completion preserves edits made while the operation was pending, including undo history. Restoring the saved copy reconnects the retained working draft without marking it saved or enabling automatic writes.
+- A focus/revision check finishing during the plan's own save no longer creates a false cross-tab conflict. Genuine newer, replaced, archived or removed copies still trigger protection.
+- Project names and assumptions are tracked while typing, so autosave and leave protection do not depend on leaving the text field.
+- Activating another plan or saved revision refreshes metadata fields even when an old field retained focus, preventing old text from carrying into the new plan.
+
+If inventory was re-imported in v2.2, review/apply the database totals and rerun hardware sizing before relying on the earlier recommendation. No saved allocation is silently resized by this patch.
+
 ## 2.2.0 — 2026-11-08
 
 ### Improved

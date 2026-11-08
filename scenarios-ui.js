@@ -1,6 +1,7 @@
 'use strict';
 const X=window.ExaScenarios;
 let csvSource=null,csvPreview=null,csvCandidate=null,csvSignature=null,csvWorkbook=null,csvSourceWarnings=[],csvWorksheetRows=null,csvReadGeneration=0;
+let scenarioProjectGeneration=null;
 const scenarioValue=(id,fallback='')=>$(id)?$(id).value:fallback;
 function scenarioNumber(id,label){const value=scenarioValue(id);if(value==='')throw Error(`Enter ${label}.`);return Number(value);}
 function scenarioTopology(){return window.ExaTopology;}
@@ -15,7 +16,10 @@ function ensureScenarioControls(){
  <details><summary>Create a growth option</summary><p class="hint">Scale known CPU/RAM needs in a separate saved option. Unknown values stay unknown, and affected machines need hardware comparison again.</p><div class="fields growth-fields"><label>Growth option name<input id="growth-name" maxlength="100" placeholder="For example: Year 2"></label><label>Workload ECPU growth (%)<input id="growth-cpu" type="number" min="0" max="1000" value="20"></label><label>Workload RAM growth (%)<input id="growth-ram" type="number" min="0" max="1000" value="20"></label></div><button type="button" data-scenario-action="growth">Create growth option</button></details>
  <details><summary>Model migration overlap</summary><p class="hint">Copy selected AVMC allocations on the active machine into a separate saved option. Both allocations consume capacity during overlap. Copied ACDs have no DR links.</p><label>Overlap option name<input id="migration-name" maxlength="100" placeholder="For example: migration overlap"></label><div id="migration-choices"></div><button type="button" data-scenario-action="migration">Create overlap option</button></details>
  <div id="saved-options"></div><div id="scenario-comparison" aria-live="polite"></div>`;
- for(const field of ['project-name','project-notes'])$(field).addEventListener('change',()=>safeUpdate(()=>{state.project={...state.project,name:scenarioValue('project-name'),notes:scenarioValue('project-notes')};X.validateExtras(state,M);}));
+ for(const [field,key]of [['project-name','name'],['project-notes','notes']]){
+  const update=()=>safeUpdate(()=>{state.project={...state.project,[key]:scenarioValue(field)};X.validateExtras(state,M);});
+  $(field).addEventListener('input',update);$(field).addEventListener('change',update);
+ }
  container.addEventListener('click',event=>{
   const button=event.target.closest('[data-scenario-action]');if(!button)return;
   const action=button.dataset.scenarioAction;
@@ -35,7 +39,9 @@ function ensureScenarioControls(){
 function renderScenarios(){
  ensureScenarioControls();if(!$('scenario-tools'))return;
  const project=state.project||{};
- for(const [id,value]of [['project-name',project.name||''],['project-notes',project.notes||'']])if($(id)&&document.activeElement!==$(id))$(id).value=value;
+ const generation=typeof libraryGeneration==='number'?libraryGeneration:project.id,changed=generation!==scenarioProjectGeneration;
+ for(const [id,value]of [['project-name',project.name||''],['project-notes',project.notes||'']])if($(id)&&(changed||document.activeElement!==$(id)))$(id).value=value;
+ scenarioProjectGeneration=generation;
  const choices=$('migration-choices');if(choices)choices.innerHTML=site().clusters.length?site().clusters.map((c,i)=>`<label class="check"><input type="checkbox" data-overlap-cluster="${i}">${escapeHTML(c.name)} · ${c.nodes.length} VMs · ${c.slots} max ACDs</label>`).join(''):'<p class="hint">Add an AVMC to the active machine first.</p>';
  const target=$('saved-options');if(!target)return;
  const selected=$('compare-option')?.value,alternatives=state.alternatives||[];

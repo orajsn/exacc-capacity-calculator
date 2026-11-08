@@ -69,7 +69,7 @@
     const q=c.requirements,inventorySelected=source?source.source==='database-inventory':q?.source!=='manual'&&(['database-inventory','database-topology'].includes(q?.source)||!!q?.topologySignature);
     add('unknowns','named-inventory',inventorySelected?`${c.name}: database inventory is selected, but no named ACDs or databases are entered.`:`${c.name}: named ACD/ADB mapping is not selected for this estimate. Reserved slots do not prove deployed databases or independent switchover groups.`,{...location,...(!inventorySelected?{inputState:'not-selected'}:{})});
    }
-   if(source?.stale)add('warnings','requirements-stale',`${c.name}: database CPU/RAM or grouping changed after sizing totals were applied. Update the sizing inputs before relying on workload fit.`,location);
+   if(source?.stale)add('warnings','requirements-stale',`${c.name}: applied inventory sizing is out of date or incomplete. Review totals and per-ACD CPU details before relying on workload fit.`,location);
    else if(source?.source==='manual'&&source.inventory?.counts?.databases&&source.delta&&(Math.abs(source.delta.ecpu||0)>EPS||Math.abs(source.delta.ramGB||0)>EPS))add('warnings','manual-inventory-difference',`${c.name}: manual sizing inputs differ from the named database totals. Confirm the intended source; the current calculation retains the manual inputs.`,location);
   });
   if(!out.hardwareReady){add('unknowns','hardware-unselected','Choose a hardware option before using capacity figures.');out.nextAction='Enter workload needs, then compare and select hardware.';return out;}
@@ -203,7 +203,7 @@
   return `<h4>Workload inputs used for sizing</h4><p class="muted">Manual totals and database inventory are separate inputs. Applied totals remain in use until the sizing source is updated. An input confirmation is not an Oracle approval.</p><table><thead><tr><th>AVMC</th><th>Sizing source</th><th>Applied ECPUs</th><th>Applied RAM GB</th><th>Named inventory totals</th><th>Input state</th></tr></thead><tbody>${site.clusters.map(c=>{
    const q=c.requirements;let source=null;try{source=Q?.status?.(c);}catch{}
    const inventory=source?.inventory,fromInventory=source?.source==='database-inventory'||['database-inventory','database-topology'].includes(q?.source);
-   const status=!q?'Not entered':source?.stale?'Inventory changed since these totals were applied':q.incomplete||source?.incomplete?'Incomplete':fromInventory?(source?'Applied totals match the CPU/RAM inventory':'Inventory freshness not checked'):'Manual totals retained';
+   const status=!q?'Not entered':source?.stale?'Applied inventory sizing needs review':q.incomplete||source?.incomplete?'Incomplete':fromInventory?(source?'Applied totals match the CPU/RAM inventory':'Inventory freshness not checked'):'Manual totals retained';
    const inventoryText=inventory?.counts?.databases?`${fmt(inventory.known.ecpu)} ECPUs / ${fmt(inventory.known.ramGB)} GB RAM${inventory.requirements.incomplete?' (CPU/RAM incomplete)':''}`:'No database rows';
    return `<tr><td>${escape(c.name)}</td><td>${q?(fromInventory?'Database inventory':'Manual totals'):'Not entered'}</td><td>${fmt(q?.ecpu)}</td><td>${fmt(q?.ramGB)}</td><td>${escape(inventoryText)}</td><td>${escape(status)}</td></tr>`;
   }).join('')}</tbody></table>`;

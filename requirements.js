@@ -2,7 +2,7 @@
  'use strict';
  const numericKeys=['ecpu','ramGB','unsizedACDs','minRatio'];
  const clone=value=>JSON.parse(JSON.stringify(value));
- function source(cluster){const q=cluster?.requirements;return q?.source==='manual'?'manual':q?.source==='database-inventory'||q?.source==='database-topology'||q?.topologySignature?'database-inventory':'manual';}
+ function source(cluster){const q=cluster?.requirements;return q?.source==='manual'?'manual':q?.source==='database-inventory'||q?.source==='database-topology'||q?.topologySignature||q?.appliedSignature?'database-inventory':'manual';}
  // Only workload quantities and their ACD grouping affect these CPU/RAM totals.
  // IDs, ordering, names, storage and Data Guard metadata are independent inputs.
  function signatureOf(slots,acds){return JSON.stringify({slots,acds:acds.map(a=>a.adbs.map(d=>[d.ecpu??null,d.ramGB??null]).sort((a,b)=>JSON.stringify(a).localeCompare(JSON.stringify(b)))).sort((a,b)=>JSON.stringify(a).localeCompare(JSON.stringify(b)))});}
@@ -13,10 +13,15 @@
   return null;
  }
  function totals(q){return Object.fromEntries(['ecpu','ramGB','unsizedACDs'].map(k=>[k,Number.isFinite(q?.[k])?q[k]:null]));}
+ function breakdownMatches(applied,current){
+  if(!Array.isArray(applied)||applied.length!==current.length||applied.some(v=>!Number.isFinite(v)||v<0))return false;
+  const left=[...applied].sort((a,b)=>a-b),right=[...current].sort((a,b)=>a-b);
+  return left.every((value,i)=>Math.abs(value-right[i])<1e-7);
+ }
  function status(cluster){
   const inventory=T.databaseTotals(cluster),selected=source(cluster),applied=totals(cluster.requirements),hasRequirements=!!cluster.requirements;
   const appliedMatches=Object.keys(applied).every(k=>applied[k]!==null&&Math.abs(applied[k]-inventory.requirements[k])<1e-7);
-  const stale=selected==='database-inventory'&&(appliedSignature(cluster)!==sizingSignature(cluster)||!appliedMatches);
+  const stale=selected==='database-inventory'&&(appliedSignature(cluster)!==sizingSignature(cluster)||!appliedMatches||!breakdownMatches(cluster.requirements?.acdEcpus,inventory.requirements.acdEcpus));
   const delta=Object.fromEntries(Object.keys(applied).map(k=>[k,applied[k]===null?null:inventory.requirements[k]-applied[k]]));
   const canApply=inventory.counts.namedACDs>0&&inventory.counts.namedACDs<=cluster.slots;
   const incomplete=selected==='database-inventory'?inventory.requirements.incomplete||!!cluster.requirements?.userIncomplete:!!cluster.requirements?.incomplete||applied.ecpu===null||applied.ramGB===null;

@@ -52,3 +52,11 @@ The five-minute first-use target in PRODUCT_GOALS.md still needs an independent 
 - Entry tests cover blank quick checks, generic production/DR examples, unsaved-work guards and no automatic example persistence.
 - Browser checks exercise the example, per-node view, database RAM edit and explicit totals review, exact missing-field navigation, manual assumption restoration, quick check with compute off/on and narrow-screen live metrics. Source changes retain the open editor and keyboard focus.
 - Independent first-time presales users have not yet performed the five-minute usability trial. Automated and browser checks are not a substitute for that trial.
+
+## 2.2.1 bug-audit regressions
+
+- Identical CSV replacement retains the per-ACD CPU floor: the generic 400/1-ECPU, two-node case stays at 208 ECPUs per VM rather than falling to 201. With 555 Other ECPUs per node, it remains over the checked CPU capacity.
+- Corrupt/missing applied breakdowns require reapplication; both inventory and independent manual source paths are covered. Growth/migration preserve applied snapshots and missing-workload flags.
+- Deterministic delayed-operation cases cover a focus check racing an own save, stale metadata reads, edits/new plans arriving during archive, and restoration of retained unsaved edits. Real cross-tab conflicts remain protected.
+- Input-event cases cover names/assumptions before blur, autosaving while focused, and metadata refresh across new plans and same-ID revisions.
+- Native browser verification exercises the identical-inventory re-import and focused-note persistence. Delayed archive/revision races use a controlled atomic backend to reproduce the timing reliably.
