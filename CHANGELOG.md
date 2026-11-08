@@ -1,5 +1,16 @@
 # Changelog
 
+## 2.3.0 — 2026-11-08
+
+### Added
+
+- System, Light and Dark appearance choices. The selected appearance is remembered in this browser separately from customer plans, and system mode follows the operating-system preference.
+- Dark colors for forms, tables, diagrams, readonly fields, warnings, errors and keyboard focus. Theme contrast tests cover text, status colors and focus indicators; printed plans retain light colors.
+
+### Improved
+
+- A compact phone capacity bar keeps balances and status visible. More/Less reveals or hides the remaining controls without changing the plan. Short landscape views keep the bar in normal page flow.
+
 ## 2.2.3 — 2026-11-08
 
 ### Improved

@@ -73,3 +73,10 @@ The five-minute first-use target in PRODUCT_GOALS.md still needs an independent 
 - Expanded AVMC inputs use 16px text and at least 44px height on phones. Bottom-of-page checks verified navigation remains reachable above the measured fixed bar.
 - In short landscape views, the capacity bar uses normal document flow instead of covering the editor. Browser console reported no errors.
 - Viewport emulation verifies layout; this is not a physical iOS/Android device or on-screen-keyboard compatibility certification.
+
+## 2.3.0 appearance and compact phone controls
+
+- Theme-controller tests cover System/Light/Dark, early application before CSS, blocked storage, operating-system changes and cross-tab preference updates. Appearance and dock controls do not change sizing plans or mark them unsaved.
+- Palette tests require at least 4.5:1 for checked normal/muted/link/placeholder text on supported surfaces, primary-button text and status combinations, and 3:1 for keyboard focus against control surfaces. This is a scoped contrast check, not a claim of full WCAG certification.
+- Mobile balances and status remain visible with extra controls collapsed. More/Less uses an accessible expanded state; existing short-screen flow and measured bottom clearance remain in place.
+- Screen-only dark tokens preserve light print styles. Review caught and fixed the disabled-primary-button hover cascade so muted text retains its dark neutral background.

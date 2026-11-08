@@ -1,6 +1,8 @@
 # ExaC@C Capacity Planner
 
-A browser-only presales planner for Exadata Cloud@Customer. Keep separate customer projects, build multi-site plans, compare allocations and export the reasoning. No account, backend, analytics or data upload. Device saving starts when you create a saved plan or choose Save on this device.
+A browser-only capacity planner for Exadata Cloud@Customer. Keep separate customer projects, build multi-site plans, compare allocations and export the reasoning. No account, backend, analytics or data upload. Device saving starts when you create a saved plan or choose Save on this device.
+
+Choose System, Light or Dark under Appearance. Only this preference is remembered automatically in this browser; changing it does not save or modify a customer plan. On phones, the compact capacity bar keeps balances and status visible; More opens its extra controls. Printed plans use light colors.
 
 [Open the planner](https://orajsn.github.io/exacc-capacity-calculator/) · [Product goals](PRODUCT_GOALS.md) · [Release history](CHANGELOG.md) · [Test catalogue](TESTING.md)
 

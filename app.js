@@ -146,6 +146,12 @@ $('combinations').onclick = e => {
  }
 };
 let jsonImportGeneration=0;
+$('dock-toggle').onclick=()=>{
+ const expanded=$('dock-toggle').getAttribute('aria-expanded')!=='true';
+ $('local-dock').dataset.expanded=String(expanded);
+ $('dock-toggle').setAttribute('aria-expanded',String(expanded));
+ $('dock-toggle').textContent=expanded?'Less':'More';
+};
 // Reserve the rendered bar height, including wrapped controls and warning text.
 // Short viewports put the bar in normal flow and need no fixed-bar clearance.
 if(typeof ResizeObserver!=='undefined'){
