@@ -45,7 +45,7 @@ function render(){T.ensureIds(state);L.ensureIdentity(state);const s=site();rend
  $('add-site').disabled=state.sites.length>=8;
  $('replacement-cpu').value='';
  $('replacement-ratio').value='';
- renderPlanning();renderAuditInputs();renderSizing();renderTopologyEditor();renderConventional();renderScenarios();renderWorkloadImport();results();}
+ renderPlanning();renderAuditInputs();renderSizing();renderTopologyEditor();renderConventional();renderScenarios();renderWorkloadImport();results();refreshTour();}
 function overview() {
  $('overview').querySelector('tbody').innerHTML = state.sites.map((s, i) => {
   let r, summary;

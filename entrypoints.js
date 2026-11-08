@@ -1,7 +1,23 @@
 'use strict';
 let startChoicesOpen=false;
 let plannerStartHandled=false;
-function plannerStartAction(search){const action=new URLSearchParams(search||'').get('start');return ['quick','workload','example','saved'].includes(action)?action:null;}
+let plannerTour=null;
+function plannerStartAction(search){const action=new URLSearchParams(search||'').get('start');return ['quick','workload','example','saved','tour'].includes(action)?action:null;}
+function refreshTour(){plannerTour?.refresh();}
+function initPlannerTour(){
+ if(plannerTour||!window.ExaTour)return;
+ plannerTour=window.ExaTour.create({document,window,getState:()=>state,getMachine:()=>site(),validate:machine=>M.validate(machine),isSaved:id=>state.project.id===id&&planSavedHere(),
+  getSlotControl:id=>{const index=site().clusters.findIndex(c=>c.uid===id);return index<0?null:[...document.querySelectorAll('[data-cluster]')].find(el=>Number(el.dataset.cluster)===index&&el.dataset.key==='slots');},
+  navigate:(view,id)=>{showPlanLibrary(false);goGuideStep(view);if(id){const index=site().clusters.findIndex(c=>c.uid===id);if(index>=0)openClusterEditor(index,false,false);}}
+ });
+}
+function startGuidedPractice(){
+ requestPlanTransition(async()=>{
+  const next=window.ExaStarts.create('quick',{model:M,topology:T,library:L,rules:R,requirements:window.ExaRequirements});next.project.name='Guided practice';next.project.notes='Illustrative guided practice only. Replace these assumptions before using the plan for a customer.';
+  markStartingHardware(next.sites[0]);activatePlan(next,{sourceKept:true,label:'Guided practice · not saved on this device'});initPlannerTour();
+  if(!plannerTour?.start())message('Guided practice is ready, but the walkthrough controls are unavailable. Your practice plan has been kept.');
+ });
+}
 function consumePlannerStartAction(){
  try{if(!window.history?.replaceState||!window.location?.href)return;const url=new URL(window.location.href);url.searchParams.delete('start');window.history.replaceState(window.history.state,'',url.pathname+url.search+url.hash);}catch{}
 }
@@ -27,6 +43,7 @@ function startWorkloadPlan(){
  });
 }
 function initEntryPoints(){
+ initPlannerTour();
  let userNavigationChanged=false;
  $('start-plan').onclick=()=>{userNavigationChanged=true;showStartChoices(true);};
  $('my-plans').addEventListener('click',()=>{userNavigationChanged=true;});
@@ -44,7 +61,7 @@ function initEntryPoints(){
   if(action)consumePlannerStartAction();
   if(action==='saved'){showPlanLibrary(true);return;}
   const error=libraryError;
-  if(action==='workload')startWorkloadPlan();else startFromTemplate(action||'quick');
+  if(action==='tour')startGuidedPractice();else if(action==='workload')startWorkloadPlan();else startFromTemplate(action||'quick');
   if(error){libraryError=error;renderPlanContext();}
  });
 }

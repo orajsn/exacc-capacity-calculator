@@ -96,3 +96,11 @@ No new hardware formulas, customer data, dependencies or shared storage service 
 | G28. Preserve work while learning | Home/guide load no plan data; help opened from the planner leaves working edits in place. CTA routing runs once and respects recovery, pending edits and user choices. | Regression tested in 3.2 |
 
 The guide documents supported cases and unassessed areas; it does not claim exhaustive Oracle supportability, physical-device certification or an independently measured first-use completion time.
+
+## 3.3 — learn by using the controls
+
+| Goal | Acceptance criteria | Delivery |
+| --- | --- | --- |
+| G29. Optional first-use walkthrough | Offer a practice tour without forcing it; remember dismissal/completion and allow restart from Guide/menu. | Implemented in 3.3 |
+| G30. Evidence-based progress | Advance through actual valid input/actions; successful current-plan saving required; skipped steps, failures and identity changes cannot silently complete the tour. | Regression tested in 3.3 |
+| G31. Preserve work and responsiveness | Fresh generic practice plan, separate tab from existing work, Back/Skip/Exit, visible mobile controls, no polling or new hosted service. | Implemented in 3.3 |

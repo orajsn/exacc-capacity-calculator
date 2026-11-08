@@ -4,7 +4,7 @@ const attrs=source=>Object.fromEntries([...source.matchAll(/([\w:-]+)\s*=\s*(?:"
 const references=html=>[...html.matchAll(/<(a|link|script|img)\b([^>]*)>/gi)].map(m=>({tag:m[1].toLowerCase(),...attrs(m[2])}));
 function entrypoints(window={}){const ctx={window,URL,URLSearchParams};vm.createContext(ctx);vm.runInContext(fs.readFileSync(require.resolve('./entrypoints.js'),'utf8'),ctx);return code=>vm.runInContext(code,ctx);}
 test('planner query accepts only the documented starting actions',()=>{
- const run=entrypoints();for(const action of ['quick','workload','example','saved'])assert.equal(run(`plannerStartAction(${JSON.stringify('?source=guide&start='+action)})`),action);
+ const run=entrypoints();for(const action of ['quick','workload','example','saved','tour'])assert.equal(run(`plannerStartAction(${JSON.stringify('?source=guide&start='+action)})`),action);
  for(const search of ['',null,'?start=','?start=unknown','?start=QUICK','?start=javascript:alert(1)','?start=__proto__'])assert.equal(run(`plannerStartAction(${JSON.stringify(search)})`),null);
  assert.equal(run('plannerStartAction("?start=%77orkload")'),'workload');
 });
@@ -27,7 +27,7 @@ test('public page navigation, anchors, downloads and image/font/script assets al
    let relative=decodeURIComponent(url.pathname.slice(prefix.length));if(!relative||relative.endsWith('/'))relative+='index.html';const target=path.join(__dirname,relative);
    assert.ok(fs.existsSync(target)&&fs.statSync(target).isFile(),`${file}: missing local file ${value}`);assert.ok(fs.statSync(target).size>0,`${file}: empty local file ${value}`);
    if(url.hash&&relative.endsWith('.html')){const ids=new Set([...fs.readFileSync(target,'utf8').matchAll(/\bid="([^"]+)"/g)].map(m=>m[1]));assert.ok(ids.has(decodeURIComponent(url.hash.slice(1))),`${file}: missing anchor ${value}`);}
-   if(url.searchParams.has('start')){assert.equal(relative,'planner.html');assert.ok(['quick','workload','example','saved'].includes(url.searchParams.get('start')),`${file}: unknown planner action`);}
+   if(url.searchParams.has('start')){assert.equal(relative,'planner.html');assert.ok(['quick','workload','example','saved','tour'].includes(url.searchParams.get('start')),`${file}: unknown planner action`);}
   }
  }
 });
@@ -35,10 +35,16 @@ test('Home and Guide stay independent from calculator state and provide every do
  const actions=new Set();
  for(const file of ['index.html','guide.html']){
   const html=fs.readFileSync(path.join(__dirname,file),'utf8'),refs=references(html);
-  assert.deepEqual(refs.filter(r=>r.tag==='script').map(r=>(r.src||'').split('?')[0]),['theme.js'],`${file}: only appearance may initialize on public pages`);
+  assert.deepEqual(refs.filter(r=>r.tag==='script').map(r=>(r.src||'').split('?')[0]),file==='index.html'?['theme.js','tour-invite.js']:['theme.js'],`${file}: only appearance and the invitation may initialize on public pages`);
   assert.ok(html.includes("connect-src 'none'"));assert.doesNotMatch(html,/<form\b|type=["']password["']/i);assert.doesNotMatch(html,/exacc-capacity\/v1/);
   for(const reference of refs)if(reference.href){const url=new URL(reference.href,'https://example.test/calculator/'+file);if(url.searchParams.has('start'))actions.add(url.searchParams.get('start'));}
   for(const reference of refs.filter(r=>r.tag==='img'))assert.ok(reference.alt?.trim(),`${file}: screenshot needs an accessible description`);
  }
- assert.deepEqual([...actions].sort(),['example','quick','saved','workload']);
+ assert.deepEqual([...actions].sort(),['example','quick','saved','tour','workload']);
+});
+test('guided-practice restart links preserve the original working tab',()=>{
+ for(const file of ['index.html','guide.html','planner.html']){
+  const links=references(fs.readFileSync(path.join(__dirname,file),'utf8')).filter(r=>r.tag==='a'&&new URL(r.href||'','https://example.test/calculator/'+file).searchParams.get('start')==='tour');assert.ok(links.length,`${file}: guided practice can be started`);
+  if(file==='planner.html')for(const link of links){assert.equal(link.target,'_blank');assert.ok((link.rel||'').split(/\s+/).includes('noopener'));}
+ }
 });

@@ -116,3 +116,11 @@ The five-minute first-use target in PRODUCT_GOALS.md still needs an independent 
 - Four genuine browser screenshots use generic examples: local capacity (one AVMC/two slots; 784GB allocated, 3,702GB free), workload sizing (40 ECPU/160GB RAM), named production/DR groups and device-local saved plans. No customer workbooks or plans are included.
 - Browser QA exercised all four starting actions, FAQ expansion, guide anchors, light/dark narrow layouts, inner table scrolling and actual planner-to-guide navigation with unsaved inputs retained.
 - Guide Oracle source links were reviewed on 8 November 2026. The existing numerical rule-check date remains separate. This does not add physical-device, independent-user timing or print-pagination certification.
+
+## 3.3.0 guided practice
+
+- Tour tests verify valid hardware confirmation, actual Add AVMC and slot-edit actions, explicit capacity review and a confirmed save of the pinned practice plan. Invalid inputs, unrelated edits, deleted targets, changed plans and stale saves cannot produce completion.
+- Integrated delayed-storage tests cover quota failure, JSON-only backup, successful retry and an outgoing save resolving after a different plan is activated. Skip/Exit/Escape do not save a plan or mark an incomplete run complete.
+- Invitation tests cover first-use visibility, no initial writes, remembered dismissal/completion and blocked storage. Navigation tests preserve existing recovery, saved-plan and pending-edit guards.
+- Native browser checks completed the five-step flow at 390px in dark mode, rejected invalid slot input, exercised Back/Skip/Exit and confirmed original unsaved work survives a separate practice tab. A 320px light view kept targets above the panel; desktop placement was also inspected.
+- Failed saving was reproduced in controlled tests, not forced in the native browser. Physical mobile keyboard behavior remains unverified.

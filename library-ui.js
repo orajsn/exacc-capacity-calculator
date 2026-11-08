@@ -83,7 +83,7 @@ async function savePlanOnDevice({expectedRevision}={}){
   }catch(e){if(generation===libraryGeneration&&state.project.id===id){if(['conflict','archived'].includes(e.code))showPlanConflict(e);else libraryError=`Current edits are not saved. ${e.message}`;}return false;}
  })();
  librarySaving=task;renderPlanContext();
- const ok=await task;if(librarySaving===task)librarySaving=null;renderPlanContext();updateSaveReminder();if(!ok&&libraryError)message(libraryError);
+ const ok=await task;if(librarySaving===task)librarySaving=null;renderPlanContext();updateSaveReminder();refreshTour();if(!ok&&libraryError)message(libraryError);
  if(ok&&libraryAuto&&!planSavedHere())queuePlanSave();return ok;
 }
 function queuePlanSave(){

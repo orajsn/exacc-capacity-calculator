@@ -8,6 +8,8 @@ Use the sun/moon button to switch appearance. Plans & files → Use device appea
 
 The home page introduces the tool and offers task-specific starts. The guide contains screenshot walkthroughs and a generic CSV example. First visits use Light; explicit appearance preferences remain remembered. Existing saved plans remain available because the planner stays on the same website origin. Home and guide links inside the calculator open separately so working edits stay in place.
 
+First visits also offer **Show me around**. The guided example uses a fresh plan named Guided practice and actual planner controls. It confirms hardware, adds an AVMC, reserves two ACD slots, explains the live result and waits for a successful device save. Back, Skip step and Exit are always available; skipped or failed steps do not count as completed. Only a dismissed/completed flag is remembered locally. Restart from Guide & FAQ or Plans & files → Guided example. Practice plans you save remain in Saved plans and can be archived there.
+
 ## Start calculating
 
 With no saved plans, the planner opens directly into a blank allocation check. It starts with a clearly labelled two-node X11M Standard hardware assumption, zero AVMCs and CPU/memory checks off. Use **Change hardware** to match your machine, then **Add AVMC** to see reservations and remaining local storage update together. This initial workspace is not saved automatically.

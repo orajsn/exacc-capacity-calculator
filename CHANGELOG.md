@@ -1,5 +1,14 @@
 # Changelog
 
+## 3.3.0 — 2026-11-08
+
+### Added
+
+- Optional first-visit invitation and a guided practice plan highlighting real hardware, AVMC, ACD-slot, capacity and save controls.
+- Back, Skip step, Exit and Escape controls; completion is recorded only after all required steps and a successful save of the current practice plan.
+- Restart links in the guide and Plans & files open a separate practice tab. Existing plan-switch and recovery protections remain in place.
+- Browser-local dismissed/completed preference. The walkthrough uses local events and no new service, polling loop or runtime dependency.
+
 ## 3.2.0 — 2026-11-08
 
 ### Added
