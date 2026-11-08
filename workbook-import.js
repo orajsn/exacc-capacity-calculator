@@ -146,6 +146,16 @@
   const map=new Map();for(const rel of children(node,'Relationship')){const a=rel.attrs;if(!a.Id||!a.Type||!a.Target||map.has(a.Id))fail(`${label}: incomplete or duplicate relationship.`);if(a.TargetMode&&a.TargetMode!=='External'&&a.TargetMode!=='Internal')fail(`${label}: invalid relationship mode.`);map.set(a.Id,{type:a.Type,target:a.Target,external:a.TargetMode==='External'});}return map;
  }
  function position(reference){const m=String(reference).match(/^([A-Za-z]+)([1-9][0-9]*)$/);if(!m)fail('A worksheet contains an invalid cell reference.');let col=0;for(const c of m[1].toUpperCase())col=col*26+c.charCodeAt(0)-64;const row=Number(m[2]);if(col>LIMITS.columns||row>LIMITS.rows)fail('Worksheet range exceeds 20,000 rows or 256 columns. Import a smaller range or CSV.');return{row,col};}
+ function plainStoredNumber(value){
+  // Preserve the stored digits: converting through Number would round numeric
+  // identifiers and precision before the user selects the inventory mapping.
+  const [mantissa,exponentText]=value.replace(/^\+/,'').split(/[eE]/);if(exponentText===undefined)return mantissa;
+  const negative=mantissa.startsWith('-'),unsigned=negative?mantissa.slice(1):mantissa,dot=unsigned.indexOf('.'),digits=unsigned.replace('.','');
+  const exponent=Number(exponentText),point=(dot<0?unsigned.length:dot)+exponent;
+  const length=(negative?1:0)+(point<=0?2-point+digits.length:Math.max(point,digits.length)+(point<digits.length?1:0));
+  if(!Number.isSafeInteger(point)||length>LIMITS.cellCharacters)fail('A worksheet numeric cell exceeds the text limit when written as a plain decimal.');
+  return (negative?'-':'')+(point<=0?'0.'+'0'.repeat(-point)+digits:point>=digits.length?digits+'0'.repeat(point-digits.length):digits.slice(0,point)+'.'+digits.slice(point));
+ }
  function sheetRows(root,shared,name,remaining){
   if(localName(root.name)!=='worksheet'||!SHEET_NS.has(root.ns))fail(`${name}: not an OpenXML worksheet.`);
   const dataParts=children(root,'sheetData');if(dataParts.length>1)fail(`${name}: duplicate worksheet data.`);
@@ -168,7 +178,7 @@
     else if(type==='e'){errorCount++;if(errorRefs.length<8)errorRefs.push(c.attrs.r||`row ${rowNo}`);}
     else if(type==='str')value=openXMLText(raw);
     else if(type==='d'){value=raw.trim();if(value)explicitDates++;}
-    else if(type==='n'){value=raw.trim();if(value&&(!/^[+-]?(?:\d+(?:\.\d*)?|\.\d+)(?:[eE][+-]?\d+)?$/.test(value)||!Number.isFinite(Number(value))))fail(`${name}: invalid stored number in ${c.attrs.r||`row ${rowNo}`}.`);}
+    else if(type==='n'){value=raw.trim();if(value&&(!/^[+-]?(?:\d+(?:\.\d*)?|\.\d+)(?:[eE][+-]?\d+)?$/.test(value)||!Number.isFinite(Number(value))))fail(`${name}: invalid stored number in ${c.attrs.r||`row ${rowNo}`}.`);if(value)value=plainStoredNumber(value);}
     else fail(`${name}: unsupported cell type. Export this worksheet as CSV.`);
     if(value.length>LIMITS.cellCharacters)fail(`${name}: a cell exceeds the text limit.`);remaining.text-=value.length;if(remaining.text<0)fail('Expanded worksheet text exceeds the 8 million character limit. Import a smaller range or CSV.');values[column-1]=value;
    }

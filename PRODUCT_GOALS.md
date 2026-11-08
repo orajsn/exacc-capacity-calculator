@@ -60,3 +60,12 @@ Requested and executed 8 November 2026. This pass implements the four highest-pr
 | G16. Turn findings into actions | Stable-ID navigation to the correct editor/field; safe fallback after deletion; missing inputs separated from not-selected/external checks. | Implemented in 2.2 |
 
 The broader suggestions—multi-option decision tables, large-inventory workbench and incoming-file diff review—remain future scope. The five-minute first-use target has not been tested with independent presales users.
+
+## 2.2.2 — focused reliability pass
+
+| Goal | Acceptance criteria | Delivery |
+| --- | --- | --- |
+| G17. Accept valid stored Excel numbers | Numeric worksheet values in scientific notation reach the import preview without changing literal text or bypassing workload limits. | Implemented in 2.2.2 |
+| G18. Recheck everyday plan use | Generic example editing, device save, reload/reopen and narrow-screen layout verified; findings distinguished from untested cases. | Verified in this pass |
+
+No new hardware formulas, customer data, dependencies or shared storage service are introduced by this patch. See TESTING.md for evidence and limits.

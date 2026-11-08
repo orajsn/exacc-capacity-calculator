@@ -1,5 +1,11 @@
 # Changelog
 
+## 2.2.2 — 2026-11-08
+
+### Fixed
+
+- Excel numeric cells stored in scientific notation now reach the inventory preview as plain decimal values. Text cells retain their original contents, and workload validation still applies.
+
 ## 2.2.1 — 2026-11-08
 
 ### Fixed

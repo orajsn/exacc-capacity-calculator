@@ -35,7 +35,7 @@ test('signed and unsigned data descriptors work and remain checksum-checked',asy
 test('preserves sparse cells, string whitespace, rich text, boolean and raw numeric values',async()=>{
  const sheet=worksheet('<row r="2"><c r="A2" t="s"><v>0</v></c><c r="C2" t="inlineStr"><is><r><t>Core </t></r><r><t>&amp; data</t></r><rPh><t>ignored</t></rPh></is></c><c r="D2" t="b"><v>1</v></c><c r="E2"><v>0.01</v></c><c r="F2"><v>2e2</v></c></row>');
  const p=parts(sheet);p['xl/_rels/workbook.xml.rels']=p['xl/_rels/workbook.xml.rels'].replace('</Relationships>',`<Relationship Id="strings" Type="${relBase}/sharedStrings" Target="sharedStrings.xml"/></Relationships>`);p['xl/sharedStrings.xml']=`<sst xmlns="${ns}"><si><t xml:space="preserve"> DC &amp; North </t></si></sst>`;
- const result=await W.read(zip(p));assert.deepEqual(result.sheets[0].rows,[[],[' DC & North ','','Core & data','TRUE','0.01','2e2']]);
+ const result=await W.read(zip(p));assert.deepEqual(result.sheets[0].rows,[[],[' DC & North ','','Core & data','TRUE','0.01','200']]);
 });
 test('does not execute or recalculate formulas; missing and error results remain unknown',async()=>{
  const sheet=worksheet('<row r="1"><c r="A1"><f>1+1</f><v>2</v></c><c r="B1"><f>ExternalBook!A1</f></c><c r="C1" t="e"><f>1/0</f><v>#DIV/0!</v></c><c r="D1" t="str"><v>=HYPERLINK("https://example.invalid")</v></c></row>');
@@ -50,6 +50,22 @@ test('multiple sheets, hidden status, merged headers and external link limitatio
 test('CSV preview conversion quotes newlines/quotes and preserves blank or formula-like strings as data',()=>{
  assert.equal(W.toCSV([['a,b','say "hi"','a\nb',null,'=literal',0,false],[]]),'"a,b","say ""hi""","a\nb","","=literal","0","false"\r\n');
  assert.throws(()=>W.toCSV([[{}]]),/Invalid worksheet cell/);
+});
+test('numeric XLSX exponent values reach inventory preview without changing text or CPU units',async()=>{
+ const X=require('./scenarios.js'),headers=['site','machine','avmc','acd','adb','ecpu','ram_gb','storage_tb'];
+ const heading=headers.map((h,i)=>cell(String.fromCharCode(65+i)+'1',h)).join('');
+ const labels=['DC','Prod','Core','Group','DB'].map((s,i)=>cell(String.fromCharCode(65+i)+'2',s)).join('');
+ const sheet=worksheet(`<row r="1">${heading}</row><row r="2">${labels}${cell('F2','2e2','n')}${cell('G2','+8E2','n')}${cell('H2','1.234567890123456789e-7','n')}</row>`);
+ const result=await W.read(zip(parts(sheet))),rows=result.sheets[0].rows,preview=X.previewCSV(W.toCSV(X.prepareWorksheetRows(rows).rows));
+ assert.deepEqual(preview.errors,[]);assert.equal(preview.rows[0].ecpu,200);assert.equal(preview.rows[0].ram_gb,800);assert.equal(preview.rows[0].storage_tb,Number('1.234567890123456789e-7'));
+ assert.equal(rows[1][7],'0.0000001234567890123456789','normalization preserves stored significant digits');
+ const expanded=await W.read(zip(parts(sheet.replace('2e2','1.234567890123456789e2'))));assert.equal(expanded.sheets[0].rows[1][5],'123.4567890123456789');
+ const literal=await W.read(zip(parts(sheet.replace('r="F2" t="n"','r="F2" t="str"'))));
+ assert.equal(literal.sheets[0].rows[1][5],'2e2');assert.ok(X.previewCSV(W.toCSV(literal.sheets[0].rows)).errors.some(e=>/ecpu/.test(e.message)));
+ const units=rows.map(row=>[...row]);units[0][5]='ocpu';assert.ok(X.previewCSV(W.toCSV(units)).errors.some(e=>/OCPU/.test(e.message)));
+ for(const raw of ['NaN','Infinity','1e309'])await assert.rejects(W.read(zip(parts(sheet.replace('2e2',raw)))),/invalid stored number/);
+ for(const raw of ['1e-1000000000','0e+1000000000'])await assert.rejects(W.read(zip(parts(sheet.replace('2e2',raw)))),/text limit/);
+ const negative=await W.read(zip(parts(sheet.replace('2e2','-2e2'))));assert.equal(negative.sheets[0].rows[1][5],'-200');assert.ok(X.previewCSV(W.toCSV(negative.sheets[0].rows)).errors.some(e=>/ecpu/.test(e.message)));
 });
 test('rejects encryption, wrong archive types, unsupported methods, ZIP64 and truncation',async()=>{
  await assert.rejects(W.read(Buffer.from('not an xlsx document')),/complete|unencrypted/);

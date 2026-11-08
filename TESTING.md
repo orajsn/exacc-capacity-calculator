@@ -60,3 +60,9 @@ The five-minute first-use target in PRODUCT_GOALS.md still needs an independent 
 - Deterministic delayed-operation cases cover a focus check racing an own save, stale metadata reads, edits/new plans arriving during archive, and restoration of retained unsaved edits. Real cross-tab conflicts remain protected.
 - Input-event cases cover names/assumptions before blur, autosaving while focused, and metadata refresh across new plans and same-ID revisions.
 - Native browser verification exercises the identical-inventory re-import and focused-note persistence. Delayed archive/revision races use a controlled atomic backend to reproduce the timing reliably.
+
+## 2.2.2 focused reliability pass
+
+- Workbook regressions exercise numeric scientific notation through the workbook reader and inventory preview, with literal text preserved and normal workload validation retained.
+- Native browser QA on an isolated local origin verified example editing, device autosave, reload and reopening with the edited AVMC name retained. A narrow-screen check found no page-level horizontal overflow or console errors.
+- The Excel fix is checked with generated workbook fixtures through the import pipeline; this pass does not claim a native file-picker test or an independent first-user usability study.
