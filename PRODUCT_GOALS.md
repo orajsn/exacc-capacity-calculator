@@ -69,3 +69,11 @@ The broader suggestions—multi-option decision tables, large-inventory workbenc
 | G18. Recheck everyday plan use | Generic example editing, device save, reload/reopen and narrow-screen layout verified; findings distinguished from untested cases. | Verified in this pass |
 
 No new hardware formulas, customer data, dependencies or shared storage service are introduced by this patch. See TESTING.md for evidence and limits.
+
+## 2.4 — consistent visual hierarchy
+
+| Goal | Acceptance criteria | Delivery |
+| --- | --- | --- |
+| G19. Consistent typography | Self-hosted licensed Geist Sans; shared type styles; 16px explanatory text, 14px controls/tables and 12px secondary metadata; tabular numeric values. | Implemented in 2.4 |
+| G20. Reach the task sooner | Less framing, compact phone navigation and optional tools below the primary task, without removing functionality. | Implemented in 2.4 |
+| G21. Preserve reliable planning | Saved-plan format and calculations unchanged; regression suite and light/dark responsive browser checks. | Verified in 2.4 |

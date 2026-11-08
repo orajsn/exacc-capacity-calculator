@@ -80,3 +80,10 @@ The five-minute first-use target in PRODUCT_GOALS.md still needs an independent 
 - Palette tests require at least 4.5:1 for checked normal/muted/link/placeholder text on supported surfaces, primary-button text and status combinations, and 3:1 for keyboard focus against control surfaces. This is a scoped contrast check, not a claim of full WCAG certification.
 - Mobile balances and status remain visible with extra controls collapsed. More/Less uses an accessible expanded state; existing short-screen flow and measured bottom clearance remain in place.
 - Screen-only dark tokens preserve light print styles. Review caught and fixed the disabled-primary-button hover cascade so muted text retains its dark neutral background.
+
+## 2.4.0 typography and task hierarchy
+
+- Existing calculation, import, save and theme tests remain unchanged and pass. The font is self-hosted, and its checksum matches the pinned official asset; its OFL license is included.
+- Browser checks at 320, 390, 768 and 1280px found no page-level horizontal overflow in the checked views. Light desktop and tablet, dark mobile, optional controls and compact capacity feedback were inspected.
+- The browser reported loaded fonts and Geist Sans as the selected body family. This does not certify the rendered font of every glyph; system fallbacks remain available.
+- This pass checks responsive layout in a desktop browser. Physical-device keyboard behavior, independently timed usability and browser print pagination remain unverified.

@@ -1,5 +1,15 @@
 # Changelog
 
+## 2.4.0 — 2026-11-08
+
+### Improved
+
+- Added self-hosted Geist Sans with its open font license; no external font service is used.
+- Unified typography around readable body, control, caption and heading styles, with aligned numeric columns.
+- Reduced enclosing frames and softened navigation so working inputs and results receive more emphasis. Phone navigation and starting choices use space more efficiently.
+- Moved optional imports and conventional VM clusters below AVMC editing, and saved-option comparisons below the main comparison tools. All features remain available.
+- Kept warm accents, light/dark/system appearance, compact phone balances and existing sizing behavior.
+
 ## 2.3.0 — 2026-11-08
 
 ### Added

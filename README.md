@@ -123,4 +123,4 @@ Static HTML/CSS/JavaScript; no build or runtime dependency. Serve this directory
 
 Run npm test for the public model/integration suite. Update model.js, package.json, CHANGELOG.md and the CSS/script version queries in index.html together. Keep customer files, examples derived from customer data and internal evidence outside this public repository. Verify the published commit and changed assets after deployment.
 
-ui.css owns the shared visual system, responsive layouts and print styles. The independent Oracle-inspired appearance uses system fonts and no proprietary brand assets. This is not an official Oracle application or deployment approval.
+ui.css owns the shared visual system, responsive layouts and print styles. Self-hosted Geist Sans provides consistent typography, with system fallbacks for unavailable glyphs or loading failures. Its license and pinned source are in assets/fonts. The design uses shared type and spacing tokens, restrained warm accents and task-focused forms and tables. This is an independent application, not an official Oracle, Vercel or IBM product or deployment approval.
