@@ -8,8 +8,9 @@ function showStartChoices(open=true){
 function startFromTemplate(kind){
  requestPlanTransition(async()=>{
   const next=window.ExaStarts.create(kind,{model:M,topology:T,library:L,rules:R,requirements:window.ExaRequirements});
+  markStartingHardware(kind==='quick'?next.sites[0]:null);
   activatePlan(next,{sourceKept:true,label:kind==='quick'?'Quick check · not saved on this device':'Illustrative example · not saved on this device'});
-  goGuideStep(kind==='example'?2:1);
+  goGuideStep(2);
   if(kind==='example'){ $('panel-topology').open=true;message('This is an editable example, not a customer deployment. Changes stay in this tab until you save on the device or download a backup.'); }
  });
 }
@@ -19,7 +20,16 @@ function initEntryPoints(){
  $('start-quick').onclick=()=>startFromTemplate('quick');
  $('start-example').onclick=()=>startFromTemplate('example');
  $('start-customer').onclick=()=>{showPlanLibrary(true);$('library-create-details').open=true;$('new-plan-customer').focus();};
- if(!libraryRecords.length&&!hasUnsavedChanges()&&state.sites.length===1&&!site().clusters.length)showStartChoices(true);
+ // Let device-library discovery and recovery finish before choosing an empty
+ // workbench. Changing the initial signature earlier would suppress its library.
+ const startingSignature=planSignature(),generation=libraryGeneration;
+ Promise.resolve(libraryReady).then(()=>{
+  if(generation!==libraryGeneration||startingSignature!==planSignature()||libraryRecords.length||libraryBinding||hasUnsavedChanges()||startChoicesOpen||!$('plan-library').hidden||!$('draft-recovery').hidden||state.sites.length!==1||site().clusters.length)return;
+  const next=window.ExaStarts.create('quick',{model:M,topology:T,library:L,rules:R,requirements:window.ExaRequirements}),error=libraryError;
+  markStartingHardware(next.sites[0]);
+  activatePlan(next,{sourceKept:true,label:'Quick check · not saved on this device'});goGuideStep(2);
+  if(error){libraryError=error;renderPlanContext();}
+ });
 }
 function openFindingAncestors(element){
  for(let p=element?.parentElement;p;p=p.parentElement)if(String(p.tagName).toLowerCase()==='details')p.open=true;

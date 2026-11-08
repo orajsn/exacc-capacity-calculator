@@ -77,3 +77,11 @@ No new hardware formulas, customer data, dependencies or shared storage service 
 | G19. Consistent typography | Self-hosted licensed Geist Sans; shared type styles; 16px explanatory text and controls, 14px tables and secondary metadata; tabular numeric values. | Implemented in 2.4 |
 | G20. Reach the task sooner | Less framing, compact phone navigation and optional tools below the primary task, without removing functionality. | Implemented in 2.4 |
 | G21. Preserve reliable planning | Saved-plan format and calculations unchanged; regression suite and light/dark responsive browser checks. | Verified in 2.4 |
+
+## 3.0 — allocation workbench
+
+| Goal | Acceptance criteria | Delivery |
+| --- | --- | --- |
+| G22. Start with the calculation | Clean first use opens blank Allocations with explicit hardware assumptions; main editing and live diagram take priority over introductory content. | Implemented in 3.0 |
+| G23. Keep existing work safe | Delayed library discovery, existing plans, recovery and user edits cannot be overwritten by startup defaults. New-plan replacement remains guarded. | Regression tested in 3.0 |
+| G24. Reduce navigation overhead | Direct task views, compact metadata and optional tools; no welcome cards or repeated Next prompts. Saved hardware plans reopen at useful editing controls. | Implemented in 3.0 |

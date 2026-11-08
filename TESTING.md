@@ -93,3 +93,11 @@ The five-minute first-use target in PRODUCT_GOALS.md still needs an independent 
 - Existing model, save/import, theme and contrast checks remain passing. No calculator formulas or saved-plan schema changed.
 - Screen type roles increase to 14px secondary text and 16px UI/body text. Print caption/UI roles retain their previous sizes.
 - Starting-choice SVGs are decorative and hidden from assistive technology; the layer explainer uses a captioned figure and ordered text list. It illustrates resource hierarchy, not a physical storage map.
+
+## 3.0.0 allocation workbench
+
+- Startup tests wait for library discovery and verify a blank assumed-hardware allocation check with no automatic writes. Existing saved plans, recovery notices, user choices and edits made during discovery retain priority.
+- View tests cover direct tab navigation, explicit starting assumptions, actual hardware summaries, unselected workload hardware and Change hardware without modifying allocations.
+- Saved-plan reopening chooses Allocations for known hardware and Machine for workload sizing, preserves payload contents, and rejects a delayed load when newer working edits arrive.
+- Browser scenarios cover adding an AVMC, changing ACD slots with immediate capacity/map feedback, changing DB-server count, comparison preview/cancel and device save/reload/reopen.
+- Narrow tabs use two rows at 320px instead of clipping Review. Physical mobile keyboards, independent user timing and print pagination remain unverified.

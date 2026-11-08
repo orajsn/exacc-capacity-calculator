@@ -1,5 +1,18 @@
 # Changelog
 
+## 3.0.0 — 2026-11-08
+
+### Redesigned
+
+- Opens directly into a blank allocation workbench on first use. The initial two-node X11M Standard hardware is explicitly a starting assumption, with Change hardware beside it. No plan is saved automatically.
+- Replaced welcome cards and the decorative layer guide with a compact New plan choice. Machine, Allocations, Compare and Review are directly accessible views, without repeated Next-step prompts.
+- Put editable AVMC allocations alongside the live storage diagram on larger screens. Reduced framing, repeated explanations and header space; optional tools remain below the working area.
+- Consolidated customer metadata and copy actions under Plan details, and moved saving instructions to linked help at the bottom.
+- Saved hardware plans reopen in Allocations; workload plans reopen in Machine. Existing saved plans, recovery prompts and unsaved edits take precedence over the new first-use default.
+- Narrow-screen tabs wrap into two rows when needed. Light/dark appearance, readable type and compact live balances remain available.
+
+Saved JSON remains compatible. Resource calculations and hardware rules are unchanged.
+
 ## 2.5.0 — 2026-11-08
 
 ### Improved

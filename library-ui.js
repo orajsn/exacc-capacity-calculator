@@ -10,7 +10,7 @@ function planHasUnkeptChanges(){return hasUnsavedChanges()&&!planSavedHere();}
 function renderPlanContext(){
  const p=state.project||{};
  const changed=planContextGeneration!==libraryGeneration;
- $('plan-context-name').textContent=`${p.customer||'Customer not named'} / ${p.name||'Untitled plan'}`;
+ $('plan-context-name').textContent=`${p.customer?p.customer+' / ':''}${p.name||'Untitled plan'}`;
  $('plan-context-owner').textContent=p.owner?`Owner: ${p.owner}`:'Owner alias is optional';
  $('plan-context-id').textContent=p.id?`Plan ID · ${p.id}`:'Plan ID will be assigned';
  for(const [id,key]of [['plan-customer','customer'],['plan-title','name'],['plan-owner','owner'],['project-name','name'],['project-notes','notes']]){const el=$(id);if(el&&(changed||document.activeElement!==el))el.value=p[key]||'';}
@@ -96,6 +96,7 @@ async function openStoredPlan(id){
  if(before!==planSignature()&&planHasUnkeptChanges())throw Error('The working plan changed while opening. Your edits have been kept; open the saved plan again when ready.');
  if(loaded.meta.archivedAt)throw Error('Restore this archived plan before opening it.');
  activatePlan(next,{binding:loaded.meta,auto:true,label:'Opened from Saved plans · JSON backup recommended'});
+ goGuideStep(planningIntent(site())==='allocation'?2:1);
 }
 async function saveWorkingCopy(){
  await libraryReady;if(!libraryStore){message('Device storage is unavailable. Download a backup instead.');return false;}

@@ -371,11 +371,6 @@ body:has(#plan-library:not([hidden])){padding-bottom:0}
 }
 
 /* Guided starts, explicit sizing provenance and actionable review. */
-.start-options{background:transparent;border:0;padding:var(--s6) 0;margin:var(--s4) 0}
-.start-options .eyebrow{color:var(--accent)}.start-options h2{font-size:29px}.start-options .section-top{margin-bottom:var(--s6)}
-.start-cards{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:var(--s5)}
-.start-cards article{display:flex;flex-direction:column;gap:var(--s3);background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);padding:var(--s6)}
-.start-type{font-size:var(--text-caption);letter-spacing:1px;font-weight:600;color:var(--muted)}.start-cards h3{font-size:var(--heading-small);margin:0}.start-cards p{font-size:var(--text-ui);line-height:1.7;color:var(--muted);margin:0 0 var(--s3)}.start-cards button{margin-top:auto;align-self:flex-start;white-space:normal}
 body:has(#start-options:not([hidden])){padding-bottom:0}
 #library-heading:focus,#start-heading:focus,#guide-heading:focus{outline:none}
 .requirement-source-status{padding:var(--s3) 0 var(--s4);margin:var(--s2) 0;border-bottom:1px solid var(--line)}.requirement-source-status p{margin-bottom:var(--s2)}.requirement-source-status button{font-size:var(--text-ui);min-height:34px}
@@ -409,7 +404,6 @@ body:has(#start-options:not([hidden])){padding-bottom:0}
 }
 @media screen and (max-width:760px){
  :root{--dock-clearance:228px}
- .start-options{padding:var(--s5);margin:var(--s4) 0}.start-options .section-top{flex-direction:column}.start-options h2{font-size:25px}.start-cards{grid-template-columns:1fr}.start-cards article{padding:var(--s5)}
  .local-dock{grid-template-columns:1fr;gap:7px;padding:10px 14px;padding-bottom:calc(10px + env(safe-area-inset-bottom,0px))}
  .dock-context{grid-column:1;grid-row:1;display:grid;grid-template-columns:minmax(0,1fr) auto;gap:2px 10px}.dock-context strong,.dock-context>span{grid-column:1}.dock-scope-control{grid-column:2;grid-row:1/4;flex-direction:column;align-items:flex-end;margin:0}.dock-scope-control select{max-width:125px}
  .dock-metrics{grid-column:1;grid-row:2;gap:8px}.dock-capacity{padding-left:8px}.dock-capacity:first-child{border-left:0;padding-left:0}.dock-capacity output{font-size:18px}.dock-capacity small{display:none}.dock-capacity>span{font-size:var(--text-caption)}
@@ -515,9 +509,6 @@ body:has(#start-options:not([hidden])){padding-bottom:0}
  table small{font-size:var(--text-caption)}td button{min-height:40px;font-size:var(--text-ui)}
  input,select,textarea{font-size:var(--text-body)}
  output,.metric strong,.resource-card strong,.editor-summary-cost{font-variant-numeric:tabular-nums}
- .start-options .section-top{margin-bottom:24px}.start-cards{gap:24px}
- .start-cards h3{font-size:var(--heading-small)}.start-cards p{font-size:var(--text-body);line-height:1.5}
- .start-cards button{min-height:44px;font-size:var(--text-ui)}
  .dock-actions button,#dock-findings{font-size:var(--text-ui);min-height:40px}
  .dock-capacity>span,.dock-capacity small,.dock-detail strong{font-size:var(--text-caption)}
  .local-dock[data-level=draft] .dock-capacity output{font-size:18px}
@@ -535,8 +526,6 @@ body:has(#start-options:not([hidden])){padding-bottom:0}
  .guide-steps{margin-bottom:16px}.guide-steps button{font-size:var(--text-ui);min-height:48px;padding:8px}
  .guide-header{padding-bottom:16px}.guide-header h2{font-size:28px}
  section.guide-panel{padding:16px}.editor-body{padding:16px}
- .start-options{padding:16px 0;margin:0}.start-options h2{font-size:28px}
- .start-cards{gap:12px}.start-cards article{padding:16px;gap:8px}.start-cards p{font-size:var(--text-ui);margin:0 0 4px}
  .dock-actions button,#dock-findings{min-height:44px}.dock-metrics{gap:8px}
  .dock-context strong,.dock-context>span,.dock-detail strong,.dock-capacity>span{font-size:var(--text-caption)}
  .dock-capacity output{font-size:18px;overflow-wrap:anywhere}
@@ -554,32 +543,13 @@ body:has(#start-options:not([hidden])){padding-bottom:0}
  .dock-context strong,.dock-context>span,.dock-detail strong,.dock-capacity>span,.dock-capacity small{font-size:14px}
  .dock-capacity output{font-size:24px}
  .version,.eyebrow,.start-type,.theme-control{font-size:14px}
- .start-cards h3{font-size:24px;letter-spacing:-.4px}
- .start-cards p{font-size:16px;line-height:1.6}
- .start-cards article{border-top:3px solid var(--accent);gap:16px}
- .choice-heading{display:flex;align-items:center;gap:12px}
- .choice-icon{width:40px;height:40px;flex:none;fill:none;stroke:var(--accent);stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round;padding:4px;background:var(--accent-soft);border-radius:8px}
- .start-type{letter-spacing:.6px;color:var(--muted)}
- .planning-flow{margin:32px 0 16px;padding:24px 0;border-top:1px solid var(--line)}
- .planning-flow figcaption{font-size:20px;font-weight:600;margin-bottom:16px}
- .planning-flow ol{list-style:none;display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:24px;padding:0;margin:0}
- .planning-flow li{position:relative;display:grid;gap:4px;padding:16px;border:1px solid var(--line);border-radius:8px;background:var(--surface);min-width:0}
- .planning-flow li:not(:last-child)::after{content:'→';position:absolute;right:-21px;top:50%;transform:translateY(-50%);color:var(--accent);font-size:20px}
- .flow-number{font-size:14px;color:var(--accent);font-variant-numeric:tabular-nums}
- .planning-flow strong{font-size:20px}.planning-flow li>span:last-child{font-size:16px;color:var(--muted)}
- .planning-flow p{font-size:16px;color:var(--muted);margin:16px 0 0}
 }
 @media screen and (max-width:760px){
- .start-cards article{gap:12px}.start-cards h3{font-size:24px}
- .planning-flow{margin-top:24px}.planning-flow ol{grid-template-columns:1fr;gap:16px}
- .planning-flow li{grid-template-columns:32px minmax(0,1fr);column-gap:12px;padding:12px 16px}
- .planning-flow .flow-number{grid-row:1/3;align-self:center}.planning-flow strong,.planning-flow li>span:last-child{grid-column:2}
- .planning-flow li:not(:last-child)::after{content:'↓';top:auto;bottom:-19px;right:auto;left:26px;transform:none;line-height:20px}
  .dock-capacity output{font-size:18px}.dock-metrics{gap:6px}
  .editor-summary-cost{font-size:22px}.editor-summary-cost small{max-width:140px}
  .guide-header p{font-size:16px}
 }
-@media print{:root{--text-caption:12px;--text-ui:14px}.planning-flow{display:none}.choice-icon{display:none}}
+@media print{:root{--text-caption:12px;--text-ui:14px}}
 @media screen and (max-width:480px){
  .cluster-editor>summary{grid-template-columns:minmax(0,1fr) 24px;gap:4px 12px}
  .cluster-editor>summary::before{grid-column:2;grid-row:1/3}
@@ -587,4 +557,107 @@ body:has(#start-options:not([hidden])){padding-bottom:0}
  .editor-summary-count{grid-column:1;grid-row:2}
  .editor-summary-cost{grid-column:1/-1;grid-row:3;display:flex;align-items:baseline;flex-wrap:wrap;gap:4px 8px;text-align:left;margin-top:8px}
  .editor-summary-cost small{max-width:none}
+}
+
+/* Engineering workbench: the editable allocation and live machine share the canvas. */
+@media screen{
+ main{max-width:1600px;padding:0 24px 24px}
+ .masthead{padding:12px 24px;border-top:0;background:var(--surface);gap:16px}
+ .masthead>div:first-child{display:flex;align-items:baseline;gap:12px;flex-wrap:wrap}
+ .masthead .eyebrow{font-size:16px;letter-spacing:0;margin:0;text-transform:none}
+ .masthead h1{font-size:20px;letter-spacing:-.4px;margin:0;font-weight:600}
+ .header-meta{gap:12px}.theme-control{font-size:14px}.version{border:0;padding:0}
+ .toolbar{padding:12px 0;gap:12px;border-bottom:1px solid var(--line)}
+ .toolbar button,.toolbar .button{background:transparent;font-size:14px;min-height:40px;padding:8px 12px}
+ #save-status{font-size:14px;max-width:35ch}
+ .plan-context{grid-template-columns:minmax(0,1fr) auto auto;gap:8px 20px;padding:12px 0;margin:0 0 20px}
+ .plan-context>.working-plan{grid-column:1;grid-row:1}
+ .working-plan strong{font-size:16px}.working-plan p{font-size:14px;margin:2px 0 0}
+ .plan-context>.actions{grid-column:3;grid-row:1}
+ .plan-context>details:not([open]){grid-column:2;grid-row:1}
+ .plan-context>details[open]{grid-column:1/-1;grid-row:2;border-top:1px solid var(--line);padding-top:8px}
+ .plan-context>details summary{font-size:14px;font-weight:400;min-height:40px}
+ .plan-context #plan-save-device{background:var(--surface);color:var(--ink);border-color:var(--line-strong);font-size:14px;min-height:40px}
+ .workspace{grid-template-columns:176px minmax(0,1fr);gap:24px}
+ .machine-nav{padding-right:16px}.machine-nav .nav-intro,.machine-nav>.hint{display:none}
+ .nav-title h2{font-size:14px}.rack-icon{display:none}
+ .machine-nav nav{margin-top:8px}.machine-nav nav h3{font-size:14px;letter-spacing:0;text-transform:none}
+ .machine-nav button{font-size:14px;padding:8px;min-height:40px}
+ .machine-nav>#add-site{margin-top:12px;background:transparent}
+ .machine-actions button{min-height:40px}
+ .guide-steps{display:flex;gap:4px;overflow-x:auto;border:0;border-bottom:1px solid var(--line);margin-bottom:16px;background:transparent}
+ .guide-steps button{flex:0 0 auto;min-height:44px;padding:12px 16px;font-size:14px;border:0;border-radius:0}
+ .guide-steps button[aria-current=step]{background:transparent;font-weight:600;color:var(--accent)}
+ .guide-steps button[aria-current=step]::after{height:2px}
+ .guide-header{display:grid;grid-template-columns:minmax(0,1fr) auto;column-gap:16px;row-gap:6px;padding:0 0 12px}
+ .guide-header h2{grid-column:1;grid-row:1;font-size:24px;margin:0;letter-spacing:-.4px}
+ #guide-machine{grid-column:2;grid-row:1;text-transform:none;font-size:14px;letter-spacing:0;align-self:center;text-align:right;color:var(--muted)}
+ .guide-header p{grid-column:1/-1;margin:0;font-size:16px;max-width:none}
+ #guide-context{display:none}
+ .workbench-hardware{display:flex;align-items:center;justify-content:space-between;gap:12px;border-bottom:1px solid var(--line);padding:0 0 16px;margin-bottom:20px}
+ #workbench-hardware-info{font-size:14px;color:var(--muted)}
+ #workbench-hardware-edit{font-size:14px;min-height:40px;flex:none;background:transparent}
+ section.guide-panel{padding:0;border:0;background:transparent;border-radius:0;margin-bottom:24px}
+ .section-top{margin-bottom:16px;align-items:center}
+ .allocation-heading h2{font-size:18px;font-weight:500;margin:0}
+ .allocation-heading #add-cluster{min-height:44px;font-size:16px}
+ .allocation-workspace{grid-template-columns:minmax(0,1.1fr) minmax(300px,.9fr);gap:24px}
+ .allocation-editor>#manual-compute-controls .check{margin:0 0 16px}
+ .empty-editor{min-height:140px;display:flex;align-items:center;justify-content:center;background:transparent;border:1px dashed var(--line-strong);font-size:16px;padding:24px}
+ .cluster-editor{border:0;border-bottom:1px solid var(--line);border-radius:0;background:transparent;margin-bottom:24px}
+ .cluster-editor>summary{padding:12px 0}
+ .cluster-editor[open]>summary{background:transparent;border-bottom:1px solid var(--line)}
+ .editor-body{padding:16px 0}.editor-summary-name{font-size:18px}
+ .allocation-visual{padding:0 0 0 24px;background:transparent;border:0;border-left:1px solid var(--line);border-radius:0}
+ .allocation-visual h3{font-size:18px;font-weight:500;margin:0 0 8px}
+ .allocation-visual>.hint{font-size:14px;margin-bottom:16px}
+ .topology-machine-title{gap:8px}.topology-machine-title strong{font-size:16px}
+ .topology-bar{height:18px;border-radius:2px;margin:16px 0}
+ .topology-legend{gap:12px;font-size:14px}
+ .topology-avmc{background:var(--surface);border-radius:4px}
+ .optional-panel,.current-panel{margin-bottom:8px}.optional-panel>summary,.current-panel>summary{font-size:16px;padding:14px 0;font-weight:500}
+ .guide-footer{display:none}
+ .local-dock{box-shadow:none}
+ .dock-actions #dock-next,.dock-actions #dock-review{display:none}
+ #save-help{margin:24px 0 0;padding:16px 0 0;border:0;border-top:1px solid var(--line)}
+ .new-plan-panel{max-width:760px;margin:32px auto;padding:24px 0}
+ .new-plan-panel h2{font-size:24px;margin:0}.new-plan-panel p{font-size:16px}
+ .new-plan-actions{display:flex;gap:12px;flex-wrap:wrap;margin:24px 0}
+ .new-plan-actions button{min-height:44px}
+}
+@media screen and (max-width:1100px){
+ .allocation-workspace{grid-template-columns:minmax(0,1fr)}
+ .allocation-visual{position:static;max-height:none;border:0;border-top:1px solid var(--line);padding:20px 0 0}
+}
+@media screen and (max-width:760px){
+ main{padding:0 16px 20px}.masthead{padding:12px 16px;gap:8px;flex-wrap:wrap}
+ .header-meta{width:auto;margin-left:auto;gap:12px}.masthead .theme-control{font-size:14px}.version{display:none}
+ .toolbar{display:block}.toolbar .actions{gap:8px}.toolbar .actions>*{flex:0 1 auto;min-height:44px;padding:8px}
+ #save-status{display:block;text-align:left;margin-top:8px;max-width:none}
+ .plan-context{grid-template-columns:minmax(0,1fr) auto;gap:4px 12px;margin-bottom:16px;padding:12px 0}
+ .plan-context>.working-plan{grid-column:1/-1;grid-row:1}.plan-context>details:not([open]){grid-column:1;grid-row:2}
+ .plan-context>.actions{grid-column:2;grid-row:2}.plan-context>details[open]{grid-row:3}
+ .plan-context #plan-save-device{min-height:44px}
+ .workspace{display:block}
+ .machine-nav{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:4px 12px;border:0;border-bottom:1px solid var(--line);padding:0 0 12px;margin-bottom:12px}
+ .machine-nav>.nav-title{grid-column:1;grid-row:1}.machine-nav>#add-site{grid-column:2;grid-row:1;margin:0;min-height:44px}
+ .machine-nav nav{grid-column:1/-1;grid-row:2;display:flex;margin:0;overflow-x:auto;max-height:150px}
+ .machine-actions{grid-column:1/-1;grid-row:3;display:flex;border:0;margin:0;padding:0;gap:8px}
+ .machine-actions button{min-height:44px}
+ .guide-steps{gap:0;margin-bottom:16px}.guide-steps button{flex:1;padding:12px 6px;font-size:14px;white-space:nowrap}
+ .guide-header{display:block}.guide-header h2{font-size:24px}#guide-machine{font-size:14px;text-align:left;margin-bottom:4px}
+ .guide-header p{font-size:16px;margin-top:8px}
+ .workbench-hardware{align-items:flex-start;gap:8px;margin-bottom:16px}.workbench-hardware button{min-height:44px;max-width:120px;white-space:normal}
+ .allocation-workspace{display:block}.allocation-visual{margin-top:24px}
+ .allocation-heading h2{font-size:18px}.section-top{gap:12px}
+ .new-plan-panel{margin:16px 0;padding:16px 0}.new-plan-actions{flex-direction:column;align-items:stretch}
+}
+@media print{.workbench-hardware,.new-plan-panel{display:none!important}}
+@media screen and (max-width:760px){
+ .guide-steps{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));overflow:visible}
+ .guide-steps button{min-width:0;padding:12px 2px;white-space:normal}
+}
+@media screen and (max-width:380px){
+ .guide-steps{grid-template-columns:repeat(2,minmax(0,1fr))}
+ .guide-steps button{justify-content:center}
 }

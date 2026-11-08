@@ -26,7 +26,7 @@ function renderClusterEditors(s) {
      <div class="editor-fields"><label>ECPUs per VM<input type="number" min="${c.allocationKind==='new'?40:1}" step="1" value="${c.cpu}" data-cluster="${i}" data-key="cpu" ${known?'':'readonly'}></label><label>Memory per ECPU (GB)<input type="number" min="2" max="5" step="0.5" value="${c.memoryPerCPU}" data-cluster="${i}" data-key="memoryPerCPU" ${known?'':'readonly'}></label></div>
      <p id="allocation-total-${i}" class="hint allocation-total"></p>
      ${known?memoryChecklist(c,i):'<p class="hint">These allocations come from the selected hardware option. Change workload needs and compare again to resize.</p>'}
-    </details>`:s.checkCompute?'<p class="hint">CPU and memory allocations will be set in step 3.</p>':'<p class="hint">CPU and memory checks are off for this machine.</p>'}
+    </details>`:s.checkCompute?'<p class="hint">CPU and memory allocations will be set in Compare.</p>':'<p class="hint">CPU and memory checks are off for this machine.</p>'}
     <div class="editor-actions"><button class="remove" data-remove="${i}" aria-label="Remove ${escapeHTML(c.name)}">Remove AVMC</button></div>
    </div>
   </details>`).join('') : '<p class="empty-editor">No AVMCs yet. Use Add AVMC to start a layout.</p>';
@@ -37,7 +37,7 @@ function updateEditorSummaries(s,r) {
   const name=$('editor-name-summary-'+i),count=$('editor-count-summary-'+i),compute=$('compute-summary-'+i);
   if(name)name.textContent=c.name;
   if(count)count.textContent=`${c.slots} max ACD${c.slots===1?'':'s'}`;
-  if(compute)compute.textContent=hardwareReady(s)?`CPU & memory · ${c.cpu} ECPUs/VM · ${c.memoryPerCPU} GB/ECPU`:'Previous allocation · compare options again in step 3';
+  if(compute)compute.textContent=hardwareReady(s)?`CPU & memory · ${c.cpu} ECPUs/VM · ${c.memoryPerCPU} GB/ECPU`:'Previous allocation · compare options again in Compare';
   const total=$('allocation-total-'+i);if(total)total.textContent=hardwareReady(s)&&r?`Across ${c.nodes.length} selected DB servers: ${fmt(c.cpu*c.nodes.length)} ECPUs allocated · ${fmt(r.costs[i].memory)} GB estimated memory.`:'Previous allocation. Compare workload options again before using these totals.';
  });
 }
@@ -85,7 +85,7 @@ function renderTopology(s,r,isPreview=false) {
  $('allocation-map').innerHTML=`
   <div class="topology-machine">
    <div class="topology-machine-title"><strong>${machineTitle}</strong><span class="map-mode">${isPreview?'Preview · not applied':ready?'Editing now':'Topology draft'}</span></div>
-   <p>${ready?`${s.nodes.length} DB servers · ${fmt(r.capacity)} GB total local storage`:'Choose hardware in step 3 to calculate local storage.'}</p>
+   <p>${ready?`${s.nodes.length} DB servers · ${fmt(r.capacity)} GB total local storage`:'Choose hardware in Compare to calculate local storage.'}</p>
    ${ready?`<div class="topology-bar" role="img" aria-label="${fmt(overhead)} GB AVMC overhead and extra allowance, ${fmt(acd)} GB reserved for ACD slots, ${fmt(r.other)} GB other allocations, ${fmt(r.free)} GB free">${segments.filter(x=>x[1]>0).map(([name,value,kind])=>`<span class="map-fill-${kind}" style="width:${100*value/scale}%" title="${name}: ${fmt(value)} GB"></span>`).join('')}</div>
    <div class="topology-legend">${segments.map(([name,value,kind])=>`<span><i class="map-fill-${kind}"></i>${name}: <strong>${fmt(value)} GB</strong></span>`).join('')}</div>
    ${nodeIssues?'<p class="negative">Local storage is over capacity on at least one DB server.</p>':''}`:''}

@@ -1,6 +1,8 @@
 'use strict';
 let guideStep=1;
-const guideTitles=['Machines','AVMCs & workloads','Compare options','Review & save'];
+const guideTitles=['Machine','Allocations','Compare','Review'];
+let startingHardware=null;
+function markStartingHardware(machine){startingHardware=machine?{uid:machine.uid,profile:machine.profile,nodes:machine.nodes.length}:null;}
 function planningIntent(s){return s.planningIntent||(s.clusters.some(c=>c.requirements)?'workload':'allocation');}
 function hardwareReady(s){return planningIntent(s)==='allocation'||s.hardwareChosen!==false;}
 function newPlanningMachine(name='Machine 1',intent='workload'){
@@ -22,19 +24,26 @@ function refreshJourney(){
  $('mode-workload').setAttribute('aria-pressed',String(intent==='workload'));
  $('mode-allocation').setAttribute('aria-pressed',String(intent==='allocation'));
  const instructions=intent==='workload'?[
-  'Add one entry for each ExaC@C infrastructure you are sizing. Name the site and machine; hardware will be suggested in step 3.',
-  'Add the planned AVMCs and maximum ACD slots. Enter workload ECPUs and RAM inside each AVMC. Mark any requirements that are still missing.',
-  'Review the sizing assumptions, compare X11M DB-server options, then choose an option for this machine. Buffers are warnings, not mandatory limits.',
-  'Review the selected machine and the all-machine summary. Save the JSON to continue later; use Print / PDF for a discussion copy.'
+  'Name the machine and site; hardware can be sized from its workloads.',
+  'Add AVMCs, reserved ACD slots and workload CPU/RAM needs.',
+  'Compare hardware options and review sizing assumptions.',
+  'Review capacity and open checks, then save the plan.'
  ]:[
-  'Add one entry for each ExaC@C infrastructure. Copy its hardware and any other allocations from the console or agreed specification.',
-  'Add the AVMCs, maximum ACD slots and CPU/memory allocations. Use the existing console values or your proposed allocation.',
-  'Compare AVMC layouts or check whether another AVMC will fit. Preview an option before applying it to this plan.',
-  'Review the calculated capacity and warnings. Compare with console figures if available, then download a backup.'
+  'Set hardware and other allocations from the console or agreed specification.',
+  'Edit AVMC allocations and see their effect on remaining capacity.',
+  'Compare layouts or check whether another AVMC will fit.',
+  'Review capacity and open checks, then save the plan.'
  ];
  $('guide-instruction').textContent=instructions[guideStep-1];
  $('guide-machine').textContent=`${s.siteName?`${s.siteName} / `:''}${s.name}`;
- $('guide-context').textContent=`Step ${guideStep} of 4 · ${state.sites.length} machine${state.sites.length===1?'':'s'} in this plan`;
+ $('guide-context').textContent=`${state.sites.length} machine${state.sites.length===1?'':'s'} in this plan`;
+ const hardwareInfo=$('workbench-hardware-info');
+ if(hardwareInfo){
+  $('workbench-hardware-edit').hidden=guideStep===1;
+  const assumed=ready&&!!startingHardware&&startingHardware.uid===s.uid&&startingHardware.profile===s.profile&&startingHardware.nodes===s.nodes.length;
+  hardwareInfo.textContent=ready?`Planning hardware: ${M.PROFILES[s.profile].label} · ${s.nodes.length} DB servers${assumed?' · starting assumption':' · confirm against your machine'}`:'Hardware not selected · compare workload options';
+  hardwareInfo.dataset.state=ready?(assumed?'assumed':'selected'):'unselected';
+ }
  for(let i=1;i<=4;i++)$('guide-step-'+i).setAttribute('aria-current',i===guideStep?'step':'false');
  const panels={
   'panel-machine':guideStep===1,'panel-avmc':guideStep===2,'panel-before':guideStep===2&&ready,
@@ -54,21 +63,22 @@ function refreshJourney(){
  $('manual-compute-controls').hidden=intent==='workload';
  $('design-heading').textContent=intent==='workload'?'AVMCs and workload needs':'Edit AVMC allocations';
  $('draft-hardware-note').hidden=intent!=='workload';
- $('draft-hardware-note').textContent=ready?`Selected option: ${M.PROFILES[s.profile].label}, ${s.nodes.length} DB servers. You can compare other options in step 3.`:'Hardware is not selected yet. Add the workload needs in step 2, then compare hardware in step 3.';
+ $('draft-hardware-note').textContent=ready?`Selected option: ${M.PROFILES[s.profile].label}, ${s.nodes.length} DB servers. Other options are available in Compare.`:'Hardware is not selected. Enter workload needs in Allocations, then compare hardware.';
  $('review-needs-hardware').hidden=guideStep!==4||ready;
  $('review-partial').hidden=guideStep!==4||!s.clusters.some(c=>c.requirements?.incomplete);
  $('sizing-path-note').hidden=intent!=='workload';
  $('guide-back').disabled=guideStep===1;
  $('guide-next').hidden=guideStep===4;
- $('guide-next').textContent=guideStep<4?`Next: ${guideTitles[guideStep]}`:'';
+ $('guide-next').textContent=guideStep<4?guideTitles[guideStep]:'';
  $('dock-next').hidden=guideStep===4;
- $('dock-next').textContent=guideStep<4?`Next: ${['','AVMCs','Compare','Review'][guideStep]}`:'';
+ $('dock-next').textContent=guideStep<4?guideTitles[guideStep]:'';
  $('dock-review').hidden=guideStep!==4;
- $('guide-footer-note').textContent=guideStep===4?'One backup file keeps all machines and options in this plan.':'You can revisit any step. Save on this device or download a backup to keep the plan.';
+ $('guide-footer-note').textContent='Save on this device or download a backup to keep the plan.';
  $('review-save').disabled=!!preview;
  $('review-add').textContent=active<state.sites.length-1?'Next machine':'Back to machines';
 }
 function initJourney(){
+ const hardwareEdit=$('workbench-hardware-edit');if(hardwareEdit)hardwareEdit.onclick=()=>goGuideStep(1);
  for(let i=1;i<=4;i++)$('guide-step-'+i).onclick=()=>goGuideStep(i);
  $('guide-back').onclick=()=>goGuideStep(guideStep-1);
  $('guide-next').onclick=()=>goGuideStep(guideStep+1);

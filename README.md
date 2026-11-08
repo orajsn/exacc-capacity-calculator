@@ -6,13 +6,13 @@ Choose System, Light or Dark under Appearance. Only this preference is remembere
 
 [Open the planner](https://orajsn.github.io/exacc-capacity-calculator/) · [Product goals](PRODUCT_GOALS.md) · [Release history](CHANGELOG.md) · [Test catalogue](TESTING.md)
 
-## Choose a starting point
+## Start calculating
 
-- **Quick capacity check:** choose known hardware and add AVMC/ACD reservations. It starts with local storage only; enable CPU/memory checks when the allocations are known.
-- **New customer plan:** open the customer/project form and use the full four-step workflow.
-- **Try an example:** explore an editable, illustrative production/DR plan. It does not save automatically or replace unsaved work without a choice.
+With no saved plans, the planner opens directly into a blank allocation check. It starts with a clearly labelled two-node X11M Standard hardware assumption, zero AVMCs and CPU/memory checks off. Use **Change hardware** to match your machine, then **Add AVMC** to see reservations and remaining local storage update together. This initial workspace is not saved automatically.
 
-The **Start** button returns to these choices. **Saved plans** opens device copies; **Download backup** saves a portable .json file; **Open plan file** reads that backup. Switching plans preserves the existing unsaved-work guard.
+Existing saved plans and recovery prompts retain priority on startup. **New plan** opens a compact choice of blank capacity check, customer plan or illustrative production/DR example. Switching plans preserves the unsaved-work guard.
+
+**Saved plans** opens device copies; **Download backup** saves a portable .json file; **Open plan file** reads that backup. Customer/project fields and Save as new copy are under **Plan details**. Saving help is at the bottom of the workspace and linked from the footer.
 
 ## Saved plans: customers, projects and owner labels
 
@@ -26,14 +26,14 @@ The **Start** button returns to these choices. **Saved plans** opens device copi
 
 An owner alias is a label, not a verified account. A Plan ID is a reference, not a password or an online retrieval code. Other people using the public calculator do not automatically see your plans. On another device/browser, open the plan's JSON first; entering the ID alone cannot retrieve data that is not there.
 
-## Plan each machine in four steps
+## Workbench views
 
-1. **Machines:** add one entry per ExaC@C infrastructure. Choose **Size a new machine** or **Check known hardware**. Hardware preset capacities are locked; Custom accepts verified console values.
-2. **AVMCs & workloads:** enter AVMC allocations or workload ECPU/RAM needs. Optionally import Excel/CSV and name the ACDs and databases. **Use database totals for sizing** is an explicit action.
-3. **Compare options:** compare hardware, alternative AVMC layouts or saved plans. Save separate growth and migration-overlap options without changing the working plan.
-4. **Review & save:** inspect the limiting resource, warnings and open checks. Download backup to resume, or download the report for all-machine executive and technical views.
+1. **Machine:** add one entry per ExaC@C infrastructure. Choose **Size a new machine** or **Check known hardware**. Hardware preset capacities are locked; Custom accepts verified console values.
+2. **Allocations:** edit AVMC allocations or workload ECPU/RAM needs alongside the live allocation diagram. Optionally import Excel/CSV and name the ACDs and databases. **Use database totals for sizing** is an explicit action.
+3. **Compare:** compare hardware, alternative AVMC layouts or saved plans. Save separate growth and migration-overlap options without changing the working plan.
+4. **Review:** inspect the limiting resource, warnings and open checks. Download backup to resume, or download the report for all-machine executive and technical views.
 
-The capacity bar keeps Next, Undo, Redo and Save available. Detailed inputs are optional. Buffers are preferred free capacity: missing a buffer warns; it does not reduce physical capacity.
+Switch views directly using the tabs. The capacity bar keeps balances, Undo and Redo available; More opens extra controls on phones. Detailed inputs are optional. Buffers are preferred free capacity: missing a buffer warns; it does not reduce physical capacity.
 
 The live bar shows remaining local storage, CPU and estimated memory. Choose **Whole machine** or an individual DB server; Review cards remain explicitly labelled whole-machine totals. A positive total does not hide a node shortage. Disabled or unavailable checks show no invented free capacity, and preview values remain labelled until applied.
 
