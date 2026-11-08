@@ -85,3 +85,14 @@ No new hardware formulas, customer data, dependencies or shared storage service 
 | G22. Start with the calculation | Clean first use opens blank Allocations with explicit hardware assumptions; main editing and live diagram take priority over introductory content. | Implemented in 3.0 |
 | G23. Keep existing work safe | Delayed library discovery, existing plans, recovery and user edits cannot be overwritten by startup defaults. New-plan replacement remains guarded. | Regression tested in 3.0 |
 | G24. Reduce navigation overhead | Direct task views, compact metadata and optional tools; no welcome cards or repeated Next prompts. Saved hardware plans reopen at useful editing controls. | Implemented in 3.0 |
+
+## 3.2 — public introduction and self-service guide
+
+| Goal | Acceptance criteria | Delivery |
+| --- | --- | --- |
+| G25. Make the purpose clear | A dedicated home page explains Autonomous ExaC@C scope, public/local privacy and limits, with clear capacity, workload, example and saved-plan actions. | Implemented in 3.2 |
+| G26. Make common cases teachable | Separate guide covers local capacity, workload sizing, groups/DR, import, options/growth, saving/sharing and result interpretation, with real generic screenshots and a sample CSV. | Implemented in 3.2 |
+| G27. Prefer a readable first visit | Light is the default; explicit Dark/System preferences remain available and remembered. Home/guide work on narrow screens. | Verified in 3.2 |
+| G28. Preserve work while learning | Home/guide load no plan data; help opened from the planner leaves working edits in place. CTA routing runs once and respects recovery, pending edits and user choices. | Regression tested in 3.2 |
+
+The guide documents supported cases and unassessed areas; it does not claim exhaustive Oracle supportability, physical-device certification or an independently measured first-use completion time.

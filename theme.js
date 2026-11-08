@@ -3,7 +3,7 @@
  const STORAGE_KEY='exacc-theme',MODES=Object.freeze(['system','light','dark']);
  const valid=value=>MODES.includes(value);
  function init(env){
-  const doc=env.document;let media=null,select=null,toggle=null,systemButton=null,controlsBound=false,mode='system',theme='light',destroyed=false;
+  const doc=env.document;let media=null,select=null,toggle=null,systemButton=null,controlsBound=false,mode='light',theme='light',destroyed=false;
   try{const saved=env.localStorage?.getItem(STORAGE_KEY);if(valid(saved))mode=saved;}catch{}
   try{media=env.matchMedia?.('(prefers-color-scheme: dark)')||null;}catch{}
   function render(){
@@ -30,7 +30,7 @@
   function systemChanged(){if(!destroyed&&mode==='system')render();}
   function preferenceChanged(event){
    if(destroyed||(event.key!==STORAGE_KEY&&event.key!==null))return;
-   mode=valid(event.newValue)?event.newValue:'system';render();
+   mode=valid(event.newValue)?event.newValue:'light';render();
   }
   render();
   if(doc.readyState==='loading')doc.addEventListener('DOMContentLoaded',bindControls,{once:true});else bindControls();

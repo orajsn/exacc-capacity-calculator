@@ -695,3 +695,7 @@ body:has(#start-options:not([hidden])){padding-bottom:0}
  .workbench-hardware{padding:12px;gap:8px}.cluster-editor{padding:0 12px}
 }
 @media print{.theme-toggle,.plan-menu{display:none!important}}
+.product-nav{display:flex;align-items:center;gap:20px;margin-left:auto;flex-wrap:wrap}
+.product-nav a{font-size:14px;min-height:44px;display:inline-flex;align-items:center;text-decoration:none}
+@media screen and (max-width:760px){.masthead{flex-wrap:wrap}.product-nav{order:3;width:100%;margin:0;gap:24px}}
+@media print{.product-nav{display:none}}

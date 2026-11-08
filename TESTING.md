@@ -108,3 +108,11 @@ The five-minute first-use target in PRODUCT_GOALS.md still needs an independent 
 - Menu interaction tests cover Escape/focus return, action dismissal and unchanged working calculations. File selection is not dismissed before the picker opens.
 - Browser checks cover theme switching, menu actions, save/reopen, new-plan return and light/dark narrow layouts. A phone popover overflow was found and corrected by bounding it to the toolbar.
 - Authentication is not part of the static release; do not interpret these UI checks as evidence of access control.
+
+## 3.2.0 public home and guide
+
+- Theme tests verify Light defaults on a dark OS, invalid/missing/deleted preference handling and preserved explicit Dark/System choices.
+- Navigation tests verify all four CTA routes, one-time query consumption, preserved unrelated URL parameters, real files/anchors/assets, and Home/Guide separation from calculator state. Race tests protect pending edits, recovery, saved plans and manual navigation.
+- Four genuine browser screenshots use generic examples: local capacity (one AVMC/two slots; 784GB allocated, 3,702GB free), workload sizing (40 ECPU/160GB RAM), named production/DR groups and device-local saved plans. No customer workbooks or plans are included.
+- Browser QA exercised all four starting actions, FAQ expansion, guide anchors, light/dark narrow layouts, inner table scrolling and actual planner-to-guide navigation with unsaved inputs retained.
+- Guide Oracle source links were reviewed on 8 November 2026. The existing numerical rule-check date remains separate. This does not add physical-device, independent-user timing or print-pagination certification.

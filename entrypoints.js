@@ -1,5 +1,10 @@
 'use strict';
 let startChoicesOpen=false;
+let plannerStartHandled=false;
+function plannerStartAction(search){const action=new URLSearchParams(search||'').get('start');return ['quick','workload','example','saved'].includes(action)?action:null;}
+function consumePlannerStartAction(){
+ try{if(!window.history?.replaceState||!window.location?.href)return;const url=new URL(window.location.href);url.searchParams.delete('start');window.history.replaceState(window.history.state,'',url.pathname+url.search+url.hash);}catch{}
+}
 function showStartChoices(open=true){
  showPlanLibrary(false);startChoicesOpen=open;$('start-options').hidden=!open;
  for(const id of ['planner-workspace','plan-context','local-dock','save','print','save-status','save-help'])$(id).hidden=open;
@@ -14,20 +19,32 @@ function startFromTemplate(kind){
   if(kind==='example'){ $('panel-topology').open=true;message('This is an editable example, not a customer deployment. Changes stay in this tab until you save on the device or download a backup.'); }
  });
 }
+function startWorkloadPlan(){
+ requestPlanTransition(async()=>{
+  const next={schema:'exacc-capacity/v1',ruleSet:{version:R.VERSION,checked:R.CHECKED,scope:R.SCOPE},sites:[newPlanningMachine()]};
+  L.ensureIdentity(next);T.ensureIds(next);validateWorkspace(next);markStartingHardware(null);
+  activatePlan(next,{sourceKept:true,label:'New workload plan · not saved on this device'});goGuideStep(1);
+ });
+}
 function initEntryPoints(){
- $('start-plan').onclick=()=>showStartChoices(true);
+ let userNavigationChanged=false;
+ $('start-plan').onclick=()=>{userNavigationChanged=true;showStartChoices(true);};
+ $('my-plans').addEventListener('click',()=>{userNavigationChanged=true;});
  $('start-return').onclick=()=>showStartChoices(false);
  $('start-quick').onclick=()=>startFromTemplate('quick');
  $('start-example').onclick=()=>startFromTemplate('example');
  $('start-customer').onclick=()=>{showPlanLibrary(true);$('library-create-details').open=true;$('new-plan-customer').focus();};
  // Let device-library discovery and recovery finish before choosing an empty
  // workbench. Changing the initial signature earlier would suppress its library.
- const startingSignature=planSignature(),generation=libraryGeneration;
+ const startingSignature=planSignature(),generation=libraryGeneration,view=guideStep,action=plannerStartAction(window.location?.search);
  Promise.resolve(libraryReady).then(()=>{
-  if(generation!==libraryGeneration||startingSignature!==planSignature()||libraryRecords.length||libraryBinding||hasUnsavedChanges()||startChoicesOpen||!$('plan-library').hidden||!$('draft-recovery').hidden||state.sites.length!==1||site().clusters.length)return;
-  const next=window.ExaStarts.create('quick',{model:M,topology:T,library:L,rules:R,requirements:window.ExaRequirements}),error=libraryError;
-  markStartingHardware(next.sites[0]);
-  activatePlan(next,{sourceKept:true,label:'Quick check · not saved on this device'});goGuideStep(2);
+  if(plannerStartHandled)return;plannerStartHandled=true;
+  if(generation!==libraryGeneration||startingSignature!==planSignature()||view!==guideStep||userNavigationChanged||libraryBinding||libraryTransitioning||hasUnsavedChanges()||startChoicesOpen||!$('draft-recovery').hidden||state.sites.length!==1||site().clusters.length)return;
+  if(!action&&(libraryRecords.length||!$('plan-library').hidden))return;
+  if(action)consumePlannerStartAction();
+  if(action==='saved'){showPlanLibrary(true);return;}
+  const error=libraryError;
+  if(action==='workload')startWorkloadPlan();else startFromTemplate(action||'quick');
   if(error){libraryError=error;renderPlanContext();}
  });
 }

@@ -1,5 +1,18 @@
 # Changelog
 
+## 3.2.0 — 2026-11-08
+
+### Added
+
+- Public home page explaining the planner and offering direct starts for known hardware, workload sizing, examples and saved plans.
+- Separate Guide & FAQ with six walkthroughs, result interpretation, common questions, scope limits, four real generic screenshots and a sample CSV.
+- Home and guide links from the planner open separately to preserve working edits. The calculator now lives at planner.html; browser-local saved plans remain on the same origin.
+
+### Changed
+
+- First visits default to Light, including when the device uses dark mode. Explicit saved Dark/System choices remain respected.
+- Start-action links are handled once after library discovery, with protection for edits, recovery and intervening user actions.
+
 ## 3.1.0 — 2026-11-08
 
 ### Improved

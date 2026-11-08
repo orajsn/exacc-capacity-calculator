@@ -4,7 +4,9 @@ A browser-only Autonomous Database capacity planner for Exadata Cloud@Customer: 
 
 Use the sun/moon button to switch appearance. Plans & files → Use device appearance restores the operating-system setting. Only this preference is remembered automatically in this browser; changing it does not save or modify a customer plan. On phones, the compact capacity bar keeps balances and status visible; More opens its extra controls. Printed plans use light colors.
 
-[Open the planner](https://orajsn.github.io/exacc-capacity-calculator/) · [Product goals](PRODUCT_GOALS.md) · [Release history](CHANGELOG.md) · [Test catalogue](TESTING.md)
+[Home](https://orajsn.github.io/exacc-capacity-calculator/) · [Open the planner](https://orajsn.github.io/exacc-capacity-calculator/planner.html) · [Guide & FAQ](https://orajsn.github.io/exacc-capacity-calculator/guide.html) · [Product goals](PRODUCT_GOALS.md) · [Release history](CHANGELOG.md) · [Test catalogue](TESTING.md)
+
+The home page introduces the tool and offers task-specific starts. The guide contains screenshot walkthroughs and a generic CSV example. First visits use Light; explicit appearance preferences remain remembered. Existing saved plans remain available because the planner stays on the same website origin. Home and guide links inside the calculator open separately so working edits stay in place.
 
 ## Start calculating
 

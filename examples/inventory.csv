@@ -1,0 +1,4 @@
+site,machine,avmc,acd,adb,role,ecpu,ram_gb,storage_tb,independent_switchover,cpu_unit
+DC,Production,Applications,Payments,PaymentsDB,primary,32,128,1,yes,ECPU
+DC,Production,Applications,Reporting,ReportingDB,unprotected,8,32,0.5,no,ECPU
+DR,Recovery,Applications,Payments DR,PaymentsDB,standby,32,128,1,yes,ECPU
