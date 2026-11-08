@@ -2,7 +2,7 @@
 @font-face{font-family:"Geist Sans";src:url("assets/fonts/GeistSans-Variable.woff2") format("woff2");font-weight:100 900;font-style:normal;font-display:swap}
 :root {
   --canvas:#f6f5f2; --surface:#fff; --surface-soft:#f2efea; --surface-tint:#fbf7f4;
-  --ink:#312d2a; --muted:#665f58; --line:#ded9d2; --line-strong:#bcb4aa;
+  --ink:#312d2a; --muted:#665f58; --line:#b8b0a6; --line-strong:#8b8176;
   --accent:#a33727; --accent-hover:#842c20; --accent-soft:#f9ece7;
   --success:#346747; --success-soft:#f1f6f2; --warning:#83590e; --warning-soft:#fff7e6;
   --red:#a32d26; --error-soft:#fff1ef; --focus:#2275a5; --button-ink:#fff; --header:#312d2a; --placeholder:#756a60;
@@ -447,7 +447,7 @@ body:has(#start-options:not([hidden])){padding-bottom:0}
  :root[data-theme=dark]{
   color-scheme:dark;
   --canvas:#17191d;--surface:#22252b;--surface-soft:#2c3037;--surface-tint:#29262a;
-  --ink:#f3eee8;--muted:#c2bbb3;--line:#515660;--line-strong:#898f99;
+  --ink:#f3eee8;--muted:#c2bbb3;--line:#68717e;--line-strong:#9aa3af;
   --accent:#ffb09a;--accent-hover:#ffd0c0;--accent-soft:#432d29;
   --button-ink:#241b18;--header:#1d1e22;--placeholder:#b9b2aa;
   --success:#9ad8b0;--success-soft:#213b2b;--warning:#f4d18a;--warning-soft:#40351f;
@@ -661,3 +661,37 @@ body:has(#start-options:not([hidden])){padding-bottom:0}
  .guide-steps{grid-template-columns:repeat(2,minmax(0,1fr))}
  .guide-steps button{justify-content:center}
 }
+
+@media screen{
+ .product-scope{font-size:14px;color:var(--muted)}
+ .masthead>div:first-child{gap:8px 16px}
+ .theme-toggle{width:44px;height:44px;padding:10px;background:transparent;border:1px solid var(--line-strong);flex:none}
+ .theme-toggle svg{width:22px;height:22px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
+ .theme-sun{display:none}:root[data-theme=dark] .theme-sun{display:block}:root[data-theme=dark] .theme-moon{display:none}
+ .toolbar{position:relative;align-items:center;justify-content:space-between;min-height:64px}
+ .plan-menu{position:static;margin:0}
+ .plan-menu>summary{min-height:44px;display:flex;align-items:center;gap:12px;padding:8px 14px;border:1px solid var(--line-strong);border-radius:4px;font-size:16px;font-weight:500;background:var(--surface);list-style:none}
+ .plan-menu>summary::-webkit-details-marker{display:none}.plan-menu>summary::after{content:'⌄';font-size:18px}
+ .plan-menu[open]>summary{border-color:var(--accent);color:var(--accent)}
+ .plan-menu-items{position:absolute;z-index:45;left:0;top:calc(100% + 6px);width:300px;max-width:100%;padding:8px;background:var(--surface);border:1px solid var(--line-strong);border-radius:6px;box-shadow:0 8px 24px #0002;display:flex;flex-direction:column;gap:2px}
+ .toolbar .plan-menu-items button,.toolbar .plan-menu-items .button{justify-content:flex-start;text-align:left;border:0;border-radius:3px;min-height:44px;white-space:normal;font-size:14px;flex:none;padding:10px 12px}
+ .toolbar .plan-menu-items .button{flex-direction:row;align-items:center}
+ .plan-menu-items #open-scenario,.plan-menu-items #theme-system{border-top:1px solid var(--line);margin-top:4px}
+ .workbench-hardware{padding:12px 16px;background:var(--surface-soft);border:0;border-left:3px solid var(--accent);border-radius:0;margin-bottom:24px}
+ .machine-nav{border-right:2px solid var(--line)}
+ .cluster-editor{border:1px solid var(--line-strong);border-radius:4px;background:var(--surface);padding:0 16px}
+ .cluster-editor[open]>summary{border-bottom:1px solid var(--line)}
+ .allocation-visual{border-left:2px solid var(--line);padding-left:24px}
+ .optional-panel,.current-panel{border-top:1px solid var(--line);padding-top:4px}
+ .guide-steps{border-bottom:2px solid var(--line)}
+ .guide-steps button[aria-current=step]::after{height:3px}
+}
+@media screen and (max-width:1100px){.allocation-visual{border-left:0;border-top:2px solid var(--line);padding:20px 0 0}}
+@media screen and (max-width:760px){
+ .masthead>div:first-child{display:block;min-width:0}.masthead h1{font-size:20px;max-width:24ch}.product-scope{display:block;margin-top:4px}
+ .masthead{flex-wrap:nowrap;align-items:center}.header-meta{margin-left:auto;flex:none}
+ .toolbar{display:flex;flex-direction:row;align-items:center;gap:12px}#save-status{flex:1;min-width:0;max-width:none;font-size:14px;margin:0}
+ .machine-nav{border-right:0;border-bottom:2px solid var(--line)}
+ .workbench-hardware{padding:12px;gap:8px}.cluster-editor{padding:0 12px}
+}
+@media print{.theme-toggle,.plan-menu{display:none!important}}

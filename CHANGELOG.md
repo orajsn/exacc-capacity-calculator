@@ -1,5 +1,16 @@
 # Changelog
 
+## 3.1.0 — 2026-11-08
+
+### Improved
+
+- Renamed the application Autonomous Capacity Planner, with Exadata Cloud@Customer stated as its deployment scope. Other VM clusters remain entered-footprint checks rather than a complete conventional sizing model.
+- Replaced the appearance dropdown with an accessible sun/moon button. Device appearance can still be restored from the menu.
+- Consolidated New, saved plans, JSON import/export and print under Plans & files. Save on this device remains beside the working plan.
+- Strengthened meaningful group boundaries and control borders in both themes. The phone menu is bounded to the toolbar width.
+
+This release does not add authentication or online plan storage. Those require a separately configured hosting/access service.
+
 ## 3.0.0 — 2026-11-08
 
 ### Redesigned

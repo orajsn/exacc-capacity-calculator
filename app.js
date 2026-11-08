@@ -146,6 +146,13 @@ $('combinations').onclick = e => {
  }
 };
 let jsonImportGeneration=0;
+$('plan-menu').addEventListener('click',event=>{
+ if(event.target.closest('button'))$('plan-menu').open=false;
+});
+$('plan-menu').addEventListener('keydown',event=>{
+ if(event.key==='Escape'){$('plan-menu').open=false;$('plan-menu').querySelector('summary').focus();}
+});
+$('import').addEventListener('change',()=>{$('plan-menu').open=false;});
 $('dock-toggle').onclick=()=>{
  const expanded=$('dock-toggle').getAttribute('aria-expanded')!=='true';
  $('local-dock').dataset.expanded=String(expanded);

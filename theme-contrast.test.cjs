@@ -10,7 +10,7 @@ for(const [name,t]of Object.entries({light,dark})){
   for(const foreground of ['ink','muted','accent','placeholder'])for(const background of ['canvas','surface','surface-soft','surface-tint'])assert.ok(contrast(t[foreground],t[background])>=4.5,`${foreground} on ${background}: ${contrast(t[foreground],t[background]).toFixed(2)}`);
   for(const pair of [['button-ink','accent'],['button-ink','accent-hover'],['success','success-soft'],['warning','warning-soft'],['red','error-soft'],['accent','accent-soft']])assert.ok(contrast(t[pair[0]],t[pair[1]])>=4.5,pair.join(' on '));
  });
- test(`${name}: focus indicator meets 3:1 on control surfaces`,()=>{
-  for(const background of ['surface','surface-soft','surface-tint'])assert.ok(contrast(t.focus,t[background])>=3,background);
+ test(`${name}: focus and control boundaries meet 3:1 on control surfaces`,()=>{
+  for(const foreground of ['focus','line-strong'])for(const background of ['surface','surface-soft','surface-tint'])assert.ok(contrast(t[foreground],t[background])>=3,`${foreground} on ${background}`);
  });
 }

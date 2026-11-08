@@ -101,3 +101,10 @@ The five-minute first-use target in PRODUCT_GOALS.md still needs an independent 
 - Saved-plan reopening chooses Allocations for known hardware and Machine for workload sizing, preserves payload contents, and rejects a delayed load when newer working edits arrive.
 - Browser scenarios cover adding an AVMC, changing ACD slots with immediate capacity/map feedback, changing DB-server count, comparison preview/cancel and device save/reload/reopen.
 - Narrow tabs use two rows at 320px instead of clipping Review. Physical mobile keyboards, independent user timing and print pagination remain unverified.
+
+## 3.1.0 simpler controls and explicit scope
+
+- Theme tests exercise the icon action, accessible label/title, OS preference reset, blocked storage and cross-tab updates. Existing local preferences are retained.
+- Menu interaction tests cover Escape/focus return, action dismissal and unchanged working calculations. File selection is not dismissed before the picker opens.
+- Browser checks cover theme switching, menu actions, save/reopen, new-plan return and light/dark narrow layouts. A phone popover overflow was found and corrected by bounding it to the toolbar.
+- Authentication is not part of the static release; do not interpret these UI checks as evidence of access control.

@@ -71,7 +71,7 @@ test('report labels missing legacy identity without inventing an owner or Plan I
  for(const project of [undefined,{name:'Legacy proposal',notes:''},{name:' ',customer:' ',owner:'',notes:''}]){
   const s=scenario();if(project)s.project=project;const header=A.reportHTML(s,M,P).split('<header>')[1].split('</header>')[0];
   assert.match(header,/<dt>Customer<\/dt><dd>Not named<\/dd>/);assert.match(header,/<dt>Owner \/ alias<\/dt><dd>Not named<\/dd>/);assert.match(header,/<dt>Plan ID<\/dt><dd class="plan-id">Not assigned<\/dd>/);
-  if(!project?.name?.trim())assert.match(header,/<h1>ExaC@C capacity plan<\/h1>/);
+  if(!project?.name?.trim())assert.match(header,/<h1>Autonomous capacity plan<\/h1>/);
  }
 });
 

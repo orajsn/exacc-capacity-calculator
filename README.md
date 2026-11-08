@@ -1,8 +1,8 @@
-# ExaC@C Capacity Planner
+# Autonomous Capacity Planner
 
-A browser-only capacity planner for Exadata Cloud@Customer. Keep separate customer projects, build multi-site plans, compare allocations and export the reasoning. No account, backend, analytics or data upload. Device saving starts when you create a saved plan or choose Save on this device.
+A browser-only Autonomous Database capacity planner for Exadata Cloud@Customer: AVMCs, ACDs and ADBs. Other VM-cluster allocations can be recorded as entered footprints; this is not a complete conventional Exadata sizing tool. Keep separate customer projects, build multi-site plans, compare allocations and export the reasoning. No account, backend, analytics or data upload. Device saving starts when you create a saved plan or choose Save on this device.
 
-Choose System, Light or Dark under Appearance. Only this preference is remembered automatically in this browser; changing it does not save or modify a customer plan. On phones, the compact capacity bar keeps balances and status visible; More opens its extra controls. Printed plans use light colors.
+Use the sun/moon button to switch appearance. Plans & files → Use device appearance restores the operating-system setting. Only this preference is remembered automatically in this browser; changing it does not save or modify a customer plan. On phones, the compact capacity bar keeps balances and status visible; More opens its extra controls. Printed plans use light colors.
 
 [Open the planner](https://orajsn.github.io/exacc-capacity-calculator/) · [Product goals](PRODUCT_GOALS.md) · [Release history](CHANGELOG.md) · [Test catalogue](TESTING.md)
 
@@ -12,7 +12,7 @@ With no saved plans, the planner opens directly into a blank allocation check. I
 
 Existing saved plans and recovery prompts retain priority on startup. **New plan** opens a compact choice of blank capacity check, customer plan or illustrative production/DR example. Switching plans preserves the unsaved-work guard.
 
-**Saved plans** opens device copies; **Download backup** saves a portable .json file; **Open plan file** reads that backup. Customer/project fields and Save as new copy are under **Plan details**. Saving help is at the bottom of the workspace and linked from the footer.
+**Plans & files** groups starting a new plan, opening device copies, importing a JSON file, downloading a backup and printing. **Save on this device** remains beside the working plan. Customer/project fields and Save as new copy are under **Plan details**. Saving help is at the bottom of the workspace and linked from the footer.
 
 ## Saved plans: customers, projects and owner labels
 
