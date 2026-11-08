@@ -146,6 +146,16 @@ $('combinations').onclick = e => {
  }
 };
 let jsonImportGeneration=0;
+// Reserve the rendered bar height, including wrapped controls and warning text.
+// Short viewports put the bar in normal flow and need no fixed-bar clearance.
+if(typeof ResizeObserver!=='undefined'){
+ const dock=$('local-dock'),updateDockClearance=()=>{
+  const height=getComputedStyle(dock).position==='fixed'?Math.ceil(dock.getBoundingClientRect().height):0;
+  document.documentElement.style.setProperty('--dock-clearance',`${height}px`);
+ };
+ const dockObserver=new ResizeObserver(updateDockClearance);dockObserver.observe(dock);
+ window.addEventListener('resize',updateDockClearance);
+}
 $('save').onclick=()=>{try{const payload=workspaceForDownload(),name=planFilename(payload);download(name,JSON.stringify(payload,null,2),'application/json');savedSignature=JSON.stringify(state);savedLabel='Backup download requested · check your Downloads folder';updateWorkflow();message(`Backup download requested: ${name}. It includes the Plan ID, customer, owner and all machines. Check Downloads; if you cancelled, save again.`);}catch(e){message(e.message);}};
 $('import').onchange=async e=>{const file=e.target.files[0];if(!file)return;const generation=++jsonImportGeneration;try{if(file.size>10000000)throw Error('Scenario file is too large (maximum 10 MB).');const raw=JSON.parse(await file.text());if(generation!==jsonImportGeneration)return;const hadID=!!raw.project?.id,next=importWorkspace(raw);requestPlanTransition(async()=>{activatePlan(next,{sourceKept:true,label:'Opened plan file · not automatically saved on this device'});message(hadID?'Opened the JSON plan. Save on this device to add or update its local copy.':'This older file had no Plan ID. A new ID was assigned; download a backup to keep it, or save on this device.');});}catch(err){if(generation===jsonImportGeneration)message(`Could not open scenario: ${err.message}`);}e.target.value='';};
 $('print').onclick=()=>{goGuideStep(4);window.print();};$('version').textContent=M.VERSION;$('checked').textContent=M.CHECKED;

@@ -1,5 +1,14 @@
 # Changelog
 
+## 2.2.3 — 2026-11-08
+
+### Improved
+
+- Removed the “Presales workspace” header label and kept the version visible on phones.
+- Stacked narrow phone forms, enlarged touch controls and input text, and allowed long resource names to wrap.
+- The capacity bar stays fixed on taller screens, with page clearance matching its actual height. On short screens it moves with the page so it does not cover the editing area.
+- Removed the duplicate backup button from the phone capacity bar; Download backup remains in the main toolbar. Wide comparison tables retain their own horizontal scrolling.
+
 ## 2.2.2 — 2026-11-08
 
 ### Fixed

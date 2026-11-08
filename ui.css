@@ -414,3 +414,30 @@ body:has(#start-options:not([hidden])){padding-bottom:0}
  .local-dock>.dock-detail{grid-column:1;grid-row:3;padding-top:5px;gap:6px}.dock-detail>span{display:none}.dock-detail strong{min-width:0;font-size:9px}.dock-actions{grid-column:1;grid-row:4;justify-content:flex-end}.dock-actions #undo{margin-right:auto}.dock-actions button{min-height:33px;font-size:10px;padding:6px 9px}
 }
 @media print{.start-options,#start-plan,#sizing-source-preview{display:none!important}.requirement-source-status button,.finding-review{display:none!important}}
+
+/* Phone forms and touch controls; keep wide tables in their own scroll areas. */
+.resource-context{min-width:0;overflow-wrap:anywhere}
+#plan-device-status,#save-status{overflow-wrap:anywhere}
+@media screen and (max-width:760px){
+ .masthead{align-items:flex-start;gap:12px;flex-wrap:wrap}.header-meta{display:flex}
+ .toolbar .actions{width:100%}.toolbar .actions>*{flex:1 1 auto}
+ button,.button,.toolbar button,.toolbar .button,.table-wrap button,.machine-nav>button,.topology-avmc button,.requirement-source-status button,.assessment-findings .finding-review,.dock-actions button,#dock-findings,.machine-actions button,.plan-card button,.remove{min-height:44px}
+ input:not([type=checkbox]),select,textarea,#csv-mapping select,.plan-id-row input,.dock-scope-control select{font-size:16px;min-height:44px}
+ .dock-scope-control select{max-width:150px}
+ .dock-actions #dock-save{display:none}
+ .dock-actions{flex-wrap:wrap}.dock-actions button{font-size:12px}
+ .dock-capacity>span,.dock-detail strong{font-size:11px}
+ .check,.node-choices label{min-height:44px}
+ .table-wrap{overscroll-behavior-x:contain}
+}
+@media screen and (max-width:480px){
+ .compute-settings .editor-fields,.form-group .fields{grid-template-columns:1fr}
+ section.guide-panel{padding:var(--s4)}.editor-body{padding:var(--s3)}
+ .editor-summary-cost small{max-width:100px}
+}
+/* A fixed bar leaves too little editing space in landscape or a short window. */
+@media screen and (max-height:500px) and (max-width:1050px){
+ :root{--dock-clearance:0px}
+ .local-dock{position:static;inset:auto;box-shadow:none}
+ body{padding-bottom:0}
+}

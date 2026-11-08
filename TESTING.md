@@ -66,3 +66,10 @@ The five-minute first-use target in PRODUCT_GOALS.md still needs an independent 
 - Workbook regressions exercise numeric scientific notation through the workbook reader and inventory preview, with literal text preserved and normal workload validation retained.
 - Native browser QA on an isolated local origin verified example editing, device autosave, reload and reopening with the edited AVMC name retained. A narrow-screen check found no page-level horizontal overflow or console errors.
 - The Excel fix is checked with generated workbook fixtures through the import pipeline; this pass does not claim a native file-picker test or an independent first-user usability study.
+
+## 2.2.3 responsive layout
+
+- Browser checks at requested 320×700, 390×844, 768×900 and 844×390 viewport sizes found no page-level horizontal overflow. Wide result tables scroll inside their own containers.
+- Expanded AVMC inputs use 16px text and at least 44px height on phones. Bottom-of-page checks verified navigation remains reachable above the measured fixed bar.
+- In short landscape views, the capacity bar uses normal document flow instead of covering the editor. Browser console reported no errors.
+- Viewport emulation verifies layout; this is not a physical iOS/Android device or on-screen-keyboard compatibility certification.
