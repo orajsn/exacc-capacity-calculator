@@ -17,10 +17,14 @@ function renderPlanContext(){
  planContextGeneration=libraryGeneration;
  $('plan-id').value=p.id||'';
  $('draft-optin').checked=libraryAuto;
- $('plan-save-device').disabled=!!librarySaving||!!preview;
+ const saveDisabled=!!librarySaving||!!preview;
+ $('plan-save-device').disabled=saveDisabled;
+ $('review-device-save').disabled=saveDisabled;
  $('plan-copy-working').disabled=!!librarySaving||!!preview;
  $('plan-switch-save').disabled=libraryTransitioning;$('plan-switch-discard').disabled=libraryTransitioning;
- $('plan-device-status').textContent=libraryError|| (librarySaving?'Saving on this device…':planSavedHere()?`Saved on this device${libraryAuto?' · automatic updates on':''}`:libraryBinding?'Changes not saved on this device yet':'Not saved on this device');
+ const deviceStatus=libraryError|| (librarySaving?'Saving on this device…':planSavedHere()?`Saved on this device${libraryAuto?' · automatic updates on':''}`:libraryBinding?'Changes not saved on this device yet':'Not saved on this device');
+ $('plan-device-status').textContent=deviceStatus;
+ $('review-device-status').textContent=deviceStatus;
  $('plan-device-status').dataset.state=libraryError?'warning':planSavedHere()?'saved':'unsaved';
  $('draft-status').textContent=libraryError|| (libraryAuto?'Valid changes are saved to this plan after a short pause. Keep JSON as a portable backup.':'Automatic device saving is off. Save on this device to keep this plan in Saved plans.');
 }
@@ -140,7 +144,7 @@ async function initLibrary(){
  const startingSignature=planSignature();
  $('my-plans').onclick=()=>showPlanLibrary(true);$('library-return').onclick=()=>showPlanLibrary(false);
  $('library-search').oninput=renderPlanList;$('library-archived').onchange=renderPlanList;
- $('library-create').onclick=createNamedPlan;$('plan-save-device').onclick=()=>savePlanOnDevice();$('plan-copy-working').onclick=saveWorkingCopy;
+ $('library-create').onclick=createNamedPlan;$('plan-save-device').onclick=$('review-device-save').onclick=()=>savePlanOnDevice();$('plan-copy-working').onclick=saveWorkingCopy;
  for(const [id,key]of [['plan-customer','customer'],['plan-title','name'],['plan-owner','owner']])$(id).oninput=()=>safeUpdate(()=>{state.project={...state.project,[key]:$(id).value};F.validateExtras(state,M);});
  $('plan-copy-id').onclick=async()=>{const id=state.project.id;try{if(!navigator.clipboard?.writeText)throw Error('unavailable');await navigator.clipboard.writeText(id);message('Plan ID copied. It finds this plan only where its data is saved or imported.');}catch{message(`Plan ID: ${id}`);}};
  $('draft-optin').onchange=()=>{libraryAutoEpoch++;libraryAuto=$('draft-optin').checked;if(libraryAuto)savePlanOnDevice();else{clearTimeout(librarySaveTimer);librarySaveTimer=null;renderPlanContext();}};

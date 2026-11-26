@@ -1,5 +1,9 @@
 # Changelog
 
+## 3.6.1 — 2026-11-26
+
+- Save the plan directly beside the capacity result in Review and see when the browser has finished saving it.
+
 ## 3.6.0 — 2026-11-26
 
 - Review leads with a machine-specific capacity answer, outstanding checks and an expandable calculation by server. Corrections on other machines remain visible.

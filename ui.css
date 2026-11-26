@@ -783,3 +783,5 @@ body:has(#start-options:not([hidden])){padding-bottom:0}
  .result-trace td:last-child{padding-bottom:10px;font-weight:650}
  .trace-field{display:inline;color:var(--muted)}
 }
+
+.review-device-actions{display:flex;align-items:center;flex-wrap:wrap;gap:8px 14px;margin:12px 0 16px}.review-device-actions [role=status]{color:var(--muted)}
