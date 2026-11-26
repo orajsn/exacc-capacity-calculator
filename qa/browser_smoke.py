@@ -14,6 +14,8 @@ def exercise(browser, width, folder):
     page.goto(BASE)
     expect(page.get_by_role("heading", name="Where are you starting?")).to_be_visible()
     expect(page.locator('.entry-paths a')).to_have_count(2)
+    if width == 320:
+        page.locator("#theme-toggle").click()
     page.locator('.entry-paths a[href$="start=quick"]').click()
     expect(page.locator("#guide-heading")).to_have_text("Allocations")
     page.locator("#add-cluster").click()
@@ -29,7 +31,10 @@ def exercise(browser, width, folder):
     expect(decision).to_contain_text("fits the checked capacity for local storage")
     expect(decision).to_contain_text("CPU and memory allocations")
     expect(decision).to_contain_text("shared database storage")
+    Path("qa-artifacts").mkdir(exist_ok=True)
+    decision.screenshot(path=f"qa-artifacts/verdict-{width}.png")
     decision.get_by_text("View calculation", exact=True).click()
+    expect(decision.locator("tfoot")).to_contain_text("3,805")
     expect(decision.locator("tbody tr")).to_have_count(2)
     expect(decision.locator("tbody tr").first).to_contain_text("1,902.5")
     Path("qa-artifacts").mkdir(exist_ok=True)
@@ -96,6 +101,6 @@ def exercise(browser, width, folder):
 
 with TemporaryDirectory() as folder, sync_playwright() as playwright:
     browser = playwright.chromium.launch(executable_path=which("google-chrome"))
-    for width in (390, 1280):
+    for width in (320, 390, 1280):
         exercise(browser, width, folder)
     browser.close()

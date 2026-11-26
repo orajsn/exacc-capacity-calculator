@@ -33,7 +33,7 @@ function calculationTrace(machine, site) {
    ? [escapeHTML(cluster.name)+' '+fmt(machine.result.costs[i].perVM)+' GB'] : []);
   return `<tr><th scope="row">DB ${node.id}</th><td>${fmt(node.local)}</td><td>${charges.join(' + ') || '0 GB'}</td><td>${fmt(node.otherLocal)}</td><td>${fmt(node.free)}</td></tr>`;
  }).join('');
- return `<details class="result-trace"><summary>View calculation</summary>${equation}<div class="table-wrap" tabindex="0" role="region" aria-label="Local storage calculation by server"><table><caption>Local storage (GB) · capacity minus AVMCs and other allocations</caption><thead><tr><th>Server</th><th>Capacity</th><th>AVMC allocations</th><th>Other</th><th>Remaining</th></tr></thead><tbody>${rows}</tbody></table></div><a href="${M.SOURCES.formula}" target="_blank" rel="noopener">Oracle AVMC sizing formula</a></details>`;
+ return `<details class="result-trace"><summary>View calculation</summary>${equation}<div class="table-wrap" tabindex="0" role="region" aria-label="Local storage calculation by server"><table><caption>Local storage (GB) · capacity minus AVMCs and other allocations</caption><thead><tr><th>Server</th><th>Capacity</th><th>AVMC allocations</th><th>Other</th><th>Remaining</th></tr></thead><tbody>${rows}</tbody><tfoot><tr><th scope="row">Machine total</th><td>${fmt(machine.result.capacity)}</td><td>${fmt(machine.result.used)}</td><td>${fmt(machine.result.other)}</td><td>${fmt(machine.result.free)}</td></tr></tfoot></table></div><a href="${M.SOURCES.formula}" target="_blank" rel="noopener">Oracle AVMC sizing formula</a></details>`;
 }
 
 function decisionResult(assessment, index, site) {
@@ -54,11 +54,11 @@ function decisionResult(assessment, index, site) {
  return `<article class="decision-result" data-level="${level}"><p class="decision-machine">${escapeHTML(machine.label)}</p><h3>${escapeHTML(machineVerdict(machine))}</h3>${machine.result?`<p class="decision-total"><strong>${fmt(machine.result.free)} GB</strong> local storage left across ${machine.nodeCount} DB servers</p>`:''}${limiting?`<p>${escapeHTML(limiting)}</p>`:''}<h4>Still to check</h4><ul class="checks-open">${pending.map(check=>`<li>${escapeHTML(check)}</li>`).join('')}</ul>${other.length?`<p class="issues warning">Also review ${other.map(m=>escapeHTML(m.label)).join(', ')} before using the whole plan.</p>`:''}${calculationTrace(machine,site)}</article>`;
 }
 
-function renderAssessment(){
+function renderAssessment(showDecision=false){
  const summary=$('assessment-summary'),coverage=$('coverage-matrix');if(!summary||!coverage)return;
  try{
   const a=currentAssessment(),f=a.findings,targets=[],unchecked=[...f.notSelected,...f.externalChecks];
-  if(guideStep===4){
+  if(showDecision){
    const result=$('decision-result'), traceOpen=result.querySelector('.result-trace')?.open;
    result.innerHTML=decisionResult(a,active,site());
    const trace=result.querySelector('.result-trace');
