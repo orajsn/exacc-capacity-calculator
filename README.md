@@ -1,5 +1,7 @@
 # Autonomous Capacity Planner
 
+On Review, read the answer for the selected machine, check the outstanding inputs, then use **View calculation** for server-level capacity and allocations. On phones, **More** expands the compact balance to show every resource.
+
 To share a design choice, open **Compare → Design options, growth and migration**, select up to two saved options, add an optional decision note and select **Export this comparison**. The standalone HTML includes the working design, selected alternatives, DB-server balances and database groups. The note belongs to the export.
 
 A browser-only Autonomous Database capacity planner for Exadata Cloud@Customer: AVMCs, ACDs and ADBs. Other VM-cluster allocations can be recorded as entered footprints; this is not a complete conventional Exadata sizing tool. Keep separate customer projects, build multi-site plans, compare allocations and export the reasoning. No account, backend, analytics or data upload. Device saving starts when you create a saved plan or choose Save on this device.

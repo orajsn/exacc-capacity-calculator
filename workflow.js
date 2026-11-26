@@ -64,6 +64,8 @@ function cancelPreview() {
 }
 
 function clearFloatingLocal(note) {
+ currentDockMetrics=[];
+ updateCompactBalance();
  clearTopology();
  $('local-dock').dataset.level = 'warning';
  $('dock-machine').textContent = `${site().siteName || 'Unspecified site'} / ${site().name}`;
@@ -79,11 +81,30 @@ function clearFloatingLocal(note) {
  $('dock-save').title = preview ? 'Apply or cancel the preview before saving from this bar.' : '';
 }
 
+let lastMetricEdited='local';
+let currentDockMetrics=[];
+function updateCompactBalance() {
+ const checked=currentDockMetrics.filter(metric=>metric.checked);
+ const selected=checked.find(metric=>metric.affectedNodes?.length || metric.status==='Over capacity')
+  || checked.find(metric=>metric.id===lastMetricEdited)
+  || currentDockMetrics[0];
+ $('local-dock').dataset.compactMetric=selected?.id || 'local';
+}
+document.addEventListener('focusin', event=>{
+ const key=event.target.dataset?.key;
+ const relevant={cpu:'cpu',otherCPU:'cpu',memoryPerCPU:'memory',otherMemory:'memory',memory:'memory',slots:'local',local:'local',otherLocal:'local'};
+ if(Object.hasOwn(relevant,key)){
+  lastMetricEdited=relevant[key];
+  updateCompactBalance();
+ }
+});
 function renderFloatingLocal(s, result, isPreview = false) {
  renderTopology(s,result,isPreview);
  const scope=$('dock-scope'),signature=`${s.uid||s.name}|${s.nodes.map(n=>n.id).join(',')}`;
  if(scope.dataset.signature!==signature){scope.innerHTML='<option value="machine">Whole machine</option>'+s.nodes.map(n=>`<option value="node:${n.id}">DB ${n.id} only</option>`).join('');scope.value='machine';scope.dataset.signature=signature;}
  const v=window.ExaLiveCapacity.build(s,result,P,{ready:hardwareReady(s),preview:isPreview,scope:scope.value});
+ currentDockMetrics=v.metrics;
+ updateCompactBalance();
  scope.disabled=!hardwareReady(s)&&!isPreview;$('dock-scope-control').hidden=scope.disabled;
  $('local-dock').dataset.level=v.level;
  $('dock-machine').textContent=`${s.siteName||'Site not named'} / ${s.name}`;$('dock-machine').title=$('dock-machine').textContent;
@@ -147,7 +168,7 @@ function updateWorkflow() {
   : 'Optional: record the numbers you have entered, then edit the design to compare Before versus After. Skip this if you only need capacity totals.';
  if (preview && (preview.active !== active || preview.signature !== JSON.stringify(state))) cancelPreview();
  refreshJourney();
- renderTopologyReview();renderAssessment();renderRequirementSources();conventionalStatus();updateDeviceDraft();
+ renderTopologyReview();if(guideStep!==4)renderAssessment();renderRequirementSources();conventionalStatus();updateDeviceDraft();
 }
 
 function clearResourceCards() {

@@ -1,5 +1,11 @@
 # Changelog
 
+## 3.6.0 — 2026-11-26
+
+- Review leads with a machine-specific capacity answer, outstanding checks and an expandable calculation by server. Corrections on other machines remain visible.
+- Home offers two starting paths based on the information the visitor has. The compact phone balance follows the resource being edited and prioritizes shortages. More reveals all balances.
+
+
 ## 3.5.0 — 2026-11-26
 
 - Live capacity displays the same warning level as the machine summary. DB-server suggestions show the entered shared-storage balance separately.
