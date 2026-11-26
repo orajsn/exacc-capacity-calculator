@@ -20,6 +20,7 @@ jobs:
         run: |
           python -m http.server 8080 --bind 127.0.0.1 > "$RUNNER_TEMP/planner-http.log" 2>&1 &
           "$RUNNER_TEMP/planner-qa/bin/python" qa/browser_smoke.py
+          "$RUNNER_TEMP/planner-qa/bin/python" qa/large_inventory.py
       - uses: actions/upload-artifact@v4
         if: success()
         with:
