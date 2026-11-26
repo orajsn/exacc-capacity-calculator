@@ -4,6 +4,7 @@
 
 - Live capacity displays the same warning level as the machine summary. DB-server suggestions show the entered shared-storage balance separately.
 - Export the working design and selected saved options as a standalone HTML comparison with a decision note, per-node storage and named database groups.
+- Added direct actions to compare saved designs and select a fitting DB-server option on phones. Large import previews index database names once per ACD.
 - Simplified the home page and reduced repeated comparison rendering during edits. Added desktop and mobile browser checks to CI.
 
 ## 3.4.2 — 2026-11-09

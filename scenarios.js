@@ -269,6 +269,7 @@
    if(removedACDs.has(a.peerId)){a.peerId='';warnings.push('A peer link to replaced inventory will be cleared.');}
    if(a.peerIds?.some(peer=>removedACDs.has(peer))){a.peerIds=a.peerIds.filter(peer=>!removedACDs.has(peer));warnings.push('A peer link to replaced inventory will be cleared.');}
   }
+  const namesByGroup=new Map();
   const report={machinesAdded:0,avmcsAdded:0,acdsAdded:0,adbsAdded:0,startingEntryReplaced};
   for(const row of preview.rows){
    const matches=next.sites.map((s,i)=>({s,i})).filter(({s})=>key(s.siteName)===key(row.site)&&key(s.name)===key(row.machine));
@@ -280,8 +281,12 @@
    c.topology??={acds:[]};const acds=c.topology.acds.filter(a=>key(a.name)===key(row.acd));if(acds.length>1)throw Error(`Line ${row.line}: ACD name is ambiguous in this AVMC.`);
    let a=acds[0];if(!a){if(c.topology.acds.length>=16)throw Error(`Line ${row.line}: the combined inventory exceeds 16 ACDs in this AVMC.`);a={id:id('acd'),name:row.acd,role:row.role,peerId:'',adbs:[]};c.topology.acds.push(a);report.acdsAdded++;}
    else if(a.role!==row.role)throw Error(`Line ${row.line}: ACD role conflicts with the existing inventory.`);
-   if(a.adbs.some(d=>key(d.name)===key(row.adb)))throw Error(`Line ${row.line}: this database already exists. Use replacement only if you intend to replace the active machine inventory.`);
+   // Build each ACD's name index once per preview, including its existing rows.
+   if(!namesByGroup.has(a))namesByGroup.set(a,new Set(a.adbs.map(db=>key(db.name))));
+   const names=namesByGroup.get(a),incomingName=key(row.adb);
+   if(names.has(incomingName))throw Error(`Line ${row.line}: this database already exists. Use replacement only if you intend to replace the active machine inventory.`);
    if(a.adbs.length>=1000)throw Error(`Line ${row.line}: the ACD exceeds the calculator input guard of 1,000 database records.`);
+   names.add(incomingName);
    a.adbs.push({id:id('adb'),name:row.adb,ecpu:row.ecpu,ramGB:row.ram_gb,storageTB:row.storage_tb,independentSwitchover:row.independent_switchover});report.adbsAdded++;
    if(c.topology.acds.length>c.slots){c.slots=c.topology.acds.length;warnings.push(`${c.name}: maximum ACD slots will increase to ${c.slots} to hold the imported inventory.`);if(s.planningIntent!=='allocation')s.hardwareChosen=false;}
    // Inventory requirements are the last applied snapshot, including the ACD
