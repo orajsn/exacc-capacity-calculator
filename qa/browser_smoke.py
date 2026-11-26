@@ -58,7 +58,12 @@ def exercise(browser, width, folder):
     expect(page.locator("#sizing-results")).to_contain_text("Smallest DB-server configuration that fits")
     expect(page.locator("#sizing-results")).to_contain_text("Shared database storage: not checked")
     Path("qa-artifacts").mkdir(exist_ok=True)
-    page.locator("#sizing-results").screenshot(path=f"qa-artifacts/db-server-fit-{width}.png")
+    choice = page.locator(".fit-choice button")
+    expect(choice).to_be_visible()
+    choice.scroll_into_view_if_needed()
+    page.screenshot(path=f"qa-artifacts/db-server-fit-{width}.png")
+    choice.click()
+    expect(page.locator("#guide-heading")).to_have_text("Review")
     assert not errors, errors
     context.close()
 

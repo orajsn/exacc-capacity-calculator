@@ -717,6 +717,7 @@ body:has(#start-options:not([hidden])){padding-bottom:0}
 #compare-export-tools{border-top:1px solid var(--line);padding:var(--s4) 0}
 #compare-export-tools label{max-width:65ch}
 #compare-export{margin-top:var(--s3)}
+.fit-choice{display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px;margin:16px 0}.fit-choice .primary{min-height:44px}
 .storage-scope{padding:var(--s3);border-left:3px solid var(--line-strong);background:var(--surface-soft)}
 .table-scroll-hint{display:none}
 .table-wrap[tabindex]:focus-visible{outline:3px solid var(--focus);outline-offset:3px}
