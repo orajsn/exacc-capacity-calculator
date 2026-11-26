@@ -10,7 +10,8 @@ function machineVerdict(machine) {
  const limiting = machine.limiting;
  if (limiting?.deficit > 1e-7) {
   const where = limiting.nodeId === null ? 'This machine' : 'DB server ' + limiting.nodeId;
-  return `${where} needs ${fmt(limiting.deficit)} more ${limiting.unit} of ${limiting.resource.toLowerCase()}.`;
+  if (limiting.resource === 'VM slots') return where + ' exceeds its VM limit by ' + fmt(limiting.deficit) + '.';
+  return `${where} is short by ${fmt(limiting.deficit)} ${limiting.unit} of ${limiting.resource.toLowerCase()}.`;
  }
  if (machine.hardErrors.length) return machine.hardErrors[0].message;
  if (!machine.avmcs) return 'Add a VM cluster to check your layout.';
@@ -19,21 +20,27 @@ function machineVerdict(machine) {
  const checks = machine.resources.map(row => ({
   'Memory estimate':'estimated memory', 'CPU':'CPU', 'Exadata storage (manual)':'entered shared storage'
  }[row.name] || row.name.toLowerCase()));
- return 'This layout fits the checked capacity for ' + checks.join(', ') + '.';
+ if (checks.length === 1 && checks[0] === 'local storage') return 'There is enough local storage for this layout.';
+ return 'This layout fits within the available capacity for ' + checks.join(', ') + '.';
 }
 
 function calculationTrace(machine, site) {
  if (!machine.result) return '';
  const limiting = machine.limiting;
- const equation = limiting
-  ? `<p><strong>${escapeHTML(limiting.resource)} · ${limiting.nodeId===null?'whole machine':'DB server '+limiting.nodeId}</strong><br>${fmt(limiting.capacity)} ${limiting.unit} capacity − ${fmt(limiting.allocated)} ${limiting.unit} allocated = ${fmt(limiting.free)} ${limiting.unit} remaining.</p>`
+ const equation = limiting && limiting.resource !== 'Local storage'
+  ? `<p><strong>${escapeHTML(limiting.resource)} · ${limiting.nodeId===null?'whole machine':'DB server '+limiting.nodeId}</strong><br>Capacity ${fmt(limiting.capacity)} − allocated ${fmt(limiting.allocated)} = ${fmt(limiting.free)} ${limiting.unit} remaining.</p>`
   : '';
  const rows = machine.result.nodes.map(node=>{
   const charges = site.clusters.flatMap((cluster,i)=>cluster.nodes.includes(node.id)
    ? [escapeHTML(cluster.name)+' '+fmt(machine.result.costs[i].perVM)+' GB'] : []);
   return `<tr><th scope="row">DB ${node.id}</th><td>${fmt(node.local)}</td><td>${charges.join(' + ') || '0 GB'}</td><td>${fmt(node.otherLocal)}</td><td>${fmt(node.free)}</td></tr>`;
  }).join('');
- return `<details class="result-trace"><summary>View calculation</summary>${equation}<div class="table-wrap" tabindex="0" role="region" aria-label="Local storage calculation by server"><table><caption>Local storage (GB) · capacity minus AVMCs and other allocations</caption><thead><tr><th>Server</th><th>Capacity</th><th>AVMC allocations</th><th>Other</th><th>Remaining</th></tr></thead><tbody>${rows}</tbody><tfoot><tr><th scope="row">Machine total</th><td>${fmt(machine.result.capacity)}</td><td>${fmt(machine.result.used)}</td><td>${fmt(machine.result.other)}</td><td>${fmt(machine.result.free)}</td></tr></tfoot></table></div><a href="${M.SOURCES.formula}" target="_blank" rel="noopener">Oracle AVMC sizing formula</a></details>`;
+ const {capacity, used, other, free} = machine.result;
+ const allocationSteps = machine.result.costs.map((cost,i)=>{
+  const cluster=site.clusters[i], placements=cluster.nodes.length;
+  return `<li><strong>${escapeHTML(cluster.name)}</strong> · ${fmt(cost.base/placements)} GB fixed + ${fmt(cost.slots/placements)} GB for ${cluster.slots} reserved ACD ${assessmentNoun(cluster.slots,'slot')}${cost.allowance?' + '+fmt(cost.allowance/placements)+' GB extra':''} = ${fmt(cost.perVM)} GB on each selected server.</li>`;
+ }).join('');
+ return `<details class="result-trace"><summary>View calculation</summary><p><strong>Local storage across this machine</strong><br>${fmt(capacity)} GB capacity − ${fmt(used)} GB for AVMCs − ${fmt(other)} GB for other allocations = <strong>${fmt(free)} GB remaining</strong>.</p><div class="table-wrap" tabindex="0" role="region" aria-label="Local storage calculation by server"><table><caption>Local storage (GB) · capacity minus AVMCs and other allocations</caption><thead><tr><th>Server</th><th>Capacity</th><th>AVMC allocations</th><th>Other</th><th>Remaining</th></tr></thead><tbody>${rows}</tbody><tfoot><tr><th scope="row">Machine total</th><td>${fmt(machine.result.capacity)}</td><td>${fmt(machine.result.used)}</td><td>${fmt(machine.result.other)}</td><td>${fmt(machine.result.free)}</td></tr></tfoot></table></div>${allocationSteps?`<details><summary>How AVMC storage is calculated</summary><ul>${allocationSteps}</ul></details>`:''}${equation}<a href="${M.SOURCES.formula}" target="_blank" rel="noopener">Oracle AVMC sizing formula</a></details>`;
 }
 
 function decisionResult(assessment, index, site) {
