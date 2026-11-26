@@ -147,7 +147,7 @@ function updateWorkflow() {
   : 'Optional: record the numbers you have entered, then edit the design to compare Before versus After. Skip this if you only need capacity totals.';
  if (preview && (preview.active !== active || preview.signature !== JSON.stringify(state))) cancelPreview();
  refreshJourney();
- renderTopologyReview();renderAssessment();renderRequirementSources();conventionalStatus();renderScenarioComparison();updateDeviceDraft();
+ renderTopologyReview();renderAssessment();renderRequirementSources();conventionalStatus();updateDeviceDraft();
 }
 
 function clearResourceCards() {

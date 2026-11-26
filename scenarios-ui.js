@@ -10,12 +10,14 @@ function scenarioSetState(next){state=next;active=Math.min(active,state.sites.le
 function ensureScenarioControls(){
  const container=$('scenario-tools');if(!container||container.dataset.ready==='true')return;
  container.dataset.ready='true';
- container.innerHTML=`<h2>Compare saved options</h2><p class="hint">Keep complete plans for an option, a future year or temporary migration overlap. Saving an option here keeps it in this tab; download JSON to retain it.</p>
+ container.innerHTML=`<h2>Compare saved options</h2><p class="hint">Name your current design and save it as an option. Edit the working plan to see what changes. Save on this device or download a JSON backup to keep both versions.</p>
  <div class="fields"><label>Project name<input id="project-name" maxlength="120" placeholder="Optional"></label><label>Project assumptions<textarea id="project-notes" rows="2" maxlength="6000" placeholder="Scope, dates and assumptions"></textarea></label></div>
  <div class="fields"><label>Option name<input id="alternative-name" maxlength="100" placeholder="For example: current design or Year 2"></label><label>Option type<select id="alternative-kind"><option value="option">Design option</option><option value="year">Year / growth stage</option><option value="migration">Migration stage</option></select></label></div><button type="button" data-scenario-action="capture">Save working plan as an option</button>
  <details><summary>Create a growth option</summary><p class="hint">Scale known CPU/RAM needs in a separate saved option. Unknown values stay unknown, and affected machines need hardware comparison again.</p><div class="fields growth-fields"><label>Growth option name<input id="growth-name" maxlength="100" placeholder="For example: Year 2"></label><label>Workload ECPU growth (%)<input id="growth-cpu" type="number" min="0" max="1000" value="20"></label><label>Workload RAM growth (%)<input id="growth-ram" type="number" min="0" max="1000" value="20"></label></div><button type="button" data-scenario-action="growth">Create growth option</button></details>
  <details><summary>Model migration overlap</summary><p class="hint">Copy selected AVMC allocations on the active machine into a separate saved option. Both allocations consume capacity during overlap. Copied ACDs have no DR links.</p><label>Overlap option name<input id="migration-name" maxlength="100" placeholder="For example: migration overlap"></label><div id="migration-choices"></div><button type="button" data-scenario-action="migration">Create overlap option</button></details>
- <div id="saved-options"></div><div id="scenario-comparison" aria-live="polite"></div>`;
+ <div id="saved-options"></div><div id="scenario-comparison" aria-live="polite"></div>
+ <div id="compare-export-tools" hidden><label>Decision note for this export (optional)<input id="decision-note" maxlength="500" placeholder="Which design would you take forward, and why?"></label><button type="button" id="compare-export">Export this comparison</button></div>`;
+ $('compare-export').onclick=exportSelectedComparison;
  for(const [field,key]of [['project-name','name'],['project-notes','notes']]){
   const update=()=>safeUpdate(()=>{state.project={...state.project,[key]:scenarioValue(field)};X.validateExtras(state,M);});
   $(field).addEventListener('input',update);$(field).addEventListener('change',update);
@@ -41,11 +43,13 @@ function renderScenarios(){
  const project=state.project||{};
  const generation=typeof libraryGeneration==='number'?libraryGeneration:project.id,changed=generation!==scenarioProjectGeneration;
  for(const [id,value]of [['project-name',project.name||''],['project-notes',project.notes||'']])if($(id)&&(changed||document.activeElement!==$(id)))$(id).value=value;
+ if(changed)$('decision-note').value='';
  scenarioProjectGeneration=generation;
  const choices=$('migration-choices');if(choices)choices.innerHTML=site().clusters.length?site().clusters.map((c,i)=>`<label class="check"><input type="checkbox" data-overlap-cluster="${i}">${escapeHTML(c.name)} · ${c.nodes.length} VMs · ${c.slots} max ACDs</label>`).join(''):'<p class="hint">Add an AVMC to the active machine first.</p>';
  const target=$('saved-options');if(!target)return;
  const alternatives=state.alternatives||[];if(changed){scenarioCompareIds=[];scenarioCompareInitialized=false;}scenarioCompareIds=scenarioCompareIds.filter(id=>alternatives.some(a=>a.id===id));if(!scenarioCompareInitialized&&alternatives.length){scenarioCompareIds=alternatives.slice(0,2).map(a=>a.id);scenarioCompareInitialized=true;}
- if(!alternatives.length){scenarioCompareInitialized=false;scenarioCompareIds=[];target.innerHTML='<p class="hint">No saved options yet. Save the working plan above to compare changes later.</p>';$('scenario-comparison').innerHTML='';return;}
+ $('compare-export-tools').hidden=!alternatives.length;
+ if(!alternatives.length){scenarioCompareInitialized=false;scenarioCompareIds=[];target.innerHTML='<p class="hint">Your first saved option becomes the reference for the next design.</p>';$('scenario-comparison').innerHTML='';return;}
  target.innerHTML=`<div class="table-wrap"><table><thead><tr><th>Saved option</th><th>Type</th><th>Machines</th><th>Actions</th></tr></thead><tbody>${alternatives.map(a=>`<tr><td>${escapeHTML(a.name)}</td><td>${escapeHTML(a.kind)}</td><td>${a.sites.length}</td><td><div class="actions"><button type="button" data-scenario-action="compare" data-alt-id="${escapeHTML(a.id)}">Compare</button><button type="button" data-scenario-action="restore" data-alt-id="${escapeHTML(a.id)}">Load into working plan</button><button type="button" class="remove" data-scenario-action="remove" data-alt-id="${escapeHTML(a.id)}">Remove option</button></div></td></tr>`).join('')}</tbody></table></div>${comparisonSelectors(alternatives)}<p class="hint">Loading changes the working plan. Undo restores the previous state. Saved options stay in this JSON file.</p>`;
  for(const checkbox of target.querySelectorAll('[data-compare-option]'))checkbox.addEventListener('change',()=>{
   const id=checkbox.dataset.compareOption;

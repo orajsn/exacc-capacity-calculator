@@ -28,7 +28,7 @@
 .section-intro h2,.scope-section h2,.guide-prompt h2{font-size:28px;letter-spacing:-.6px}
 .section-intro p{font-size:16px;color:var(--muted)}
 .task-list{margin-top:24px;border-top:1px solid var(--line)}
-.task-list>a{display:grid;grid-template-columns:36px minmax(0,1fr) 24px;gap:20px;padding:24px 12px;border-bottom:1px solid var(--line);color:var(--ink);text-decoration:none;align-items:start}
+.task-list>a{display:grid;grid-template-columns:minmax(0,1fr) 24px;gap:20px;padding:24px 12px;border-bottom:1px solid var(--line);color:var(--ink);text-decoration:none;align-items:start}
 .task-list>a:hover{background:var(--surface-soft)}
 .task-number{color:var(--accent);font-size:14px;line-height:28px;font-variant-numeric:tabular-nums}
 .task-list strong{font-size:20px;display:block;margin-bottom:6px;font-weight:600}
@@ -66,7 +66,7 @@
  .site-main{padding:0 16px}.site-header{padding:16px;gap:12px}.site-brand{font-size:16px;max-width:22ch}.site-brand span{font-size:14px}
  .site-header nav{justify-content:space-between;gap:12px}.hero{padding:32px 0;gap:24px}.hero h1{font-size:32px;letter-spacing:-.8px}.hero-lead{font-size:18px}
  .hero-actions{flex-direction:column;align-items:stretch}.hero-preview{padding:8px}.hero-note{font-size:14px}
- .section-intro h2,.scope-section h2,.guide-prompt h2{font-size:24px}.start-section{padding:28px 0}.task-list>a{grid-template-columns:24px minmax(0,1fr) 16px;gap:12px;padding:20px 0}
+ .section-intro h2,.scope-section h2,.guide-prompt h2{font-size:24px}.start-section{padding:28px 0}.task-list>a{grid-template-columns:minmax(0,1fr) 16px;gap:12px;padding:20px 0}
  .task-list strong{font-size:18px}.task-list a>span>span{font-size:16px}.scope-section{padding:32px 0}.guide-prompt{padding:24px 20px;margin-bottom:32px}
  .site-footer{padding:20px 16px;display:block}.site-footer nav{margin:16px 0;gap:8px 20px}.site-footer nav a{min-height:44px;display:inline-flex;align-items:center}
  .guide-intro{padding:32px 0 24px}.guide-intro h1{font-size:32px}.guide-intro p{font-size:16px}.guide-content h2{font-size:24px}.guide-shot{padding:6px}

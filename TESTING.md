@@ -1,5 +1,9 @@
 # Verification catalogue
 
+The Product checks workflow runs the repository tests and a real Chromium journey at 390px and 1280px using synthetic inputs. It exercises device save/reopen, file import, JSON download and the selected comparison report.
+
+First-user trial: give 3–5 first-time engineers the same generic two-site task. Ask them to compare separate and consolidated AVMCs, identify the limiting server and send their decision report to the facilitator. Record time, independent completion, misinterpreted verdicts and prompts needed. Independent user results are pending.
+
 The public suite uses Node's built-in test runner and generic fixtures. Run **npm test** from this directory. No installation or live OCI access is required.
 
 ## Automated coverage
