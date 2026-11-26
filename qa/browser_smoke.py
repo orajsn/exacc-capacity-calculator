@@ -18,9 +18,10 @@ def exercise(browser, width, folder):
     expect(page.locator("#dock-free")).to_have_text("3,805 GB")
 
     page.locator("#guide-step-3").click()
-    page.locator("#panel-scenarios > summary").click()
+    page.get_by_role("button", name="Compare saved designs", exact=True).click()
     page.locator("#alternative-name").fill("Separate groups")
     page.locator('[data-scenario-action="capture"]').click()
+    expect(page.locator("#scenario-comparison")).to_contain_text("3,805 GB free")
     page.locator("#decision-note").fill("Confirm the switchover group before deployment.")
     with page.expect_download() as received:
         page.locator("#compare-export").click()
@@ -45,6 +46,19 @@ def exercise(browser, width, folder):
     page.locator("#import").set_input_files(file)
     expect(page.locator("#message")).to_contain_text("Opened the JSON plan")
     assert page.evaluate("document.documentElement.scrollWidth <= window.innerWidth")
+    # Exercise the workload route and the explicit shared-storage result.
+    page.goto(BASE + "/planner.html?start=workload")
+    expect(page.locator("#guide-heading")).to_have_text("Machine")
+    page.locator("#guide-step-2").click()
+    page.locator("#add-cluster").click()
+    page.locator('[data-requirement][data-key="ecpu"]').fill("32")
+    page.locator('[data-requirement][data-key="ramGB"]').fill("128")
+    page.locator("#guide-step-3").click()
+    page.locator("#suggest-sizing").click()
+    expect(page.locator("#sizing-results")).to_contain_text("Smallest DB-server configuration that fits")
+    expect(page.locator("#sizing-results")).to_contain_text("Shared database storage: not checked")
+    Path("qa-artifacts").mkdir(exist_ok=True)
+    page.locator("#sizing-results").screenshot(path=f"qa-artifacts/db-server-fit-{width}.png")
     assert not errors, errors
     context.close()
 

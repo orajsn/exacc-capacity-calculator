@@ -713,6 +713,7 @@ body:has(#start-options:not([hidden])){padding-bottom:0}
 .inventory-diff-table .missing-values{font-size:14px;color:var(--warning);margin:12px 0 0}
 .diff-filter{max-width:450px}.diff-pagination{display:flex;align-items:center;gap:12px;justify-content:space-between;flex-wrap:wrap;font-size:14px}
 .diff-pagination button{min-height:44px;font-size:14px}.import-notes{border-top:1px solid var(--line);padding-top:8px}
+#jump-options{justify-self:start;margin:4px 0;min-height:44px}
 #compare-export-tools{border-top:1px solid var(--line);padding:var(--s4) 0}
 #compare-export-tools label{max-width:65ch}
 #compare-export{margin-top:var(--s3)}

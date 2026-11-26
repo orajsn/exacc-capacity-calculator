@@ -9,6 +9,7 @@ function comparisonReviewNotes(cell){
 function renderScenarioComparison(){
  const el=$('scenario-comparison');if(!el||!window.ExaReview)return;
  $('compare-export').disabled=!scenarioCompareIds.length;
+ if($('panel-scenarios').hidden||!$('panel-scenarios').open)return;
  if(!(state.alternatives||[]).length){el.innerHTML='';return;}
  try{
   const comparison=window.ExaReview.comparePlans(state,scenarioCompareIds,M,P,T,X,window.ExaRequirements);

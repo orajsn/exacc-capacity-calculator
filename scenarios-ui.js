@@ -17,6 +17,9 @@ function ensureScenarioControls(){
  <details><summary>Model migration overlap</summary><p class="hint">Copy selected AVMC allocations on the active machine into a separate saved option. Both allocations consume capacity during overlap. Copied ACDs have no DR links.</p><label>Overlap option name<input id="migration-name" maxlength="100" placeholder="For example: migration overlap"></label><div id="migration-choices"></div><button type="button" data-scenario-action="migration">Create overlap option</button></details>
  <div id="saved-options"></div><div id="scenario-comparison" aria-live="polite"></div>
  <div id="compare-export-tools" hidden><label>Decision note for this export (optional)<input id="decision-note" maxlength="500" placeholder="Which design would you take forward, and why?"></label><button type="button" id="compare-export">Export this comparison</button></div>`;
+ $('panel-scenarios').addEventListener('toggle',()=>{
+  if($('panel-scenarios').open)renderScenarioComparison();
+ });
  $('compare-export').onclick=exportSelectedComparison;
  for(const [field,key]of [['project-name','name'],['project-notes','notes']]){
   const update=()=>safeUpdate(()=>{state.project={...state.project,[key]:scenarioValue(field)};X.validateExtras(state,M);});

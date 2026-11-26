@@ -45,6 +45,7 @@ function refreshJourney(){
   hardwareInfo.dataset.state=ready?(assumed?'assumed':'selected'):'unselected';
  }
  for(let i=1;i<=4;i++)$('guide-step-'+i).setAttribute('aria-current',i===guideStep?'step':'false');
+ $('jump-options').hidden=guideStep!==3;
  const panels={
   'panel-machine':guideStep===1,'panel-avmc':guideStep===2,'panel-before':guideStep===2&&ready,
   'panel-sizing':guideStep===3&&intent==='workload','panel-layouts':guideStep===3&&intent==='allocation',
@@ -79,6 +80,13 @@ function refreshJourney(){
  $('review-add').textContent=active<state.sites.length-1?'Next machine':'Back to machines';
 }
 function initJourney(){
+ $('jump-options').onclick=()=>{
+  const panel=$('panel-scenarios');
+  panel.open=true;
+  const heading=panel.querySelector('summary');
+  heading.focus();
+  heading.scrollIntoView({block:'start'});
+ };
  const hardwareEdit=$('workbench-hardware-edit');if(hardwareEdit)hardwareEdit.onclick=()=>goGuideStep(1);
  for(let i=1;i<=4;i++)$('guide-step-'+i).onclick=()=>goGuideStep(i);
  $('guide-back').onclick=()=>goGuideStep(guideStep-1);
