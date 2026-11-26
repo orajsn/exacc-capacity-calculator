@@ -16,6 +16,9 @@ def exercise(browser, width, folder):
     expect(page.locator('.entry-paths a')).to_have_count(2)
     if width == 320:
         page.locator("#theme-toggle").click()
+    Path("qa-artifacts").mkdir(exist_ok=True)
+    page.screenshot(path=f"qa-artifacts/home-{width}.png")
+    assert page.evaluate("document.documentElement.scrollWidth <= window.innerWidth")
     page.locator('.entry-paths a[href$="start=quick"]').click()
     expect(page.locator("#guide-heading")).to_have_text("Allocations")
     page.locator("#add-cluster").click()
@@ -38,6 +41,9 @@ def exercise(browser, width, folder):
     decision.get_by_text("How AVMC storage is calculated", exact=True).click()
     expect(decision).to_contain_text("289 GB fixed + 51.5 GB for 1 reserved ACD slot = 340.5 GB")
     decision.get_by_text("How AVMC storage is calculated", exact=True).click()
+    if width < 600:
+        expect(decision.locator("tbody .trace-field").first).to_be_visible()
+        assert decision.locator(".table-wrap").evaluate("el => el.scrollWidth <= el.clientWidth + 1")
     expect(decision.locator("tbody tr")).to_have_count(2)
     expect(decision.locator("tbody tr").first).to_contain_text("1,902.5")
     Path("qa-artifacts").mkdir(exist_ok=True)

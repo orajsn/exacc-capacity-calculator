@@ -771,3 +771,15 @@ body:has(#start-options:not([hidden])){padding-bottom:0}
  #local-dock[data-compact-metric=cpu]:not([data-expanded=true]) #dock-cpu-metric,
  #local-dock[data-compact-metric=memory]:not([data-expanded=true]) #dock-memory-metric{display:flex;flex-direction:row;align-items:baseline;flex-wrap:wrap;gap:6px 12px;border:0;padding:0}
 }
+
+.trace-field{display:none}
+@media(max-width:600px){
+ .result-trace table{display:block;min-width:0;width:100%}
+ .result-trace caption,.result-trace tbody,.result-trace tfoot,.result-trace tr{display:block}
+ .result-trace caption{text-align:left;margin-bottom:8px}
+ .result-trace thead{position:absolute;width:1px;height:1px;overflow:hidden;clip-path:inset(50%)}
+ .result-trace th[scope=row]{display:block;padding:8px;text-align:left}
+ .result-trace td{display:grid;grid-template-columns:6em minmax(0,1fr);gap:8px;padding:4px 8px;border:0;white-space:normal}
+ .result-trace td:last-child{padding-bottom:10px;font-weight:650}
+ .trace-field{display:inline;color:var(--muted)}
+}
