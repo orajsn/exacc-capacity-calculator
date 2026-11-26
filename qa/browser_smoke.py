@@ -1,5 +1,6 @@
 """Run against a local checkout served at http://127.0.0.1:8080."""
 from pathlib import Path
+from shutil import which
 from tempfile import TemporaryDirectory
 from playwright.sync_api import sync_playwright, expect
 
@@ -48,7 +49,7 @@ def exercise(browser, width, folder):
     context.close()
 
 with TemporaryDirectory() as folder, sync_playwright() as playwright:
-    browser = playwright.chromium.launch()
+    browser = playwright.chromium.launch(executable_path=which("google-chrome"))
     for width in (390, 1280):
         exercise(browser, width, folder)
     browser.close()

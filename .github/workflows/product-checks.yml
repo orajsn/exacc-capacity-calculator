@@ -4,7 +4,7 @@ permissions:
   contents: read
 jobs:
   planner:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     timeout-minutes: 10
     steps:
       - uses: actions/checkout@v4
@@ -16,7 +16,6 @@ jobs:
         run: |
           python -m venv "$RUNNER_TEMP/planner-qa"
           "$RUNNER_TEMP/planner-qa/bin/pip" install playwright==1.55.0
-          "$RUNNER_TEMP/planner-qa/bin/python" -m playwright install --with-deps chromium
       - name: Exercise generic desktop and phone workflows
         run: |
           python -m http.server 8080 --bind 127.0.0.1 > "$RUNNER_TEMP/planner-http.log" 2>&1 &
